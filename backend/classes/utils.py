@@ -13,3 +13,4 @@ def verify_type(type_hints: dict[str, Any], function_parameters: dict[str, Any])
             continue
         if not isinstance(function_parameters[key], type_hints[key]):
             raise TypeError
+

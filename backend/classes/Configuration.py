@@ -2,6 +2,7 @@ import json
 from utils import verify_type
 from typing import get_type_hints
 
+
 class Configuration:
 
     def __init__(self, phosphor_factor: float | None = None, potassium_factor: float | None = None) -> None:
@@ -37,6 +38,3 @@ class Configuration:
 
     def __repr__(self) -> str:
         return f'Phosphor factor: {self.__phosphor_factor}, Potassium_factor: {self.__potassium_factor} '
-
-
-
