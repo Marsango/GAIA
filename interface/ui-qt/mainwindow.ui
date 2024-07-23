@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1958</width>
+    <height>1151</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
+     <widget class="QFrame" name="frame">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(70, 0, 0);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap>../../../../Downloads/UpscaleImage_1_20240722.jpeg</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>false</bool>
+         </property>
+         <property name="textInteractionFlags">
+          <set>Qt::TextInteractionFlag::LinksAccessibleByMouse</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1958</width>
+     <height>33</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuCadastro">
+    <property name="title">
+     <string>Cadastro</string>
+    </property>
+    <addaction name="actionSolicitante"/>
+    <addaction name="actionPropriedade"/>
+    <addaction name="actionAmostra"/>
+   </widget>
+   <widget class="QMenu" name="menuLaudo">
+    <property name="title">
+     <string>Laudo</string>
+    </property>
+    <addaction name="actionGerar_laudo"/>
+    <addaction name="actionConsultar_laudo"/>
+   </widget>
+   <widget class="QMenu" name="menuConfigura_es">
+    <property name="title">
+     <string>Configuracoes</string>
+    </property>
+    <addaction name="actionGr_ficos"/>
+    <addaction name="actionFatores_vari_veis"/>
+   </widget>
+   <addaction name="menuCadastro"/>
+   <addaction name="menuLaudo"/>
+   <addaction name="menuConfigura_es"/>
+  </widget>
+  <action name="actionSolicitante">
+   <property name="text">
+    <string>Solicitante</string>
+   </property>
+  </action>
+  <action name="actionPropriedade">
+   <property name="text">
+    <string>Propriedade</string>
+   </property>
+  </action>
+  <action name="actionAmostra">
+   <property name="text">
+    <string>Amostra</string>
+   </property>
+  </action>
+  <action name="actionGerar_laudo">
+   <property name="text">
+    <string>Gerar laudo</string>
+   </property>
+  </action>
+  <action name="actionConsultar_laudo">
+   <property name="text">
+    <string>Consultar laudo</string>
+   </property>
+  </action>
+  <action name="actionGr_ficos">
+   <property name="text">
+    <string>Graficos</string>
+   </property>
+  </action>
+  <action name="actionFatores_vari_veis">
+   <property name="text">
+    <string>Fatores variaveis</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
