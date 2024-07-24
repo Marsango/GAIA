@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -21,6 +24,21 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QFrame" name="frame">
       <property name="enabled">
@@ -42,6 +60,18 @@
        <enum>QFrame::Shadow::Raised</enum>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
         <widget class="QLabel" name="label">
          <property name="sizePolicy">
@@ -82,7 +112,14 @@
     <property name="title">
      <string>Cadastro</string>
     </property>
-    <addaction name="actionSolicitante"/>
+    <widget class="QMenu" name="menuSolicitante">
+     <property name="title">
+      <string>Solicitante</string>
+     </property>
+     <addaction name="actionPessoa_F_sica"/>
+     <addaction name="actionPessoa_Jur_dica"/>
+    </widget>
+    <addaction name="menuSolicitante"/>
     <addaction name="actionPropriedade"/>
     <addaction name="actionAmostra"/>
    </widget>
@@ -104,11 +141,6 @@
    <addaction name="menuLaudo"/>
    <addaction name="menuConfigura_es"/>
   </widget>
-  <action name="actionSolicitante">
-   <property name="text">
-    <string>Solicitante</string>
-   </property>
-  </action>
   <action name="actionPropriedade">
    <property name="text">
     <string>Propriedade</string>
@@ -137,6 +169,16 @@
   <action name="actionFatores_vari_veis">
    <property name="text">
     <string>Fatores variaveis</string>
+   </property>
+  </action>
+  <action name="actionPessoa_F_sica">
+   <property name="text">
+    <string>Pessoa Física</string>
+   </property>
+  </action>
+  <action name="actionPessoa_Jur_dica">
+   <property name="text">
+    <string>Pessoa Jurídica</string>
    </property>
   </action>
  </widget>

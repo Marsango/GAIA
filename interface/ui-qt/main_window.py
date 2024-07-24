@@ -18,20 +18,19 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
     QMainWindow, QMenu, QMenuBar, QSizePolicy,
-    QWidget, QVBoxLayout)
+    QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
+        MainWindow.setEnabled(True)
         MainWindow.resize(1958, 1151)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
-        self.actionSolicitante = QAction(MainWindow)
-        self.actionSolicitante.setObjectName(u"actionSolicitante")
         self.actionPropriedade = QAction(MainWindow)
         self.actionPropriedade.setObjectName(u"actionPropriedade")
         self.actionAmostra = QAction(MainWindow)
@@ -44,10 +43,16 @@ class Ui_MainWindow(object):
         self.actionGr_ficos.setObjectName(u"actionGr_ficos")
         self.actionFatores_vari_veis = QAction(MainWindow)
         self.actionFatores_vari_veis.setObjectName(u"actionFatores_vari_veis")
+        self.actionPessoa_F_sica = QAction(MainWindow)
+        self.actionPessoa_F_sica.setObjectName(u"actionPessoa_F_sica")
+        self.actionPessoa_Jur_dica = QAction(MainWindow)
+        self.actionPessoa_Jur_dica.setObjectName(u"actionPessoa_Jur_dica")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_2 = QHBoxLayout(self.centralwidget)
+        self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.frame = QFrame(self.centralwidget)
         self.frame.setObjectName(u"frame")
         self.frame.setEnabled(True)
@@ -57,7 +62,18 @@ class Ui_MainWindow(object):
         self.frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
+        self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, -1, 0)
+        self.label = QLabel(self.frame)
+        self.label.setObjectName(u"label")
+        sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
+        self.label.setSizePolicy(sizePolicy)
+        self.label.setPixmap(QPixmap(u"../../../../Downloads/UpscaleImage_1_20240722.jpeg"))
+        self.label.setScaledContents(False)
+        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
+
+        self.horizontalLayout.addWidget(self.label)
 
 
         self.horizontalLayout_2.addWidget(self.frame)
@@ -68,6 +84,8 @@ class Ui_MainWindow(object):
         self.menubar.setGeometry(QRect(0, 0, 1958, 33))
         self.menuCadastro = QMenu(self.menubar)
         self.menuCadastro.setObjectName(u"menuCadastro")
+        self.menuSolicitante = QMenu(self.menuCadastro)
+        self.menuSolicitante.setObjectName(u"menuSolicitante")
         self.menuLaudo = QMenu(self.menubar)
         self.menuLaudo.setObjectName(u"menuLaudo")
         self.menuConfigura_es = QMenu(self.menubar)
@@ -77,29 +95,35 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuCadastro.menuAction())
         self.menubar.addAction(self.menuLaudo.menuAction())
         self.menubar.addAction(self.menuConfigura_es.menuAction())
-        self.menuCadastro.addAction(self.actionSolicitante)
+        self.menuCadastro.addAction(self.menuSolicitante.menuAction())
         self.menuCadastro.addAction(self.actionPropriedade)
         self.menuCadastro.addAction(self.actionAmostra)
+        self.menuSolicitante.addAction(self.actionPessoa_F_sica)
+        self.menuSolicitante.addAction(self.actionPessoa_Jur_dica)
         self.menuLaudo.addAction(self.actionGerar_laudo)
         self.menuLaudo.addAction(self.actionConsultar_laudo)
         self.menuConfigura_es.addAction(self.actionGr_ficos)
         self.menuConfigura_es.addAction(self.actionFatores_vari_veis)
 
         self.retranslateUi(MainWindow)
+
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.actionSolicitante.setText(QCoreApplication.translate("MainWindow", u"Solicitante", None))
         self.actionPropriedade.setText(QCoreApplication.translate("MainWindow", u"Propriedade", None))
         self.actionAmostra.setText(QCoreApplication.translate("MainWindow", u"Amostra", None))
         self.actionGerar_laudo.setText(QCoreApplication.translate("MainWindow", u"Gerar laudo", None))
         self.actionConsultar_laudo.setText(QCoreApplication.translate("MainWindow", u"Consultar laudo", None))
-        self.actionGr_ficos.setText(QCoreApplication.translate("MainWindow", u"Gráficos", None))
-        self.actionFatores_vari_veis.setText(QCoreApplication.translate("MainWindow", u"Fatores variáveis", None))
+        self.actionGr_ficos.setText(QCoreApplication.translate("MainWindow", u"Graficos", None))
+        self.actionFatores_vari_veis.setText(QCoreApplication.translate("MainWindow", u"Fatores variaveis", None))
+        self.actionPessoa_F_sica.setText(QCoreApplication.translate("MainWindow", u"Pessoa F\u00edsica", None))
+        self.actionPessoa_Jur_dica.setText(QCoreApplication.translate("MainWindow", u"Pessoa Jur\u00eddica", None))
+        self.label.setText("")
         self.menuCadastro.setTitle(QCoreApplication.translate("MainWindow", u"Cadastro", None))
+        self.menuSolicitante.setTitle(QCoreApplication.translate("MainWindow", u"Solicitante", None))
         self.menuLaudo.setTitle(QCoreApplication.translate("MainWindow", u"Laudo", None))
-        self.menuConfigura_es.setTitle(QCoreApplication.translate("MainWindow", u"Configurações", None))
+        self.menuConfigura_es.setTitle(QCoreApplication.translate("MainWindow", u"Configuracoes", None))
     # retranslateUi
 
