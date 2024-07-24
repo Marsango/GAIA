@@ -12,5 +12,9 @@ def verify_type(type_hints: dict[str, Any], function_parameters: dict[str, Any])
         if key == 'return':
             continue
         if not isinstance(function_parameters[key], type_hints[key]):
-            raise TypeError
+            raise TypeError(f'Error with values of {key}')
+        if isinstance(function_parameters[key], str):
+            if function_parameters[key] == '':
+                raise ValueError(f'String is empty')
+
 
