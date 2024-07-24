@@ -91,14 +91,14 @@ border: none; background: transparent;
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_7">
                <item>
-                <widget class="QLineEdit" name="lineEdit">
+                <widget class="QLineEdit" name="name_input">
                  <property name="placeholderText">
                   <string>Nome</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="lineEdit_5">
+                <widget class="QLineEdit" name="email_input">
                  <property name="placeholderText">
                   <string>E-mail</string>
                  </property>
@@ -135,7 +135,7 @@ border: none; background: transparent;
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_4">
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_2">
+                   <widget class="QLineEdit" name="cpf_input">
                     <property name="minimumSize">
                      <size>
                       <width>100</width>
@@ -175,7 +175,7 @@ border: none; background: transparent;
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_3">
+                   <widget class="QLineEdit" name="birth_date_input">
                     <property name="minimumSize">
                      <size>
                       <width>80</width>
@@ -215,7 +215,7 @@ border: none; background: transparent;
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_4">
+                   <widget class="QLineEdit" name="phone_number_input">
                     <property name="inputMask">
                      <string>(99)99999-9999</string>
                     </property>
@@ -289,35 +289,35 @@ border: none; background: transparent;
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
-          <widget class="QLineEdit" name="lineEdit_6">
+          <widget class="QLineEdit" name="country_input">
            <property name="placeholderText">
             <string>País</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_7">
+          <widget class="QLineEdit" name="state_input">
            <property name="placeholderText">
             <string>Estado</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_8">
+          <widget class="QLineEdit" name="city_input">
            <property name="placeholderText">
             <string>Cidade</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_9">
+          <widget class="QLineEdit" name="street_input">
            <property name="placeholderText">
             <string>Rua</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_10">
+          <widget class="QLineEdit" name="address_number_input">
            <property name="text">
             <string/>
            </property>
@@ -327,7 +327,7 @@ border: none; background: transparent;
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_11">
+          <widget class="QLineEdit" name="cep_input">
            <property name="placeholderText">
             <string>CEP</string>
            </property>

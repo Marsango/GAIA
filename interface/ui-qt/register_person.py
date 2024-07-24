@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'cadastrar_solicitante.ui'
+## Form generated from reading UI file 'register_person.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -61,15 +61,15 @@ class Ui_Form(object):
         self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_7 = QVBoxLayout(self.frame)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
-        self.lineEdit = QLineEdit(self.frame)
-        self.lineEdit.setObjectName(u"lineEdit")
+        self.name_input = QLineEdit(self.frame)
+        self.name_input.setObjectName(u"name_input")
 
-        self.verticalLayout_7.addWidget(self.lineEdit)
+        self.verticalLayout_7.addWidget(self.name_input)
 
-        self.lineEdit_5 = QLineEdit(self.frame)
-        self.lineEdit_5.setObjectName(u"lineEdit_5")
+        self.email_input = QLineEdit(self.frame)
+        self.email_input.setObjectName(u"email_input")
 
-        self.verticalLayout_7.addWidget(self.lineEdit_5)
+        self.verticalLayout_7.addWidget(self.email_input)
 
 
         self.verticalLayout_2.addWidget(self.frame)
@@ -86,13 +86,13 @@ class Ui_Form(object):
         self.groupBox.setMaximumSize(QSize(120, 50))
         self.verticalLayout_4 = QVBoxLayout(self.groupBox)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.lineEdit_2 = QLineEdit(self.groupBox)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
-        self.lineEdit_2.setMinimumSize(QSize(100, 15))
-        self.lineEdit_2.setMaximumSize(QSize(100, 15))
-        self.lineEdit_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.cpf_input = QLineEdit(self.groupBox)
+        self.cpf_input.setObjectName(u"cpf_input")
+        self.cpf_input.setMinimumSize(QSize(100, 15))
+        self.cpf_input.setMaximumSize(QSize(100, 15))
+        self.cpf_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.verticalLayout_4.addWidget(self.lineEdit_2)
+        self.verticalLayout_4.addWidget(self.cpf_input)
 
 
         self.horizontalLayout_3.addWidget(self.groupBox)
@@ -102,14 +102,14 @@ class Ui_Form(object):
         self.groupBox_3.setMaximumSize(QSize(100, 50))
         self.horizontalLayout_5 = QHBoxLayout(self.groupBox_3)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.lineEdit_3 = QLineEdit(self.groupBox_3)
-        self.lineEdit_3.setObjectName(u"lineEdit_3")
-        self.lineEdit_3.setMinimumSize(QSize(80, 15))
-        self.lineEdit_3.setMaximumSize(QSize(80, 15))
-        self.lineEdit_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_3.setPlaceholderText(u"")
+        self.birth_date_input = QLineEdit(self.groupBox_3)
+        self.birth_date_input.setObjectName(u"birth_date_input")
+        self.birth_date_input.setMinimumSize(QSize(80, 15))
+        self.birth_date_input.setMaximumSize(QSize(80, 15))
+        self.birth_date_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.birth_date_input.setPlaceholderText(u"")
 
-        self.horizontalLayout_5.addWidget(self.lineEdit_3)
+        self.horizontalLayout_5.addWidget(self.birth_date_input)
 
 
         self.horizontalLayout_3.addWidget(self.groupBox_3)
@@ -119,11 +119,11 @@ class Ui_Form(object):
         self.groupBox_2.setMaximumSize(QSize(125, 50))
         self.verticalLayout_6 = QVBoxLayout(self.groupBox_2)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.lineEdit_4 = QLineEdit(self.groupBox_2)
-        self.lineEdit_4.setObjectName(u"lineEdit_4")
-        self.lineEdit_4.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.phone_number_input = QLineEdit(self.groupBox_2)
+        self.phone_number_input.setObjectName(u"phone_number_input")
+        self.phone_number_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.verticalLayout_6.addWidget(self.lineEdit_4)
+        self.verticalLayout_6.addWidget(self.phone_number_input)
 
 
         self.horizontalLayout_3.addWidget(self.groupBox_2)
@@ -159,35 +159,35 @@ class Ui_Form(object):
         self.address_gbox.setMaximumSize(QSize(200, 16777215))
         self.verticalLayout_3 = QVBoxLayout(self.address_gbox)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.lineEdit_6 = QLineEdit(self.address_gbox)
-        self.lineEdit_6.setObjectName(u"lineEdit_6")
+        self.country_input = QLineEdit(self.address_gbox)
+        self.country_input.setObjectName(u"country_input")
 
-        self.verticalLayout_3.addWidget(self.lineEdit_6)
+        self.verticalLayout_3.addWidget(self.country_input)
 
-        self.lineEdit_7 = QLineEdit(self.address_gbox)
-        self.lineEdit_7.setObjectName(u"lineEdit_7")
+        self.state_input = QLineEdit(self.address_gbox)
+        self.state_input.setObjectName(u"state_input")
 
-        self.verticalLayout_3.addWidget(self.lineEdit_7)
+        self.verticalLayout_3.addWidget(self.state_input)
 
-        self.lineEdit_8 = QLineEdit(self.address_gbox)
-        self.lineEdit_8.setObjectName(u"lineEdit_8")
+        self.city_input = QLineEdit(self.address_gbox)
+        self.city_input.setObjectName(u"city_input")
 
-        self.verticalLayout_3.addWidget(self.lineEdit_8)
+        self.verticalLayout_3.addWidget(self.city_input)
 
-        self.lineEdit_9 = QLineEdit(self.address_gbox)
-        self.lineEdit_9.setObjectName(u"lineEdit_9")
+        self.street_input = QLineEdit(self.address_gbox)
+        self.street_input.setObjectName(u"street_input")
 
-        self.verticalLayout_3.addWidget(self.lineEdit_9)
+        self.verticalLayout_3.addWidget(self.street_input)
 
-        self.lineEdit_10 = QLineEdit(self.address_gbox)
-        self.lineEdit_10.setObjectName(u"lineEdit_10")
+        self.address_number_input = QLineEdit(self.address_gbox)
+        self.address_number_input.setObjectName(u"address_number_input")
 
-        self.verticalLayout_3.addWidget(self.lineEdit_10)
+        self.verticalLayout_3.addWidget(self.address_number_input)
 
-        self.lineEdit_11 = QLineEdit(self.address_gbox)
-        self.lineEdit_11.setObjectName(u"lineEdit_11")
+        self.cep_input = QLineEdit(self.address_gbox)
+        self.cep_input.setObjectName(u"cep_input")
 
-        self.verticalLayout_3.addWidget(self.lineEdit_11)
+        self.verticalLayout_3.addWidget(self.cep_input)
 
 
         self.horizontalLayout_2.addWidget(self.address_gbox)
@@ -204,24 +204,24 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.personal_data_gbox.setTitle(QCoreApplication.translate("Form", u"Dados Pessoais", None))
-        self.lineEdit.setPlaceholderText(QCoreApplication.translate("Form", u"Nome", None))
-        self.lineEdit_5.setPlaceholderText(QCoreApplication.translate("Form", u"E-mail", None))
+        self.name_input.setPlaceholderText(QCoreApplication.translate("Form", u"Nome", None))
+        self.email_input.setPlaceholderText(QCoreApplication.translate("Form", u"E-mail", None))
         self.groupBox.setTitle(QCoreApplication.translate("Form", u"CPF", None))
-        self.lineEdit_2.setInputMask(QCoreApplication.translate("Form", u"999.999.999-99", None))
-        self.lineEdit_2.setPlaceholderText("")
+        self.cpf_input.setInputMask(QCoreApplication.translate("Form", u"999.999.999-99", None))
+        self.cpf_input.setPlaceholderText("")
         self.groupBox_3.setTitle(QCoreApplication.translate("Form", u"Nascimento", None))
-        self.lineEdit_3.setInputMask(QCoreApplication.translate("Form", u"99/99/9999", None))
+        self.birth_date_input.setInputMask(QCoreApplication.translate("Form", u"99/99/9999", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("Form", u"Telefone", None))
-        self.lineEdit_4.setInputMask(QCoreApplication.translate("Form", u"(99)99999-9999", None))
-        self.lineEdit_4.setPlaceholderText(QCoreApplication.translate("Form", u"Telefone", None))
+        self.phone_number_input.setInputMask(QCoreApplication.translate("Form", u"(99)99999-9999", None))
+        self.phone_number_input.setPlaceholderText(QCoreApplication.translate("Form", u"Telefone", None))
         self.register_button.setText(QCoreApplication.translate("Form", u"Cadastrar Solicitante", None))
         self.address_gbox.setTitle(QCoreApplication.translate("Form", u"Endere\u00e7o", None))
-        self.lineEdit_6.setPlaceholderText(QCoreApplication.translate("Form", u"Pa\u00eds", None))
-        self.lineEdit_7.setPlaceholderText(QCoreApplication.translate("Form", u"Estado", None))
-        self.lineEdit_8.setPlaceholderText(QCoreApplication.translate("Form", u"Cidade", None))
-        self.lineEdit_9.setPlaceholderText(QCoreApplication.translate("Form", u"Rua", None))
-        self.lineEdit_10.setText("")
-        self.lineEdit_10.setPlaceholderText(QCoreApplication.translate("Form", u"N\u00famero", None))
-        self.lineEdit_11.setPlaceholderText(QCoreApplication.translate("Form", u"CEP", None))
+        self.country_input.setPlaceholderText(QCoreApplication.translate("Form", u"Pa\u00eds", None))
+        self.state_input.setPlaceholderText(QCoreApplication.translate("Form", u"Estado", None))
+        self.city_input.setPlaceholderText(QCoreApplication.translate("Form", u"Cidade", None))
+        self.street_input.setPlaceholderText(QCoreApplication.translate("Form", u"Rua", None))
+        self.address_number_input.setText("")
+        self.address_number_input.setPlaceholderText(QCoreApplication.translate("Form", u"N\u00famero", None))
+        self.cep_input.setPlaceholderText(QCoreApplication.translate("Form", u"CEP", None))
     # retranslateUi
 
