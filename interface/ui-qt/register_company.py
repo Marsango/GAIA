@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'register_person.ui'
+## Form generated from reading UI file 'register_company.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
     QLineEdit, QPushButton, QSizePolicy, QVBoxLayout,
     QWidget)
 
-class RegisterPersonDialog(object):
+class RegisterCompanyDialog(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
@@ -61,10 +61,10 @@ class RegisterPersonDialog(object):
         self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_7 = QVBoxLayout(self.frame)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
-        self.name_input = QLineEdit(self.frame)
-        self.name_input.setObjectName(u"name_input")
+        self.company_name_input = QLineEdit(self.frame)
+        self.company_name_input.setObjectName(u"company_name_input")
 
-        self.verticalLayout_7.addWidget(self.name_input)
+        self.verticalLayout_7.addWidget(self.company_name_input)
 
         self.email_input = QLineEdit(self.frame)
         self.email_input.setObjectName(u"email_input")
@@ -83,36 +83,19 @@ class RegisterPersonDialog(object):
         self.groupBox = QGroupBox(self.frame_2)
         self.groupBox.setObjectName(u"groupBox")
         self.groupBox.setMinimumSize(QSize(120, 30))
-        self.groupBox.setMaximumSize(QSize(120, 50))
-        self.verticalLayout_4 = QVBoxLayout(self.groupBox)
-        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.cpf_input = QLineEdit(self.groupBox)
-        self.cpf_input.setObjectName(u"cpf_input")
-        self.cpf_input.setMinimumSize(QSize(100, 15))
-        self.cpf_input.setMaximumSize(QSize(100, 15))
-        self.cpf_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.groupBox.setMaximumSize(QSize(1140, 50))
+        self.horizontalLayout_4 = QHBoxLayout(self.groupBox)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.cnpj_input = QLineEdit(self.groupBox)
+        self.cnpj_input.setObjectName(u"cpf_input")
+        self.cnpj_input.setMinimumSize(QSize(100, 15))
+        self.cnpj_input.setMaximumSize(QSize(130, 15))
+        self.cnpj_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.verticalLayout_4.addWidget(self.cpf_input)
+        self.horizontalLayout_4.addWidget(self.cnpj_input)
 
 
         self.horizontalLayout_3.addWidget(self.groupBox)
-
-        self.groupBox_3 = QGroupBox(self.frame_2)
-        self.groupBox_3.setObjectName(u"groupBox_3")
-        self.groupBox_3.setMaximumSize(QSize(100, 50))
-        self.horizontalLayout_5 = QHBoxLayout(self.groupBox_3)
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.birth_date_input = QLineEdit(self.groupBox_3)
-        self.birth_date_input.setObjectName(u"birth_date_input")
-        self.birth_date_input.setMinimumSize(QSize(80, 15))
-        self.birth_date_input.setMaximumSize(QSize(80, 15))
-        self.birth_date_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.birth_date_input.setPlaceholderText(u"")
-
-        self.horizontalLayout_5.addWidget(self.birth_date_input)
-
-
-        self.horizontalLayout_3.addWidget(self.groupBox_3)
 
         self.groupBox_2 = QGroupBox(self.frame_2)
         self.groupBox_2.setObjectName(u"groupBox_2")
@@ -204,13 +187,11 @@ class RegisterPersonDialog(object):
     def retranslateUi(self, Form):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.personal_data_gbox.setTitle(QCoreApplication.translate("Form", u"Dados Pessoais", None))
-        self.name_input.setPlaceholderText(QCoreApplication.translate("Form", u"Nome", None))
+        self.company_name_input.setPlaceholderText(QCoreApplication.translate("Form", u"Raz\u00e3o Social", None))
         self.email_input.setPlaceholderText(QCoreApplication.translate("Form", u"E-mail", None))
-        self.groupBox.setTitle(QCoreApplication.translate("Form", u"CPF", None))
-        self.cpf_input.setInputMask(QCoreApplication.translate("Form", u"999.999.999-99", None))
-        self.cpf_input.setPlaceholderText("")
-        self.groupBox_3.setTitle(QCoreApplication.translate("Form", u"Nascimento", None))
-        self.birth_date_input.setInputMask(QCoreApplication.translate("Form", u"99/99/9999", None))
+        self.groupBox.setTitle(QCoreApplication.translate("Form", u"CNPJ", None))
+        self.cnpj_input.setInputMask(QCoreApplication.translate("Form", u"99.999.999/9999-99", None))
+        self.cnpj_input.setPlaceholderText("")
         self.groupBox_2.setTitle(QCoreApplication.translate("Form", u"Telefone", None))
         self.phone_number_input.setInputMask(QCoreApplication.translate("Form", u"(99)99999-9999", None))
         self.phone_number_input.setPlaceholderText(QCoreApplication.translate("Form", u"Telefone", None))

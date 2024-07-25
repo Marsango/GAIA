@@ -42,7 +42,10 @@ class Database:
         FOREIGN KEY(fk_city_id) REFERENCES city(city_id) ON DELETE CASCADE,
         FOREIGN KEY(fk_street_id) REFERENCES street(street_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS person(
-        name varchar(255), birth_date date, fk_requester_id integer,
+        name varchar(255), birth_date date, cpf varchar(15), fk_requester_id integer,
+        FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
+        self.__cur.execute("""CREATE TABLE IF NOT EXISTS company(
+        company_name varchar(255), cnpj varchar(20), fk_requester_id integer,
         FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__con.commit()
 
@@ -51,8 +54,17 @@ class Database:
         requester_id = self.insert_requester(person, address_id)
         person_dict = to_dict(person)
         person_dict['requester_id'] = requester_id
-        self.__cur.execute("""INSERT INTO person(name, birth_date, fk_requester_id)
-        VALUES(:name, :birth_date, :requester_id)""", person_dict)
+        self.__cur.execute("""INSERT INTO person(name, birth_date, cpf, fk_requester_id)
+        VALUES(:name, :birth_date, :cpf, :requester_id)""", person_dict)
+        self.__con.commit()
+
+    def insert_company(self, company: Company, address: Address) -> None:
+        address_id = self.insert_address(address)
+        requester_id = self.insert_requester(company, address_id)
+        company_dict = to_dict(company)
+        company_dict['requester_id'] = requester_id
+        self.__cur.execute("""INSERT INTO company(company_name, cnpj, fk_requester_id)
+        VALUES(:company_name, :cnpj, :requester_id)""", company_dict)
         self.__con.commit()
 
     def insert_requester(self, requester: Person | Company, address_id: int) -> int:
