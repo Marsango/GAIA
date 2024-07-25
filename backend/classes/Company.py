@@ -1,7 +1,7 @@
-from Requester import Requester
+from .Requester import Requester
 from typing import get_type_hints
-from utils import verify_type
-from Address import Address
+from .utils import verify_type
+from .Address import Address
 
 
 class Company(Requester):
@@ -11,3 +11,4 @@ class Company(Requester):
         self.__company_name: str = company_name
         self.__cpf: str = cnpj
         Requester.__init__(self, phone_number, email, address)
+

@@ -18,3 +18,9 @@ def verify_type(type_hints: dict[str, Any], function_parameters: dict[str, Any])
                 raise ValueError(f'String is empty')
 
 
+def to_dict(_object: Any) -> dict[str, Any]:
+    aux_dict: dict[str, Any] = {}
+    _object = _object.__dict__
+    for key in _object:
+        aux_dict[key.split('__')[1]] = _object[key]
+    return aux_dict

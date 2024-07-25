@@ -1,8 +1,8 @@
-from Requester import Requester
+from .Requester import Requester
 from datetime import date
-from typing import get_type_hints
-from utils import verify_type
-from Address import Address
+from typing import get_type_hints, Any
+from .utils import verify_type
+from .Address import Address
 
 
 class Person(Requester):

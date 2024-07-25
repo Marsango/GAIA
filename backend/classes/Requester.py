@@ -1,6 +1,6 @@
-from utils import verify_type
+from .utils import verify_type
 from typing import get_type_hints
-from Address import Address
+from .Address import Address
 
 
 class Requester:
