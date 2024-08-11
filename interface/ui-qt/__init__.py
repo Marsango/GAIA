@@ -1,5 +1,5 @@
 import sys
-
+from backend.classes.utils import handle_exception
 from PySide6.QtSvgWidgets import *
 from PySide6.QtWidgets import (QApplication, QMainWindow, QDialog)
 from datetime import datetime
@@ -10,6 +10,22 @@ from backend.classes.Company import Company
 from main_window import Ui_MainWindow
 from register_person import RegisterPersonDialog
 from register_company import RegisterCompanyDialog
+from error_window import ErrorDialog
+from sucessful_register import SucessfulDialog
+
+class SucessfulRegister(QDialog, SucessfulDialog):
+    def __init__(self) -> None:
+        super(SucessfulRegister, self).__init__()
+        self.setupUi(self)
+        self.pushButton.clicked.connect(self.close)
+
+class ErrorWindow(QDialog, ErrorDialog):
+    def __init__(self, error) -> None:
+        super(ErrorWindow, self).__init__()
+        self.setupUi(self)
+        self.setWindowTitle('Erro!')
+        self.label_2.setText(error)
+        self.pushButton.clicked.connect(self.close)
 
 
 class RegisterPerson(QDialog, RegisterPersonDialog):
@@ -21,14 +37,23 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
 
     def register_action(self) -> None:
         db = Database()
-        address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
-                                   city=self.city_input.text(), street=self.street_input.text(),
-                                   address_number=int(self.address_number_input.text()), cep=self.cep_input.text())
-        person: Person = Person(name=self.name_input.text(), email=self.email_input.text(),
-                                cpf=self.cpf_input.text(),
-                                birth_date=datetime.strptime(self.birth_date_input.text(), '%d/%m/%Y'),
-                                phone_number=self.phone_number_input.text(), address=address)
-        db.insert_person(person, address)
+        try:
+            address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
+                                       city=self.city_input.text(), street=self.street_input.text(),
+                                       address_number=self.address_number_input.text(), cep=self.cep_input.text())
+            person: Person = Person(name=self.name_input.text(), email=self.email_input.text(),
+                                    cpf=self.cpf_input.text().replace('.', '').replace('-', ''),
+                                    birth_date=self.birth_date_input.text(),
+                                    phone_number=self.phone_number_input.text()
+                                    .replace('-', '').replace('(', '').replace(')', ''), address=address)
+            db.insert_person(person, address)
+            widget: SucessfulRegister = SucessfulRegister()
+            widget.exec()
+        except Exception as e:
+            error = handle_exception(e)
+            widget: ErrorWindow = ErrorWindow(error)
+            widget.exec()
+
         db.close_connection()
 
 
@@ -41,13 +66,22 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
 
     def register_action(self) -> None:
         db: Database = Database()
-        address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
-                                   city=self.city_input.text(), street=self.street_input.text(),
-                                   address_number=int(self.address_number_input.text()), cep=self.cep_input.text())
-        company: Company = Company(company_name=self.company_name_input.text(), email=self.email_input.text(),
-                                   cnpj=self.cnpj_input.text(),
-                                   phone_number=self.phone_number_input.text(), address=address)
-        db.insert_company(company, address)
+        try:
+            address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
+                                       city=self.city_input.text(), street=self.street_input.text(),
+                                       address_number=self.address_number_input.text(), cep=self.cep_input.text())
+            company: Company = Company(company_name=self.company_name_input.text(), email=self.email_input.text(),
+                                       cnpj=self.cnpj_input.text().replace('.', '').replace('/', '').replace('-', ''),
+                                       phone_number=self.phone_number_input.text()
+                                       .replace('(', '').replace(')', '').replace('-', ''), address=address)
+            db.insert_company(company, address)
+            widget: SucessfulRegister = SucessfulRegister()
+            widget.exec()
+        except Exception as e:
+            error = handle_exception(e)
+            widget: ErrorWindow = ErrorWindow(error)
+            widget.exec()
+
         db.close_connection()
 
 
@@ -69,6 +103,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def register_company_window(self) -> None:
         widget: RegisterCompany = RegisterCompany()
         widget.exec()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
