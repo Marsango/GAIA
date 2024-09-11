@@ -1,7 +1,8 @@
 import sys
 from backend.classes.utils import handle_exception
 from PySide6.QtSvgWidgets import *
-from PySide6.QtWidgets import (QApplication, QMainWindow, QDialog)
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QApplication, QMainWindow, QDialog, QCompleter)
 from datetime import datetime
 from backend.classes.Address import Address
 from backend.classes.Person import Person
@@ -34,9 +35,43 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         self.setupUi(self)
         self.setWindowTitle('Registro de Pessoa Física')
         self.register_button.clicked.connect(self.register_action)
+        self.create_country_completer()
+        self.country_input.editingFinished.connect(self.country_changed)
+        self.state_input.editingFinished.connect(self.state_changed)
+        self.city_input.editingFinished.connect(self.city_changed)
+
+
+    def create_country_completer(self) -> None:
+        db: Database = Database()
+        completer: QCompleter = QCompleter(db.get_countries(), self)
+        db.close_connection()
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.country_input.setCompleter(completer)
+
+    def country_changed(self) -> None:
+        db: Database = Database()
+        completer: QCompleter = QCompleter(db.get_states(self.country_input.text()), self)
+        db.close_connection()
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.state_input.setCompleter(completer)
+
+    def state_changed(self) -> None:
+        db: Database = Database()
+        completer: QCompleter = QCompleter(db.get_cities(self.state_input.text()), self)
+        db.close_connection()
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.city_input.setCompleter(completer)
+
+    def city_changed(self) -> None:
+        db: Database = Database()
+        completer: QCompleter = QCompleter(db.get_streets(self.city_input.text()), self)
+        db.close_connection()
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.street_input.setCompleter(completer)
+
 
     def register_action(self) -> None:
-        db = Database()
+        db: Database = Database()
         try:
             address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
                                        city=self.city_input.text(), street=self.street_input.text(),

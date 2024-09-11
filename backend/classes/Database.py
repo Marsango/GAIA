@@ -24,15 +24,15 @@ class Database:
         requester_id integer primary key, phone_number varchar(15), email varchar(255), fk_address_id integer,
         FOREIGN KEY(fk_address_id) REFERENCES address(address_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS country(
-        country_id integer primary key, country_name varchar(255))""")
+        country_id integer primary key, country_name varchar(255) UNIQUE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS state(
-                state_id integer primary key, state_name varchar(255), fk_country_id integer,
+                state_id integer primary key, state_name varchar(255) UNIQUE, fk_country_id integer,
                  FOREIGN KEY(fk_country_id) REFERENCES country(country_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS city(
-                city_id integer primary key, city_name varchar(255), fk_state_id integer,
+                city_id integer primary key, city_name varchar(255) UNIQUE, fk_state_id integer,
                 FOREIGN KEY(fk_state_id) REFERENCES state(state_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS street(
-                street_id integer primary key, street_name varchar(255), fk_city_id integer,
+                street_id integer primary key, street_name varchar(255) UNIQUE, fk_city_id integer,
                 FOREIGN KEY(fk_city_id) REFERENCES city(city_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS address(
         cep varchar(10), address_id integer primary key, fk_country_id integer, fk_state_id integer, fk_city_id integer,
@@ -42,10 +42,10 @@ class Database:
         FOREIGN KEY(fk_city_id) REFERENCES city(city_id) ON DELETE CASCADE,
         FOREIGN KEY(fk_street_id) REFERENCES street(street_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS person(
-        name varchar(255), birth_date date, cpf varchar(15), fk_requester_id integer,
+        name varchar(255), birth_date date, cpf varchar(15) UNIQUE, fk_requester_id integer,
         FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS company(
-        company_name varchar(255), cnpj varchar(20), fk_requester_id integer,
+        company_name varchar(255), cnpj varchar(20) UNIQUE, fk_requester_id integer,
         FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__con.commit()
 
@@ -83,7 +83,7 @@ class Database:
             if attribute == 'cep' or attribute == 'address_number':
                 continue
             address[attribute] = self.insert_address_components(attribute, address[attribute],
-                                                                  previous_attribute, previous_attribute_id)
+                                                                previous_attribute, previous_attribute_id)
             previous_attribute = attribute
             previous_attribute_id: int = address[attribute]
         self.__cur.execute("""INSERT INTO address(cep, address_number, fk_country_id,
@@ -92,16 +92,46 @@ class Database:
         self.__con.commit()
         return self.__cur.lastrowid
 
+    def get_countries(self) -> list[str]:
+        self.__cur.execute("""SELECT country_name from country""")
+        return [row['country_name'] for row in self.__cur.fetchall()]
+
+    def get_states(self, country: str) -> list[str]:
+        self.__cur.execute("""
+                    SELECT s.state_name
+                    FROM state s
+                    INNER JOIN country c ON s.fk_country_id = c.country_id
+                    WHERE c.country_name = ?
+                        """, (country,))
+        return [row['state_name'] for row in self.__cur.fetchall()]
+
+    def get_cities(self, state: str) -> list[str]:
+        self.__cur.execute("""
+                    SELECT c.city_name
+                    FROM city c
+                    INNER JOIN state s ON s.state_id = c.fk_state_id
+                    WHERE s.state_name = ?
+                        """, (state,))
+        return [row['city_name'] for row in self.__cur.fetchall()]
+
+    def get_streets(self, city: str) -> list[str]:
+        self.__cur.execute("""
+                    SELECT street_name
+                    FROM street
+                    INNER JOIN city c ON c.city_id = street.fk_city_id
+                    WHERE c.city_name = ?
+                        """, (city,))
+        return [row['street_name'] for row in self.__cur.fetchall()]
 
     def insert_address_components(self, table: str, row_name: str,
                                   previous_attribute: str, previous_attribute_id: int) -> int:
         self.__cur.execute(f"""SELECT {table}_id FROM {table}
-        WHERE lower({table}_name) = lower(?)""", (row_name, ))
+        WHERE lower({table}_name) = lower(?)""", (row_name,))
         matches: list[sqlite3.Row] = self.__cur.fetchall()
         if not matches:
             if previous_attribute == '':
                 self.__cur.execute(f"""INSERT INTO {table}({table}_name)
-                VALUES(?)""", (row_name, ))
+                VALUES(?)""", (row_name,))
                 return self.__cur.lastrowid
             self.__cur.execute(f"""INSERT INTO {table}({table}_name, fk_{previous_attribute}_id)
             VALUES(?, ?)""", (row_name, previous_attribute_id))
@@ -113,17 +143,9 @@ class Database:
         self.__cur.close()
         self.__con.close()
 
-    def select_person(self):
+    def get_persons(self):
         self.__cur.execute("""SELECT * FROM person""")
         return self.__cur.fetchall()
 
-if __name__ == '__main__':
-    db = Database()
-    address = Address('oi', 'oi', 'oi', 'oi', 'oi', 12)
-    person = Person('99999999', 'oiiiiiii', 'oiii', datetime(2024, 10,
-                                                             12).date(),
-                    'oi', address)
-    db.insert_person(person, address)
-    print(len(db.select_person()))
-    db.close_connection()
+
 
