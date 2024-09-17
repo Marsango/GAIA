@@ -18,7 +18,7 @@ class Person(Requester):
 
     def verify_valid_date(self, birth_date: str) -> None:
         try:
-            self.__birth_date: date = datetime.strptime(birth_date, '%d/%m/%Y')
+            self.__birth_date: date = datetime.strptime(birth_date, '%d/%m/%Y').date()
         except:
             raise ValueError("Error with values of 'birth_date'")
 

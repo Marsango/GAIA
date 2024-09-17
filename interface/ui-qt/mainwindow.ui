@@ -54,10 +54,7 @@
        <string notr="true">color: rgb(70, 0, 0);</string>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Shadow::Raised</enum>
+       <enum>QFrame::NoFrame</enum>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="spacing">
@@ -90,7 +87,7 @@
           <bool>false</bool>
          </property>
          <property name="textInteractionFlags">
-          <set>Qt::TextInteractionFlag::LinksAccessibleByMouse</set>
+          <set>Qt::NoTextInteraction</set>
          </property>
         </widget>
        </item>
@@ -105,21 +102,14 @@
      <x>0</x>
      <y>0</y>
      <width>1958</width>
-     <height>33</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCadastro">
     <property name="title">
      <string>Cadastro</string>
     </property>
-    <widget class="QMenu" name="menuSolicitante">
-     <property name="title">
-      <string>Solicitante</string>
-     </property>
-     <addaction name="actionPessoa_F_sica"/>
-     <addaction name="actionPessoa_Jur_dica"/>
-    </widget>
-    <addaction name="menuSolicitante"/>
+    <addaction name="actionSolicitantes"/>
     <addaction name="actionPropriedade"/>
     <addaction name="actionAmostra"/>
    </widget>
@@ -179,6 +169,11 @@
   <action name="actionPessoa_Jur_dica">
    <property name="text">
     <string>Pessoa Jurídica</string>
+   </property>
+  </action>
+  <action name="actionSolicitantes">
+   <property name="text">
+    <string>Solicitantes</string>
    </property>
   </action>
  </widget>

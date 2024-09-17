@@ -93,7 +93,7 @@ class Database:
         return self.__cur.lastrowid
 
     def get_countries(self) -> list[str]:
-        self.__cur.execute("""SELECT country_name from country""")
+        self.__cur.execute("""SELECT country_name, country_id from country""")
         return [row['country_name'] for row in self.__cur.fetchall()]
 
     def get_states(self, country: str) -> list[str]:
@@ -144,8 +144,64 @@ class Database:
         self.__con.close()
 
     def get_persons(self):
-        self.__cur.execute("""SELECT * FROM person""")
+        self.__cur.execute("""SELECT 
+            p.name AS person_name,
+            p.birth_date AS person_birth_date,
+            p.cpf AS person_cpf,
+            r.requester_id,
+            r.phone_number AS requester_phone,
+            r.email AS requester_email,
+            a.cep AS address_cep,
+            a.address_number,
+            s.street_name,
+            c.city_name,
+            st.state_name,
+            co.country_name
+            FROM 
+            person p
+            INNER JOIN 
+            requester r ON p.fk_requester_id = r.requester_id
+            INNER JOIN 
+            address a ON r.fk_address_id = a.address_id
+            INNER JOIN 
+            street s ON a.fk_street_id = s.street_id
+            INNER JOIN 
+            city c ON a.fk_city_id = c.city_id
+            INNER JOIN 
+            state st ON a.fk_state_id = st.state_id
+            INNER JOIN 
+            country co ON a.fk_country_id = co.country_id;""")
         return self.__cur.fetchall()
 
+    def get_companies(self):
+        self.__cur.execute("""SELECT 
+            cn.company_name,
+            cn.cnpj,
+            r.requester_id,
+            r.phone_number AS requester_phone,
+            r.email AS requester_email,
+            a.cep AS address_cep,
+            a.address_number,
+            s.street_name,
+            c.city_name,
+            st.state_name,
+            co.country_name
+            FROM 
+            company cn
+            INNER JOIN 
+            requester r ON cn.fk_requester_id = r.requester_id
+            INNER JOIN 
+            address a ON r.fk_address_id = a.address_id
+            INNER JOIN 
+            street s ON a.fk_street_id = s.street_id
+            INNER JOIN 
+            city c ON a.fk_city_id = c.city_id
+            INNER JOIN 
+            state st ON a.fk_state_id = st.state_id
+            INNER JOIN 
+            country co ON a.fk_country_id = co.country_id;""")
+        return self.__cur.fetchall()
 
-
+if __name__ == '__main__':
+    db = Database()
+    print(len(db.get_persons()))
