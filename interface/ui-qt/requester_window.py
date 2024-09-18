@@ -23,14 +23,21 @@ class RequesterDialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(643, 441)
-        Dialog.setMinimumSize(QSize(643, 441))
-        Dialog.setMaximumSize(QSize(643, 441))
+        Dialog.resize(750, 441)
+        Dialog.setMinimumSize(QSize(750, 441))
+        Dialog.setMaximumSize(QSize(750, 441))
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.frame_2 = QFrame(Dialog)
+        self.frame = QFrame(Dialog)
+        self.frame.setObjectName(u"frame")
+        self.frame.setMinimumSize(QSize(712, 0))
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_2 = QVBoxLayout(self.frame)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.frame_2 = QFrame(self.frame)
         self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setMinimumSize(QSize(625, 46))
+        self.frame_2.setMinimumSize(QSize(720, 46))
         self.frame_2.setMaximumSize(QSize(625, 30))
         self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
@@ -64,17 +71,11 @@ class RequesterDialog(object):
         self.horizontalLayout.addWidget(self.delete_2)
 
 
-        self.verticalLayout.addWidget(self.frame_2)
+        self.verticalLayout_2.addWidget(self.frame_2)
 
-        self.frame = QFrame(Dialog)
-        self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.verticalLayout_2 = QVBoxLayout(self.frame)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.requester_table = QTableWidget(self.frame)
-        if (self.requester_table.columnCount() < 6):
-            self.requester_table.setColumnCount(6)
+        if (self.requester_table.columnCount() < 7):
+            self.requester_table.setColumnCount(7)
         __qtablewidgetitem = QTableWidgetItem()
         self.requester_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
@@ -87,6 +88,8 @@ class RequesterDialog(object):
         self.requester_table.setHorizontalHeaderItem(4, __qtablewidgetitem4)
         __qtablewidgetitem5 = QTableWidgetItem()
         self.requester_table.setHorizontalHeaderItem(5, __qtablewidgetitem5)
+        __qtablewidgetitem6 = QTableWidgetItem()
+        self.requester_table.setHorizontalHeaderItem(6, __qtablewidgetitem6)
         self.requester_table.setObjectName(u"requester_table")
 
         self.verticalLayout_2.addWidget(self.requester_table)
@@ -109,16 +112,18 @@ class RequesterDialog(object):
         self.edit.setText(QCoreApplication.translate("Dialog", u"Editar", None))
         self.delete_2.setText(QCoreApplication.translate("Dialog", u"Excluir", None))
         ___qtablewidgetitem = self.requester_table.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"Nome", None));
+        ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"id", None));
         ___qtablewidgetitem1 = self.requester_table.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"Nascimento", None));
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"Nome", None));
         ___qtablewidgetitem2 = self.requester_table.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"CPF", None));
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"Nascimento", None));
         ___qtablewidgetitem3 = self.requester_table.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"Telefone", None));
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"CPF", None));
         ___qtablewidgetitem4 = self.requester_table.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("Dialog", u"E-mail", None));
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("Dialog", u"Telefone", None));
         ___qtablewidgetitem5 = self.requester_table.horizontalHeaderItem(5)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("Dialog", u"Endere\u00e7o", None));
+        ___qtablewidgetitem5.setText(QCoreApplication.translate("Dialog", u"E-mail", None));
+        ___qtablewidgetitem6 = self.requester_table.horizontalHeaderItem(6)
+        ___qtablewidgetitem6.setText(QCoreApplication.translate("Dialog", u"Endere\u00e7o", None));
     # retranslateUi
 

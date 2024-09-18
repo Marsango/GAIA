@@ -36,32 +36,62 @@ class Database:
                 FOREIGN KEY(fk_city_id) REFERENCES city(city_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS address(
         cep varchar(10), address_id integer primary key, fk_country_id integer, fk_state_id integer, fk_city_id integer,
-        fk_street_id integer, address_number integer,
+        fk_street_id integer, address_number varchar(10),
         FOREIGN KEY(fk_country_id) REFERENCES country(country_id) ON DELETE CASCADE,
         FOREIGN KEY(fk_state_id) REFERENCES state(state_id) ON DELETE CASCADE,
         FOREIGN KEY(fk_city_id) REFERENCES city(city_id) ON DELETE CASCADE,
         FOREIGN KEY(fk_street_id) REFERENCES street(street_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS person(
+        id INTEGER PRIMARY KEY,
         name varchar(255), birth_date date, cpf varchar(15) UNIQUE, fk_requester_id integer,
         FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS company(
+        id INTEGER PRIMARY KEY,
         company_name varchar(255), cnpj varchar(20) UNIQUE, fk_requester_id integer,
         FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__con.commit()
 
     def insert_person(self, person: Person, address: Address) -> None:
-        address_id = self.insert_address(address)
-        requester_id = self.insert_requester(person, address_id)
-        person_dict = to_dict(person)
+        address_id: int = self.insert_address(address)
+        requester_id: int = self.insert_requester(person, address_id)
+        person_dict: dict[str, Any] = to_dict(person)
         person_dict['requester_id'] = requester_id
         self.__cur.execute("""INSERT INTO person(name, birth_date, cpf, fk_requester_id)
         VALUES(:name, :birth_date, :cpf, :requester_id)""", person_dict)
         self.__con.commit()
 
+    def edit_person(self, person: Person, address: Address, id: int) -> None:
+        person_dict: dict[str, Any] = to_dict(person)
+        person_dict['id'] = id
+        self.edit_address(address, id)
+        self.__cur.execute("""
+            UPDATE person
+            SET name = :name, birth_date = :birth_date, cpf = :cpf
+            WHERE id = :id
+        """, person_dict)
+        self.__con.commit()
+
+    def edit_address(self, address: Address, id: int):
+        person: sqlite3.Row = self.get_persons(id=id)[0]
+        address_dict: dict[str, str] = to_dict(address)
+        is_equal: bool = True
+        for key in address_dict.keys():
+            if address_dict[key] != person[key]:
+                is_equal = False
+        if is_equal is True:
+            return
+        new_address_id: int = self.insert_address(address)
+        self.__cur.execute("UPDATE requester "
+                           "SET fk_address_id = :new_address_id "
+                           "WHERE requester_id = :requester_id", {"new_address_id": new_address_id, "requester_id": person["requester_id"]})
+        self.__cur.execute("DELETE from address "
+                           "WHERE address_id = :id", {"id": person["address_id"]})
+        self.__con.commit()
+
     def insert_company(self, company: Company, address: Address) -> None:
-        address_id = self.insert_address(address)
-        requester_id = self.insert_requester(company, address_id)
-        company_dict = to_dict(company)
+        address_id: int = self.insert_address(address)
+        requester_id: int = self.insert_requester(company, address_id)
+        company_dict: dict[str, Any] = to_dict(company)
         company_dict['requester_id'] = requester_id
         self.__cur.execute("""INSERT INTO company(company_name, cnpj, fk_requester_id)
         VALUES(:company_name, :cnpj, :requester_id)""", company_dict)
@@ -143,20 +173,22 @@ class Database:
         self.__cur.close()
         self.__con.close()
 
-    def get_persons(self):
-        self.__cur.execute("""SELECT 
-            p.name AS person_name,
-            p.birth_date AS person_birth_date,
-            p.cpf AS person_cpf,
+    def get_persons(self, **kwargs):
+        query = """SELECT
+            p.id AS id, 
+            p.name,
+            p.birth_date,
+            p.cpf,
             r.requester_id,
-            r.phone_number AS requester_phone,
-            r.email AS requester_email,
-            a.cep AS address_cep,
+            r.phone_number,
+            r.email,
+            a.cep,
             a.address_number,
-            s.street_name,
-            c.city_name,
-            st.state_name,
-            co.country_name
+            a.address_id,
+            s.street_name as street,
+            c.city_name as city,
+            st.state_name as state,
+            co.country_name as country
             FROM 
             person p
             INNER JOIN 
@@ -170,22 +202,28 @@ class Database:
             INNER JOIN 
             state st ON a.fk_state_id = st.state_id
             INNER JOIN 
-            country co ON a.fk_country_id = co.country_id;""")
+            country co ON a.fk_country_id = co.country_id"""
+        id = kwargs.get("id")
+        if id:
+            query += f" WHERE id = :id"
+        self.__cur.execute(query, {"id": id})
         return self.__cur.fetchall()
 
     def get_companies(self):
         self.__cur.execute("""SELECT 
+            cn.id AS id
             cn.company_name,
             cn.cnpj,
             r.requester_id,
-            r.phone_number AS requester_phone,
-            r.email AS requester_email,
-            a.cep AS address_cep,
+            r.phone_number,
+            r.email,
+            a.cep,
             a.address_number,
-            s.street_name,
-            c.city_name,
-            st.state_name,
-            co.country_name
+            a.address_id,
+            s.street_name as street,
+            c.city_name as city,
+            st.state_name as state,
+            co.country_name as country
             FROM 
             company cn
             INNER JOIN 
@@ -204,4 +242,4 @@ class Database:
 
 if __name__ == '__main__':
     db = Database()
-    print(len(db.get_persons()))
+    print(db.get_persons(id=1)[0]['address_id'])
