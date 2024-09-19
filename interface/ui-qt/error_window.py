@@ -46,7 +46,7 @@ class ErrorDialog(object):
         self.label.setObjectName(u"label")
         self.label.setMinimumSize(QSize(50, 50))
         self.label.setMaximumSize(QSize(50, 50))
-        self.label.setPixmap(QPixmap(u"../../../../Downloads/error-icon-4 (2).png"))
+        self.label.setPixmap(QPixmap(u"images/error-icon-4 (2).png"))
 
         self.horizontalLayout_2.addWidget(self.label)
 

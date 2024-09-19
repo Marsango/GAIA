@@ -16,14 +16,16 @@ from requester_window import RequesterDialog
 from error_window import ErrorDialog
 from sucessful_register import SucessfulDialog
 
+
 class SucessfulRegister(QDialog, SucessfulDialog):
     def __init__(self, **kwargs) -> None:
         super(SucessfulRegister, self).__init__()
         self.setupUi(self)
         message: str = kwargs.get('sucess_message')
         if message:
-            self.label.setText(message)
+            self.label.setText(f"<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">{message}</span></p></body></html>")
         self.pushButton.clicked.connect(self.close)
+
 
 class ErrorWindow(QDialog, ErrorDialog):
     def __init__(self, error) -> None:
@@ -58,8 +60,6 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         self.email_input.insert(person_data['email'])
         self.cpf_input.insert(person_data['cpf'])
         self.birth_date_input.insert(person_data['birth_date'])
-        print(person_data['birth_date'])
-        print(type(person_data['birth_date']))
         self.phone_number_input.insert(person_data['phone_number'])
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de Pessoa Física')
@@ -98,29 +98,31 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
 
     def register_action(self) -> None:
         db: Database = Database()
+        try:
 
-        address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
-                                   city=self.city_input.text(), street=self.street_input.text(),
-                                   address_number=self.address_number_input.text(), cep=self.cep_input.text())
-        person: Person = Person(name=self.name_input.text(), email=self.email_input.text(),
-                                cpf=self.cpf_input.text().replace('.', '').replace('-', ''),
-                                birth_date=self.birth_date_input.text(),
-                                phone_number=self.phone_number_input.text()
-                                .replace('-', '').replace('(', '').replace(')', ''), address=address)
-        if self.mode == 'register':
-            db.insert_person(person, address)
-            sucess_text: str = "Solicitante registrado com sucesso!"
-        elif self.mode == 'edit':
-            db.edit_person(person, address, self.current_person_id)
-            sucess_text: str = "Alterações salvas com sucesso!"
-        widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
-        widget.exec()
-    # except Exception as e:
-    #     error = handle_exception(e)
-    #     print(e)
-    #     print(e.__traceback__)
-    #     widget: ErrorWindow = ErrorWindow(error)
-    #     widget.exec()
+
+            address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
+                                       city=self.city_input.text(), street=self.street_input.text(),
+                                       address_number=self.address_number_input.text(), cep=self.cep_input.text())
+            person: Person = Person(name=self.name_input.text(), email=self.email_input.text(),
+                                    cpf=self.cpf_input.text().replace('.', '').replace('-', ''),
+                                    birth_date=self.birth_date_input.text(),
+                                    phone_number=self.phone_number_input.text()
+                                    .replace('-', '').replace('(', '').replace(')', ''), address=address)
+            if self.mode == 'register':
+                db.insert_person(person, address)
+                sucess_text: str = "Solicitante registrado com sucesso!"
+            elif self.mode == 'edit':
+                db.edit_person(person, address, self.current_person_id)
+                sucess_text: str = "Alterações salvas com sucesso!"
+            widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
+            widget.exec()
+        except Exception as e:
+            error = handle_exception(e)
+            print(e)
+            print(e.__traceback__)
+            widget: ErrorWindow = ErrorWindow(error)
+            widget.exec()
 
         db.close_connection()
 
@@ -137,7 +139,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         self.country_input.editingFinished.connect(self.country_changed)
         self.state_input.editingFinished.connect(self.state_changed)
         self.city_input.editingFinished.connect(self.city_changed)
-
+        self.mode = 'register'
 
     def create_country_completer(self) -> None:
         db: Database = Database()
@@ -172,24 +174,44 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
 
     def register_action(self) -> None:
         db: Database = Database()
-        try:
-            address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
-                                       city=self.city_input.text(), street=self.street_input.text(),
-                                       address_number=self.address_number_input.text(), cep=self.cep_input.text())
-            company: Company = Company(company_name=self.company_name_input.text(), email=self.email_input.text(),
-                                       cnpj=self.cnpj_input.text().replace('.', '').replace('/', '').replace('-', ''),
-                                       phone_number=self.phone_number_input.text()
-                                       .replace('(', '').replace(')', '').replace('-', ''), address=address)
+        # try:
+        address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
+                                   city=self.city_input.text(), street=self.street_input.text(),
+                                   address_number=self.address_number_input.text(), cep=self.cep_input.text())
+        company: Company = Company(company_name=self.company_name_input.text(), email=self.email_input.text(),
+                                   cnpj=self.cnpj_input.text().replace('.', '').replace('/', '').replace('-', ''),
+                                   phone_number=self.phone_number_input.text()
+                                   .replace('(', '').replace(')', '').replace('-', ''), address=address)
+        if self.mode == 'register':
             db.insert_company(company, address)
-            widget: SucessfulRegister = SucessfulRegister()
-            widget.exec()
-        except Exception as e:
-            error = handle_exception(e)
-            widget: ErrorWindow = ErrorWindow(error)
-            widget.exec()
+            sucess_text: str = "Solicitante registrado com sucesso!"
+        elif self.mode == 'edit':
+            db.edit_company(company, address, self.current_company_id)
+            sucess_text: str = "Alterações salvas com sucesso!"
+        widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
+        widget.exec()
+        # except Exception as e:
+        #     error = handle_exception(e)
+        #     widget: ErrorWindow = ErrorWindow(error)
+        #     widget.exec()
 
         db.close_connection()
 
+    def edit_mode(self, company_data) -> None:
+        self.country_input.insert(company_data['country'])
+        self.state_input.insert(company_data['state'])
+        self.city_input.insert(company_data['city'])
+        self.street_input.insert(company_data['street'])
+        self.address_number_input.insert(str(company_data['address_number']))
+        self.cep_input.insert(company_data['cep'])
+        self.company_name_input.insert(company_data['company_name'])
+        self.email_input.insert(company_data['email'])
+        self.cnpj_input.insert(company_data['cnpj'])
+        self.phone_number_input.insert(company_data['phone_number'])
+        self.register_button.setText("Salvar alterações")
+        self.setWindowTitle('Edição de registro de Pessoa Física')
+        self.mode = 'edit'
+        self.current_company_id = int(company_data['id'])
 
 class RequesterWindow(QDialog, RequesterDialog):
     def __init__(self) -> None:
@@ -198,25 +220,27 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.setWindowTitle('Solicitantes registrados')
         self.current_table = 'person'
         self.add.clicked.connect(self.register_person)
-        self.edit.clicked.connect(self.edit_person)
+        self.edit.clicked.connect(self.edit_requester)
+        self.current_table_type = 'person'
         self.requester_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.requester_type.currentTextChanged.connect(self.type_change)
         self.refresh_table()
 
-    def type_change(self):
+    def type_change(self) -> None:
         if self.requester_type.currentText() == 'Pessoa física':
             self.create_person_table()
             self.add.clicked.disconnect(self.register_company)
             self.add.clicked.connect(self.register_person)
-            self.edit.clicked.connect(self.edit_person)
+            self.current_table_type = 'person'
         elif self.requester_type.currentText() == 'Pessoa jurídica':
             self.create_company_table()
             self.add.clicked.disconnect(self.register_person)
             self.add.clicked.connect(self.register_company)
+            self.current_table_type = 'company'
 
 
-    def edit_person(self):
-        dialog: RegisterPerson = RegisterPerson()
+    def edit_requester(self) -> None:
+        dialog: RegisterPerson | RegisterCompany = RegisterPerson() if self.current_table_type == 'person' else RegisterCompany()
         selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
         if len(selected_items) == 0:
             widget: ErrorWindow = ErrorWindow("Você deve selecionar um solicitante para editar.")
@@ -230,12 +254,13 @@ class RequesterWindow(QDialog, RequesterDialog):
         row: int = selected_items[0].row()
         id: str = self.requester_table.item(row, 0).text()
         db: Database = Database()
-        person: sqlite3.Row = db.get_persons(id=id)[0]
-        dialog.edit_mode(person)
+        requester: sqlite3.Row = db.get_persons(id=id)[0] if self.current_table_type == 'person' else db.get_companies(id=id)[0]
+        db.close_connection()
+        dialog.edit_mode(requester)
         dialog.exec()
         self.refresh_table()
 
-    def create_person_table(self):
+    def create_person_table(self) -> None:
         if self.current_table == 'company':
             self.requester_table.setRowCount(0)
             self.requester_table.setColumnCount(7)
@@ -247,7 +272,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             self.current_table = 'person'
             self.refresh_table()
 
-    def create_company_table(self):
+    def create_company_table(self) -> None:
         if self.current_table == 'person':
             self.requester_table.setRowCount(0)
             self.requester_table.setColumnCount(6)
@@ -258,7 +283,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             self.current_table = 'company'
             self.refresh_table()
 
-    def refresh_table(self):
+    def refresh_table(self) -> None:
         db: Database = Database()
         if self.current_table == 'person':
             persons: list[sqlite3.Row] = db.get_persons()
@@ -284,14 +309,14 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.setItem(row_position, 2, QTableWidgetItem(company['cnpj']))
                 self.requester_table.setItem(row_position, 3, QTableWidgetItem(company['phone_number']))
                 self.requester_table.setItem(row_position, 4, QTableWidgetItem(company['email']))
-                self.requester_table.setItem(row_position, 5, QTableWidgetItem(f"{company['street']}, {company['address_number']} - {company['address']}, {company['city']}, {company['state']}, {company['country']}"))
-
-    def register_person(self):
+                self.requester_table.setItem(row_position, 5, QTableWidgetItem(f"{company['street']}, {company['address_number']} - {company['cep']}, {company['city']}, {company['state']}, {company['country']}"))
+        db.close_connection()
+    def register_person(self) -> None:
         dialog: RegisterPerson = RegisterPerson()
         dialog.exec()
         self.refresh_table()
 
-    def register_company(self):
+    def register_company(self) -> None:
         dialog: RegisterCompany = RegisterCompany()
         dialog.exec()
         self.refresh_table()

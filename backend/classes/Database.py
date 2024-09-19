@@ -63,7 +63,7 @@ class Database:
     def edit_person(self, person: Person, address: Address, id: int) -> None:
         person_dict: dict[str, Any] = to_dict(person)
         person_dict['id'] = id
-        self.edit_address(address, id)
+        self.edit_address(address, id, person)
         self.__cur.execute("""
             UPDATE person
             SET name = :name, birth_date = :birth_date, cpf = :cpf
@@ -71,21 +71,32 @@ class Database:
         """, person_dict)
         self.__con.commit()
 
-    def edit_address(self, address: Address, id: int):
-        person: sqlite3.Row = self.get_persons(id=id)[0]
+    def edit_company(self, company: Company, address: Address, id: int) -> None:
+        company_dict: dict[str, Any] = to_dict(company)
+        company_dict['id'] = id
+        self.edit_address(address, id, company)
+        self.__cur.execute("""
+            UPDATE company
+            SET company_name = :company_name, cnpj = :cnpj 
+            WHERE id = :id
+        """, company_dict)
+        self.__con.commit()
+
+    def edit_address(self, address: Address, id: int, requester_type: Person | Company):
+        requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else self.get_companies(id=id)[0]
         address_dict: dict[str, str] = to_dict(address)
         is_equal: bool = True
         for key in address_dict.keys():
-            if address_dict[key] != person[key]:
+            if address_dict[key] != requester[key]:
                 is_equal = False
         if is_equal is True:
             return
         new_address_id: int = self.insert_address(address)
         self.__cur.execute("UPDATE requester "
                            "SET fk_address_id = :new_address_id "
-                           "WHERE requester_id = :requester_id", {"new_address_id": new_address_id, "requester_id": person["requester_id"]})
+                           "WHERE requester_id = :requester_id", {"new_address_id": new_address_id, "requester_id": requester["requester_id"]})
         self.__cur.execute("DELETE from address "
-                           "WHERE address_id = :id", {"id": person["address_id"]})
+                           "WHERE address_id = :id", {"id": requester["address_id"]})
         self.__con.commit()
 
     def insert_company(self, company: Company, address: Address) -> None:
@@ -209,9 +220,9 @@ class Database:
         self.__cur.execute(query, {"id": id})
         return self.__cur.fetchall()
 
-    def get_companies(self):
-        self.__cur.execute("""SELECT 
-            cn.id AS id
+    def get_companies(self, **kwargs):
+        query = """SELECT 
+            cn.id AS id,
             cn.company_name,
             cn.cnpj,
             r.requester_id,
@@ -237,8 +248,13 @@ class Database:
             INNER JOIN 
             state st ON a.fk_state_id = st.state_id
             INNER JOIN 
-            country co ON a.fk_country_id = co.country_id;""")
+            country co ON a.fk_country_id = co.country_id"""
+        id = kwargs.get("id")
+        if id:
+            query += f" WHERE id = :id"
+        self.__cur.execute(query, {"id": id})
         return self.__cur.fetchall()
+
 
 if __name__ == '__main__':
     db = Database()
