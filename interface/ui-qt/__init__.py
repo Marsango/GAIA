@@ -15,7 +15,29 @@ from register_company import RegisterCompanyDialog
 from requester_window import RequesterDialog
 from error_window import ErrorDialog
 from sucessful_register import SucessfulDialog
+from delete_confirmation import DeleteDialog
 
+
+class DeleteConfirmation(QDialog, DeleteDialog):
+    def __init__(self, list_of_ids: list[int], requester_type: str) -> None:
+        super(DeleteConfirmation, self).__init__()  # Initialize QDialog properly
+        self.setupUi(self)
+        self.confirm_button.clicked.connect(self.delete_action)
+        self.cancel_button.clicked.connect(self.close)
+
+        # Store the additional parameters
+        self.list_of_ids = list_of_ids
+        self.requester_type = requester_type
+
+    def delete_action(self) -> None:
+        db: Database = Database()
+        for id in self.list_of_ids:
+            if self.requester_type == 'person':
+                db.delete_person(id)
+            elif self.requester_type == 'company':
+                db.delete_company(id)
+        db.close_connection()
+        self.close()
 
 class SucessfulRegister(QDialog, SucessfulDialog):
     def __init__(self, **kwargs) -> None:
@@ -174,26 +196,26 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
 
     def register_action(self) -> None:
         db: Database = Database()
-        # try:
-        address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
-                                   city=self.city_input.text(), street=self.street_input.text(),
-                                   address_number=self.address_number_input.text(), cep=self.cep_input.text())
-        company: Company = Company(company_name=self.company_name_input.text(), email=self.email_input.text(),
-                                   cnpj=self.cnpj_input.text().replace('.', '').replace('/', '').replace('-', ''),
-                                   phone_number=self.phone_number_input.text()
-                                   .replace('(', '').replace(')', '').replace('-', ''), address=address)
-        if self.mode == 'register':
-            db.insert_company(company, address)
-            sucess_text: str = "Solicitante registrado com sucesso!"
-        elif self.mode == 'edit':
-            db.edit_company(company, address, self.current_company_id)
-            sucess_text: str = "Alterações salvas com sucesso!"
-        widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
-        widget.exec()
-        # except Exception as e:
-        #     error = handle_exception(e)
-        #     widget: ErrorWindow = ErrorWindow(error)
-        #     widget.exec()
+        try:
+            address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
+                                       city=self.city_input.text(), street=self.street_input.text(),
+                                       address_number=self.address_number_input.text(), cep=self.cep_input.text())
+            company: Company = Company(company_name=self.company_name_input.text(), email=self.email_input.text(),
+                                       cnpj=self.cnpj_input.text().replace('.', '').replace('/', '').replace('-', ''),
+                                       phone_number=self.phone_number_input.text()
+                                       .replace('(', '').replace(')', '').replace('-', ''), address=address)
+            if self.mode == 'register':
+                db.insert_company(company, address)
+                sucess_text: str = "Solicitante registrado com sucesso!"
+            elif self.mode == 'edit':
+                db.edit_company(company, address, self.current_company_id)
+                sucess_text: str = "Alterações salvas com sucesso!"
+            widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
+            widget.exec()
+        except Exception as e:
+            error = handle_exception(e)
+            widget: ErrorWindow = ErrorWindow(error)
+            widget.exec()
 
         db.close_connection()
 
@@ -221,10 +243,31 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.current_table = 'person'
         self.add.clicked.connect(self.register_person)
         self.edit.clicked.connect(self.edit_requester)
+        self.delete_2.clicked.connect(self.delete_requester)
         self.current_table_type = 'person'
         self.requester_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.requester_type.currentTextChanged.connect(self.type_change)
         self.refresh_table()
+
+    def delete_requester(self):
+        try:
+            selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
+            if len(selected_items) == 0:
+                widget: ErrorWindow = ErrorWindow("Você deve selecionar um solicitante para deletar.")
+                widget.exec()
+                return
+            selected_requesters: set[int] = {selected_item.row() for selected_item in selected_items}
+            list_of_ids: list[int] = [int(self.requester_table.item(item_row, 0).text()) for item_row in selected_requesters]
+            dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, requester_type=self.current_table_type)
+            dialog.exec()
+            sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Solicitante deletado com sucesso!")
+            sucessful_dialog.exec()
+        except Exception as e:
+            error = handle_exception(e)
+            widget: ErrorWindow = ErrorWindow(error)
+            widget.exec()
+        self.refresh_table()
+
 
     def type_change(self) -> None:
         if self.requester_type.currentText() == 'Pessoa física':

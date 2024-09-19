@@ -82,6 +82,18 @@ class Database:
         """, company_dict)
         self.__con.commit()
 
+    def delete_person(self, id: int) -> None:
+        person_dict: dict[str, Any] = self.get_persons(id=id)[0]
+        self.__cur.execute("""DELETE from address 
+        WHERE address_id = :address_id """, {'address_id': person_dict['address_id']})
+        self.__con.commit()
+
+    def delete_company(self, id: int) -> None:
+        company_dict: dict[str, Any] = self.get_companies(id=id)[0]
+        self.__cur.execute("""DELETE from address 
+        WHERE address_id = :address_id """, {'address_id': company_dict['address_id']})
+        self.__con.commit()
+
     def edit_address(self, address: Address, id: int, requester_type: Person | Company):
         requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else self.get_companies(id=id)[0]
         address_dict: dict[str, str] = to_dict(address)
@@ -258,4 +270,3 @@ class Database:
 
 if __name__ == '__main__':
     db = Database()
-    print(db.get_persons(id=1)[0]['address_id'])
