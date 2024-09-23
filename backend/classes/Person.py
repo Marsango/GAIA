@@ -13,7 +13,8 @@ class Person(Requester):
         verify_type(get_type_hints(Person.__init__), locals())
         self.verify_valid_date(birth_date)
         self.verify_valid_cpf(cpf)
-        self.__name: str = name
+        self.__name: str | None = None
+        self.verify_name(name)
         Requester.__init__(self, phone_number, email, address)
 
     def verify_valid_date(self, birth_date: str) -> None:
@@ -40,3 +41,8 @@ class Person(Requester):
         verify_valid_digit(first_digit_verification, cpf[:9])
         verify_valid_digit(second_digit_verification, cpf[:10])
         self.__cpf: str = cpf
+
+    def verify_name(self, name: str):
+        if any(char.isdigit() for char in name):
+            raise ValueError("Error with values of 'cpf'")
+        self.__name = name

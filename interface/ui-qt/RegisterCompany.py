@@ -57,7 +57,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         try:
             address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
                                        city=self.city_input.text(), street=self.street_input.text(),
-                                       address_number=self.address_number_input.text(), cep=self.cep_input.text())
+                                       address_number=self.address_number_input.text(), cep=self.cep_input.text().replace('-', ''))
             company: Company = Company(company_name=self.company_name_input.text(), email=self.email_input.text(),
                                        cnpj=self.cnpj_input.text().replace('.', '').replace('/', '').replace('-', ''),
                                        phone_number=self.phone_number_input.text()
@@ -70,6 +70,8 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
                 sucess_text: str = "Alterações salvas com sucesso!"
             widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
             widget.exec()
+            if self.mode == 'register':
+                self.clean_input()
         except Exception as e:
             error = handle_exception(e)
             widget: ErrorWindow = ErrorWindow(error)
@@ -92,3 +94,15 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         self.setWindowTitle('Edição de registro de Pessoa Física')
         self.mode = 'edit'
         self.current_company_id = int(company_data['id'])
+
+    def clean_input(self):
+        self.country_input.clear()
+        self.state_input.clear()
+        self.city_input.clear()
+        self.street_input.clear()
+        self.address_number_input.clear()
+        self.cep_input.clear()
+        self.company_name_input.clear()
+        self.email_input.clear()
+        self.cnpj_input.clear()
+        self.phone_number_input.clear()

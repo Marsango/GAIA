@@ -26,13 +26,16 @@ class Database:
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS country(
         country_id integer primary key, country_name varchar(255) UNIQUE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS state(
-                state_id integer primary key, state_name varchar(255) UNIQUE, fk_country_id integer,
+                state_id integer primary key, state_name varchar(255), fk_country_id integer,
+                UNIQUE(state_name, fk_country_id),
                  FOREIGN KEY(fk_country_id) REFERENCES country(country_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS city(
-                city_id integer primary key, city_name varchar(255) UNIQUE, fk_state_id integer,
+                city_id integer primary key, city_name varchar(255), fk_state_id integer,
+                UNIQUE(city_name, fk_state_id),
                 FOREIGN KEY(fk_state_id) REFERENCES state(state_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS street(
-                street_id integer primary key, street_name varchar(255) UNIQUE, fk_city_id integer,
+                street_id integer primary key, street_name varchar(255), fk_city_id integer,
+                UNIQUE(street_name, fk_city_id),
                 FOREIGN KEY(fk_city_id) REFERENCES city(city_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS address(
         cep varchar(10), address_id integer primary key, fk_country_id integer, fk_state_id integer, fk_city_id integer,
@@ -267,6 +270,3 @@ class Database:
         self.__cur.execute(query, {"id": id})
         return self.__cur.fetchall()
 
-
-if __name__ == '__main__':
-    db = Database()

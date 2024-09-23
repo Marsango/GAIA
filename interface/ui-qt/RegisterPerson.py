@@ -74,7 +74,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
 
             address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
                                        city=self.city_input.text(), street=self.street_input.text(),
-                                       address_number=self.address_number_input.text(), cep=self.cep_input.text())
+                                       address_number=self.address_number_input.text(), cep=self.cep_input.text().replace('-', ''))
             person: Person = Person(name=self.name_input.text(), email=self.email_input.text(),
                                     cpf=self.cpf_input.text().replace('.', '').replace('-', ''),
                                     birth_date=self.birth_date_input.text(),
@@ -88,9 +88,24 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
                 sucess_text: str = "Alterações salvas com sucesso!"
             widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
             widget.exec()
+            if self.mode == 'register':
+                self.clean_input()
         except Exception as e:
             error = handle_exception(e)
             widget: ErrorWindow = ErrorWindow(error)
             widget.exec()
 
         db.close_connection()
+
+    def clean_input(self):
+        self.country_input.clear()
+        self.state_input.clear()
+        self.city_input.clear()
+        self.street_input.clear()
+        self.address_number_input.clear()
+        self.cep_input.clear()
+        self.name_input.clear()
+        self.birth_date_input.clear()
+        self.email_input.clear()
+        self.cpf_input.clear()
+        self.phone_number_input.clear()
