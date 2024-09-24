@@ -7,6 +7,7 @@ from backend.classes.utils import handle_exception
 from RegisterCompany import RegisterCompany
 from RegisterPerson import RegisterPerson
 from backend.classes.Database import Database
+from PropertyWindow import PropertyWindow
 import sqlite3
 
 
@@ -23,8 +24,36 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.requester_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.requester_type.currentTextChanged.connect(self.type_change)
         self.refresh_table()
+        self.register_property.clicked.connect(self.register_property_action)
 
-    def delete_requester(self):
+    def register_property_action(self) -> None:
+        selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
+        if len(selected_items) == 0:
+            widget: ErrorWindow = ErrorWindow("Você deve selecionar um solicitante para cadastrar uma propriedade.")
+            widget.exec()
+            return
+        for data in selected_items:
+            if data.row() != selected_items[0].row():
+                widget: ErrorWindow = ErrorWindow("Você só pode adicionar propriedades a um solicitante por vez.")
+                widget.exec()
+                return
+        row: int = selected_items[0].row()
+        id: str = self.requester_table.item(row, 0).text()
+        db: Database = Database()
+        if self.current_table_type == 'person':
+            requester_id: int = db.get_persons(id=id)[0]['requester_id']
+        else:
+            requester_id: int = db.get_companies(id=id)[0]['requester_id']
+        requester: sqlite3.Row = db.get_requesters(requester_id=requester_id)[0]
+        if requester['requester_type'] == 'person':
+            requester_text = f"{requester_id} | {requester['name']} | CPF: {requester['document_number']}"
+        else:
+            requester_text = f"{requester_id} | {requester['name']} | CNPJ: {requester['document_number']}"
+        dialog: PropertyWindow = PropertyWindow(owner=requester_text)
+        dialog.exec()
+        db.close_connection()
+
+    def delete_requester(self) -> None:
         try:
             selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
             if len(selected_items) == 0:

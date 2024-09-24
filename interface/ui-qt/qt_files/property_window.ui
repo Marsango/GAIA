@@ -39,6 +39,28 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
+       <widget class="QFrame" name="frame_3">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Proprietário:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="owner"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
        <widget class="QFrame" name="frame_2">
         <property name="minimumSize">
          <size>
@@ -56,45 +78,6 @@
          <enum>QFrame::NoFrame</enum>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <widget class="QComboBox" name="requester_type">
-           <property name="minimumSize">
-            <size>
-             <width>50</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <item>
-            <property name="text">
-             <string>Pessoa física</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Pessoa jurídica</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="register_property">
-           <property name="maximumSize">
-            <size>
-             <width>125</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Cadastrar propriedade</string>
-           </property>
-          </widget>
-         </item>
          <item>
           <widget class="QPushButton" name="add">
            <property name="maximumSize">
@@ -138,10 +121,18 @@
        </widget>
       </item>
       <item>
-       <widget class="QTableWidget" name="requester_table">
+       <widget class="QTableWidget" name="property_table">
+        <attribute name="horizontalHeaderDefaultSectionSize">
+         <number>142</number>
+        </attribute>
         <column>
          <property name="text">
           <string>id</string>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
          </property>
         </column>
         <column>
@@ -151,27 +142,12 @@
         </column>
         <column>
          <property name="text">
-          <string>Nascimento</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>CPF</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Telefone</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>E-mail</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
           <string>Endereço</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Nº de matrícula</string>
          </property>
         </column>
        </widget>

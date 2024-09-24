@@ -52,6 +52,10 @@ class Database:
         id INTEGER PRIMARY KEY,
         company_name varchar(255), cnpj varchar(20) UNIQUE, fk_requester_id integer,
         FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
+        self.__cur.execute("""CREATE TABLE IF NOT EXISTS property(
+        id INTEGER PRIMARY KEY, property_name varchar(255), location varchar(255), registration_number integer, fk_city_id integer, fk_requester_id integer,
+        FOREIGN KEY (fk_city_id) REFERENCES city(city_id) ON DELETE CASCADE,
+        FOREIGN KEY (fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__con.commit()
 
     def insert_person(self, person: Person, address: Address) -> None:
@@ -199,7 +203,7 @@ class Database:
         self.__cur.close()
         self.__con.close()
 
-    def get_persons(self, **kwargs):
+    def get_persons(self, **kwargs) -> list[sqlite3.Row]:
         query = """SELECT
             p.id AS id, 
             p.name,
@@ -235,7 +239,7 @@ class Database:
         self.__cur.execute(query, {"id": id})
         return self.__cur.fetchall()
 
-    def get_companies(self, **kwargs):
+    def get_companies(self, **kwargs) -> list[sqlite3.Row]:
         query = """SELECT 
             cn.id AS id,
             cn.company_name,
@@ -270,3 +274,47 @@ class Database:
         self.__cur.execute(query, {"id": id})
         return self.__cur.fetchall()
 
+    def get_requesters(self, **kwargs) -> list[sqlite3.Row] | None:
+        self.__cur.execute("""SELECT
+            r.requester_id,
+            r.phone_number,
+            r.email,
+            p.name AS name,
+            p.id AS id,
+            p.cpf as document_number,
+            'person' AS requester_type 
+        FROM 
+            requester r
+        INNER JOIN 
+            person p ON r.requester_id = p.fk_requester_id
+        
+        UNION 
+        
+        SELECT 
+            r.requester_id,
+            r.phone_number,
+            r.email,
+            c.company_name AS name,
+            c.id AS id,
+            c.cnpj AS document_number,
+            'company' AS requester_type
+        FROM 
+            requester r
+        INNER JOIN 
+            company c ON r.requester_id = c.fk_requester_id;
+        """)
+        requester_id: int = kwargs.get('requester_id')
+        rows: list[sqlite3.Row] = self.__cur.fetchall()
+        if requester_id:
+            for row in rows:
+                if requester_id == row['requester_id']:
+                    return [row]
+        return self.__cur.fetchall()
+
+    def get_properties(self, **kwargs):
+        query = """SELECT * FROM property """
+        requester_id = kwargs.get('requester_id')
+        if requester_id:
+            query += "WHERE fk_requester_id = :requester_id"
+        self.__cur.execute(query, {"requester_id": requester_id})
+        return self.__cur.fetchall()

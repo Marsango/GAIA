@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'requester_window.ui'
+## Form generated from reading UI file 'property_window.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -15,11 +15,12 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QFrame,
-    QHBoxLayout, QHeaderView, QPushButton, QSizePolicy,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
+    QHeaderView, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget)
 
-class RequesterDialog(object):
+class PropertyDialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
@@ -34,6 +35,25 @@ class RequesterDialog(object):
         self.frame.setFrameShape(QFrame.NoFrame)
         self.verticalLayout_2 = QVBoxLayout(self.frame)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.frame_3 = QFrame(self.frame)
+        self.frame_3.setObjectName(u"frame_3")
+        self.frame_3.setFrameShape(QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_2 = QHBoxLayout(self.frame_3)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.label = QLabel(self.frame_3)
+        self.label.setObjectName(u"label")
+
+        self.horizontalLayout_2.addWidget(self.label)
+
+        self.owner = QLineEdit(self.frame_3)
+        self.owner.setObjectName(u"owner")
+
+        self.horizontalLayout_2.addWidget(self.owner)
+
+
+        self.verticalLayout_2.addWidget(self.frame_3)
+
         self.frame_2 = QFrame(self.frame)
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setMinimumSize(QSize(720, 46))
@@ -41,21 +61,6 @@ class RequesterDialog(object):
         self.frame_2.setFrameShape(QFrame.NoFrame)
         self.horizontalLayout = QHBoxLayout(self.frame_2)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.requester_type = QComboBox(self.frame_2)
-        self.requester_type.addItem("")
-        self.requester_type.addItem("")
-        self.requester_type.setObjectName(u"requester_type")
-        self.requester_type.setMinimumSize(QSize(50, 0))
-        self.requester_type.setMaximumSize(QSize(100, 16777215))
-
-        self.horizontalLayout.addWidget(self.requester_type)
-
-        self.register_property = QPushButton(self.frame_2)
-        self.register_property.setObjectName(u"register_property")
-        self.register_property.setMaximumSize(QSize(125, 16777215))
-
-        self.horizontalLayout.addWidget(self.register_property)
-
         self.add = QPushButton(self.frame_2)
         self.add.setObjectName(u"add")
         self.add.setMaximumSize(QSize(100, 16777215))
@@ -77,26 +82,24 @@ class RequesterDialog(object):
 
         self.verticalLayout_2.addWidget(self.frame_2)
 
-        self.requester_table = QTableWidget(self.frame)
-        if (self.requester_table.columnCount() < 7):
-            self.requester_table.setColumnCount(7)
+        self.property_table = QTableWidget(self.frame)
+        if (self.property_table.columnCount() < 4):
+            self.property_table.setColumnCount(4)
+        font = QFont()
+        font.setPointSize(8)
         __qtablewidgetitem = QTableWidgetItem()
-        self.requester_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        __qtablewidgetitem.setFont(font);
+        self.property_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
-        self.requester_table.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        self.property_table.setHorizontalHeaderItem(1, __qtablewidgetitem1)
         __qtablewidgetitem2 = QTableWidgetItem()
-        self.requester_table.setHorizontalHeaderItem(2, __qtablewidgetitem2)
+        self.property_table.setHorizontalHeaderItem(2, __qtablewidgetitem2)
         __qtablewidgetitem3 = QTableWidgetItem()
-        self.requester_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
-        __qtablewidgetitem4 = QTableWidgetItem()
-        self.requester_table.setHorizontalHeaderItem(4, __qtablewidgetitem4)
-        __qtablewidgetitem5 = QTableWidgetItem()
-        self.requester_table.setHorizontalHeaderItem(5, __qtablewidgetitem5)
-        __qtablewidgetitem6 = QTableWidgetItem()
-        self.requester_table.setHorizontalHeaderItem(6, __qtablewidgetitem6)
-        self.requester_table.setObjectName(u"requester_table")
+        self.property_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
+        self.property_table.setObjectName(u"property_table")
+        self.property_table.horizontalHeader().setDefaultSectionSize(142)
 
-        self.verticalLayout_2.addWidget(self.requester_table)
+        self.verticalLayout_2.addWidget(self.property_table)
 
 
         self.verticalLayout.addWidget(self.frame)
@@ -109,26 +112,17 @@ class RequesterDialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
-        self.requester_type.setItemText(0, QCoreApplication.translate("Dialog", u"Pessoa f\u00edsica", None))
-        self.requester_type.setItemText(1, QCoreApplication.translate("Dialog", u"Pessoa jur\u00eddica", None))
-
-        self.register_property.setText(QCoreApplication.translate("Dialog", u"Cadastrar propriedade", None))
+        self.label.setText(QCoreApplication.translate("Dialog", u"Propriet\u00e1rio:", None))
         self.add.setText(QCoreApplication.translate("Dialog", u"Adicionar", None))
         self.edit.setText(QCoreApplication.translate("Dialog", u"Editar", None))
         self.delete_2.setText(QCoreApplication.translate("Dialog", u"Excluir", None))
-        ___qtablewidgetitem = self.requester_table.horizontalHeaderItem(0)
+        ___qtablewidgetitem = self.property_table.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"id", None));
-        ___qtablewidgetitem1 = self.requester_table.horizontalHeaderItem(1)
+        ___qtablewidgetitem1 = self.property_table.horizontalHeaderItem(1)
         ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"Nome", None));
-        ___qtablewidgetitem2 = self.requester_table.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"Nascimento", None));
-        ___qtablewidgetitem3 = self.requester_table.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"CPF", None));
-        ___qtablewidgetitem4 = self.requester_table.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("Dialog", u"Telefone", None));
-        ___qtablewidgetitem5 = self.requester_table.horizontalHeaderItem(5)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("Dialog", u"E-mail", None));
-        ___qtablewidgetitem6 = self.requester_table.horizontalHeaderItem(6)
-        ___qtablewidgetitem6.setText(QCoreApplication.translate("Dialog", u"Endere\u00e7o", None));
+        ___qtablewidgetitem2 = self.property_table.horizontalHeaderItem(2)
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"Endere\u00e7o", None));
+        ___qtablewidgetitem3 = self.property_table.horizontalHeaderItem(3)
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"N\u00ba de matr\u00edcula", None));
     # retranslateUi
 
