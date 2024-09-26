@@ -1,8 +1,8 @@
-from .Requester import Requester
+from backend.classes.Requester import Requester
 from datetime import date
 from typing import get_type_hints, Any
-from .utils import verify_type
-from .Address import Address
+from backend.classes.utils import verify_type
+from backend.classes.Address import Address
 from datetime import datetime
 
 

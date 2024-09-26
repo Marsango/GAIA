@@ -6,6 +6,7 @@ from backend.classes.Person import Person
 from backend.classes.Address import Address
 from backend.classes.Company import Company
 from backend.classes.utils import *
+from backend.classes.Property import Property
 
 
 class Database:
@@ -78,6 +79,17 @@ class Database:
         """, person_dict)
         self.__con.commit()
 
+    def edit_property(self, property: Property, property_id: int) -> None:
+        property_dict: dict[str, Any] = to_dict(property)
+        property_dict['id'] = property_id
+        property_dict['city_id'] = self.insert_city(property.get_location())
+        self.__cur.execute("""
+            UPDATE property
+            SET property_name = :name, location = :location, registration_number = :registration_number, fk_city_id = :city_id
+            WHERE id = :id
+        """, property_dict)
+        self.__con.commit()
+
     def edit_company(self, company: Company, address: Address, id: int) -> None:
         company_dict: dict[str, Any] = to_dict(company)
         company_dict['id'] = id
@@ -90,15 +102,20 @@ class Database:
         self.__con.commit()
 
     def delete_person(self, id: int) -> None:
-        person_dict: dict[str, Any] = self.get_persons(id=id)[0]
+        person_dict: sqlite3.Row = self.get_persons(id=id)[0]
         self.__cur.execute("""DELETE from address 
         WHERE address_id = :address_id """, {'address_id': person_dict['address_id']})
         self.__con.commit()
 
     def delete_company(self, id: int) -> None:
-        company_dict: dict[str, Any] = self.get_companies(id=id)[0]
+        company_dict: sqlite3.Row = self.get_companies(id=id)[0]
         self.__cur.execute("""DELETE from address 
         WHERE address_id = :address_id """, {'address_id': company_dict['address_id']})
+        self.__con.commit()
+
+    def delete_property(self, id: int) -> None:
+        self.__cur.execute("""DELETE from property 
+        WHERE id = :id """, {'id': id})
         self.__con.commit()
 
     def edit_address(self, address: Address, id: int, requester_type: Person | Company):
@@ -151,6 +168,43 @@ class Database:
          VALUES(:cep, :address_number, :country, :state, :city, :street)""", address)
         self.__con.commit()
         return self.__cur.lastrowid
+
+    def insert_city(self, location: dict[str]) -> int:
+        try:
+            self.__cur.execute("""
+                INSERT OR IGNORE INTO country (country_name)
+                VALUES (:country)
+            """, location)
+            self.__cur.execute("""
+                INSERT OR IGNORE INTO state (state_name, fk_country_id)
+                VALUES (:state, (SELECT country_id FROM country WHERE country_name = :country))
+            """, location)
+            self.__cur.execute("""
+                INSERT OR IGNORE INTO city (city_name, fk_state_id)
+                VALUES (:city, (SELECT state_id FROM state WHERE state_name = :state AND fk_country_id = (SELECT country_id FROM country WHERE country_name = :country)))
+            """, location)
+            self.__cur.execute("""
+                SELECT city_id FROM city
+                WHERE city_name = :city AND fk_state_id = (SELECT state_id FROM state WHERE state_name = :state AND fk_country_id = (SELECT country_id FROM country WHERE country_name = :country))
+            """, location)
+            city_id = self.__cur.fetchone()['city_id']
+            self.__con.commit()
+            return city_id
+
+        except Exception as e:
+            self.__con.rollback()
+            raise e
+
+    def insert_property(self, property: Property, requester_id: int) -> None:
+        property_dict: dict[Any] = to_dict(property)
+        city_id: int = self.insert_city(property.get_location())
+        property_dict['city_id'] = city_id
+        property_dict['location'] = property.get_location()['location']
+        property_dict['requester_id'] = requester_id
+        self.__cur.execute("""
+        INSERT INTO property(property_name, location, registration_number, fk_city_id, fk_requester_id) 
+        VALUES(:name, :location, :registration_number, :city_id, :requester_id)""", property_dict)
+        self.__con.commit()
 
     def get_countries(self) -> list[str]:
         self.__cur.execute("""SELECT country_name, country_id from country""")
@@ -312,9 +366,36 @@ class Database:
         return self.__cur.fetchall()
 
     def get_properties(self, **kwargs):
-        query = """SELECT * FROM property """
+        query = """SELECT
+            property.id as id,
+            property.property_name as name,
+            property.location,
+            property.registration_number,
+            city.city_name as city,
+            state.state_name as state,
+            country.country_name as country 
+        FROM
+            property
+        JOIN
+            requester ON property.fk_requester_id = requester.requester_id
+        JOIN
+            city ON property.fk_city_id = city.city_id
+        JOIN
+            state ON city.fk_state_id = state.state_id
+        JOIN
+            country ON state.fk_country_id = country.country_id
+        """
         requester_id = kwargs.get('requester_id')
+        property_id = kwargs.get('id')
+
         if requester_id:
-            query += "WHERE fk_requester_id = :requester_id"
-        self.__cur.execute(query, {"requester_id": requester_id})
+            query += "WHERE property.fk_requester_id = :requester_id"
+            params = {"requester_id": requester_id}
+        elif property_id:
+            query += "WHERE property.id = :property_id"
+            params = {"property_id": property_id}
+        else:
+            params = {}
+
+        self.__cur.execute(query, params)
         return self.__cur.fetchall()

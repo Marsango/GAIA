@@ -49,7 +49,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             requester_text = f"{requester_id} | {requester['name']} | CPF: {requester['document_number']}"
         else:
             requester_text = f"{requester_id} | {requester['name']} | CNPJ: {requester['document_number']}"
-        dialog: PropertyWindow = PropertyWindow(owner=requester_text)
+        dialog: PropertyWindow = PropertyWindow(owner=requester_text, owner_id = requester_id)
         dialog.exec()
         db.close_connection()
 
