@@ -38,7 +38,10 @@ class Sample:
         if self.__organic_matter > 50:
             self.__h_al: float = math.pow(2.7182, (6.9056 - (0.08824 * self.__smp)))
         else:
-            self.__h_al: float = conversion_table[round(self.__smp, 1)]
+            try:
+                self.__h_al: float = conversion_table[round(self.__smp, 1)]
+            except:
+                raise ValueError("Error with values of 'SMP'")
         self.__h_al: float = 1.0
         self.__calcium: float = calcium
         self.__magnesium: float = magnesium
@@ -59,3 +62,17 @@ class Sample:
             self.__collection_date: str = datetime.strptime(collection_date, '%d/%m/%Y').strftime("%d/%m/%Y")
         except:
             raise ValueError("Error with values of 'birth_date'")
+
+    def verify_valid_latitude(self, latitude: float) -> None:
+        if -90 <= latitude <= 90:
+            self.__latitude: float = latitude
+        else:
+            raise ValueError("Error with values of 'latitude'")
+
+    def verify_valid_longitude(self, longitude: float) -> None:
+        if -180 <= longitude <= 180:
+            self.__longitude: float = longitude
+        else:
+            raise ValueError("Error with values of 'longitude'")
+
+    

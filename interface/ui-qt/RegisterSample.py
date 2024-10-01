@@ -55,33 +55,34 @@ class RegisterSample(QDialog, RegisterSampleDialog):
 
     def register_action(self) -> None:
         db: Database = Database()
-        sample: Sample = Sample(depth=float(self.collection_depth.text()), collection_date=self.date.text(),
-                                description=self.description.text(), total_area=float(self.area.text()),
-                                latitude=float(self.latitude.text()), longitude=float(self.longitude.text()),
-                                phosphorus=float(self.phosphorus.text()), potassium=float(self.potassium.text()),
-                                organic_matter=float(self.organic_matter.text()), ph=float(self.ph.text()),
-                                smp=float(self.SMP.text()),
-                                aluminum=float(self.read_aluminum.text()) - float(self.blank_test_aluminum.text()),
-                                calcium=float(self.read_calcium.text()) - float(self.blank_test_calcium.text()),
-                                magnesium=float(self.read_magnesium.text()) - float(self.blank_test_magnesium.text()),
-                                copper=float(self.read_copper.text()) - float(self.blank_test_copper.text()),
-                                iron=float(self.read_iron.text()) - float(self.blank_test_iron.text()),
-                                manganese=float(self.read_manganese.text()) - float(self.blank_test_manganese.text()),
-                                zinc=float(self.read_zinc.text()) - float(self.blank_test_zinc.text()))
-        if self.mode == 'register':
-            db.insert_sample(sample, self.current_property_id, int(self.sample_number.text()))
-            sucess_text: str = "Amostra registrada com sucesso!"
-        elif self.mode == 'edit':
-            db.edit_sample(sample, self.current_sample_id)
-            sucess_text: str = "Alterações salvas com sucesso!"
-        widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
-        widget.exec()
-        if self.mode == 'register':
-            self.clean_input()
-        # except Exception as e:
-        #     error = handle_exception(e)
-        #     widget: ErrorWindow = ErrorWindow(error)
-        #     widget.exec()
+        try:
+            sample: Sample = Sample(depth=float(self.collection_depth.text()), collection_date=self.date.text(),
+                                    description=self.description.text(), total_area=float(self.area.text()),
+                                    latitude=float(self.latitude.text()), longitude=float(self.longitude.text()),
+                                    phosphorus=float(self.phosphorus.text()), potassium=float(self.potassium.text()),
+                                    organic_matter=float(self.organic_matter.text()), ph=float(self.ph.text()),
+                                    smp=float(self.SMP.text()),
+                                    aluminum=float(self.read_aluminum.text()) - float(self.blank_test_aluminum.text()),
+                                    calcium=float(self.read_calcium.text()) - float(self.blank_test_calcium.text()),
+                                    magnesium=float(self.read_magnesium.text()) - float(self.blank_test_magnesium.text()),
+                                    copper=float(self.read_copper.text()) - float(self.blank_test_copper.text()),
+                                    iron=float(self.read_iron.text()) - float(self.blank_test_iron.text()),
+                                    manganese=float(self.read_manganese.text()) - float(self.blank_test_manganese.text()),
+                                    zinc=float(self.read_zinc.text()) - float(self.blank_test_zinc.text()))
+            if self.mode == 'register':
+                db.insert_sample(sample, self.current_property_id, int(self.sample_number.text()))
+                sucess_text: str = "Amostra registrada com sucesso!"
+            elif self.mode == 'edit':
+                db.edit_sample(sample, self.current_sample_id)
+                sucess_text: str = "Alterações salvas com sucesso!"
+            widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
+            widget.exec()
+            if self.mode == 'register':
+                self.clean_input()
+        except Exception as e:
+            error = handle_exception(e)
+            widget: ErrorWindow = ErrorWindow(error)
+            widget.exec()
         db.close_connection()
 
     def clean_input(self):

@@ -23,13 +23,13 @@ class RegisterSampleDialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(773, 697)
-        Dialog.setMaximumSize(QSize(773, 697))
+        Dialog.resize(773, 654)
+        Dialog.setMaximumSize(QSize(773, 710))
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.frame_33 = QFrame(Dialog)
         self.frame_33.setObjectName(u"frame_33")
-        self.frame_33.setMaximumSize(QSize(16777215, 240))
+        self.frame_33.setMaximumSize(QSize(16777215, 250))
         self.frame_33.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_33.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_9 = QHBoxLayout(self.frame_33)
@@ -349,6 +349,7 @@ class RegisterSampleDialog(object):
 
         self.groupBox_2 = QGroupBox(Dialog)
         self.groupBox_2.setObjectName(u"groupBox_2")
+        self.groupBox_2.setMinimumSize(QSize(0, 350))
         self.groupBox_2.setMaximumSize(QSize(16777215, 340))
         self.horizontalLayout_20 = QHBoxLayout(self.groupBox_2)
         self.horizontalLayout_20.setObjectName(u"horizontalLayout_20")
@@ -746,7 +747,7 @@ class RegisterSampleDialog(object):
 
         self.frame_34 = QFrame(Dialog)
         self.frame_34.setObjectName(u"frame_34")
-        self.frame_34.setMaximumSize(QSize(16777215, 45))
+        self.frame_34.setMaximumSize(QSize(16777215, 44))
         self.frame_34.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_34.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_40 = QHBoxLayout(self.frame_34)
