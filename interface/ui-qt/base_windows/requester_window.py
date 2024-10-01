@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'requester_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.7.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -112,7 +112,7 @@ class RequesterDialog(object):
         self.requester_type.setItemText(0, QCoreApplication.translate("Dialog", u"Pessoa f\u00edsica", None))
         self.requester_type.setItemText(1, QCoreApplication.translate("Dialog", u"Pessoa jur\u00eddica", None))
 
-        self.register_property.setText(QCoreApplication.translate("Dialog", u"Cadastrar propriedade", None))
+        self.register_property.setText(QCoreApplication.translate("Dialog", u"Ver propriedades", None))
         self.add.setText(QCoreApplication.translate("Dialog", u"Adicionar", None))
         self.edit.setText(QCoreApplication.translate("Dialog", u"Editar", None))
         self.delete_2.setText(QCoreApplication.translate("Dialog", u"Excluir", None))

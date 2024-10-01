@@ -9,17 +9,17 @@ from backend.classes.utils import handle_exception
 
 
 class RegisterProperty(QDialog, RegisterPropertyDialog):
-    def __init__(self, requester_id) -> None:
+    def __init__(self, requester_id: int) -> None:
         super(RegisterProperty, self).__init__()
-        self.current_property_id = None
+        self.current_property_id: int | None = None
         self.setupUi(self)
         self.setWindowTitle('Registro de propriedade')
         self.register_button.clicked.connect(self.register_action)
         self.create_country_completer()
         self.country_input.editingFinished.connect(self.country_changed)
         self.state_input.editingFinished.connect(self.state_changed)
-        self.requester_id = requester_id
-        self.mode = 'register'
+        self.requester_id: int = requester_id
+        self.mode: str = 'register'
 
     def edit_mode(self, property_data) -> None:
         self.country_input.insert(property_data['country'])

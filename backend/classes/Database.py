@@ -7,6 +7,7 @@ from backend.classes.Address import Address
 from backend.classes.Company import Company
 from backend.classes.utils import *
 from backend.classes.Property import Property
+from backend.classes.Sample import Sample
 
 
 class Database:
@@ -47,7 +48,7 @@ class Database:
         FOREIGN KEY(fk_street_id) REFERENCES street(street_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS person(
         id INTEGER PRIMARY KEY,
-        name varchar(255), birth_date date, cpf varchar(15) UNIQUE, fk_requester_id integer,
+        name varchar(255), birth_date varchar(20), cpf varchar(15) UNIQUE, fk_requester_id integer,
         FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS company(
         id INTEGER PRIMARY KEY,
@@ -57,6 +58,12 @@ class Database:
         id INTEGER PRIMARY KEY, property_name varchar(255), location varchar(255), registration_number integer, fk_city_id integer, fk_requester_id integer,
         FOREIGN KEY (fk_city_id) REFERENCES city(city_id) ON DELETE CASCADE,
         FOREIGN KEY (fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
+        self.__cur.execute("""CREATE TABLE IF NOT EXISTS sample(
+        id INTEGER PRIMARY KEY, description varchar(255), sample_number integer, collection_date varchar(20), total_area float,
+        latitude float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
+         aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
+         zinc float, base_sum float, ctc float, v_percent float , aluminum_saturation float,
+        effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
         self.__con.commit()
 
     def insert_person(self, person: Person, address: Address) -> None:
@@ -169,7 +176,7 @@ class Database:
         self.__con.commit()
         return self.__cur.lastrowid
 
-    def insert_city(self, location: dict[str]) -> int:
+    def insert_city(self, location: dict[str, str]) -> int:
         try:
             self.__cur.execute("""
                 INSERT OR IGNORE INTO country (country_name)
@@ -196,7 +203,7 @@ class Database:
             raise e
 
     def insert_property(self, property: Property, requester_id: int) -> None:
-        property_dict: dict[Any] = to_dict(property)
+        property_dict: dict[str, Any] = to_dict(property)
         city_id: int = self.insert_city(property.get_location())
         property_dict['city_id'] = city_id
         property_dict['location'] = property.get_location()['location']
@@ -204,6 +211,20 @@ class Database:
         self.__cur.execute("""
         INSERT INTO property(property_name, location, registration_number, fk_city_id, fk_requester_id) 
         VALUES(:name, :location, :registration_number, :city_id, :requester_id)""", property_dict)
+        self.__con.commit()
+
+    def insert_sample(self, sample: Sample, property_id: int, sample_number: int) -> None:
+        sample_dict: dict[str, Any] = to_dict(sample)
+        sample_dict['property_id'] = property_id
+        sample_dict['sample_number'] = sample_number
+        self.__cur.execute("""INSERT INTO sample(description, sample_number, collection_date, total_area, 
+        latitude, longitude , depth, phosphorus, potassium, organic_matter, ph,
+         aluminum, h_al, calcium, magnesium, copper, iron, manganese, 
+         zinc, base_sum, ctc, v_percent, aluminum_saturation,
+        effective_ctc, fk_property_id) 
+        VALUES(:description, :sample_number, :collection_date, :total_area, :latitude, :longitude, :depth, :phosphorus,
+        :potassium, :organic_matter, :ph, :aluminum, :h_al, :calcium, :magnesium, :copper, :iron, :manganese,
+        :zinc, :base_sum, :ctc, :v_percent, :aluminum_saturation, :effective_ctc, :property_id)""", sample_dict)
         self.__con.commit()
 
     def get_countries(self) -> list[str]:
@@ -397,5 +418,18 @@ class Database:
         else:
             params = {}
 
+        self.__cur.execute(query, params)
+        return self.__cur.fetchall()
+
+    def get_samples(self, **kwargs):
+        query = """SELECT
+            * from sample  
+        """
+        property_id = kwargs.get('property_id')
+        if property_id:
+            query += "WHERE fk_property_id = :property_id"
+            params = {"property_id": property_id}
+        else:
+            params = {}
         self.__cur.execute(query, params)
         return self.__cur.fetchall()

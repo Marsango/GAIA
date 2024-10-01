@@ -1,34 +1,45 @@
 from typing import get_type_hints
-from utils import verify_type
-
+from backend.classes.utils import verify_type
+from datetime import datetime
+from datetime import date
 
 class Sample:
-    def __init__(self, name_description: str, total_area: float, collection_depth: float, phosphorus: float,
+    def __init__(self, description: str, total_area: float, depth: float, collection_date: str,
+                 latitude: float, longitude: float, phosphorus: float,
                  potassium: float,
-                 organic_matter: float, pH: float, SMP: float, aluminum: float, H_Al: float, calcium: float,
+                 organic_matter: float, ph: float, smp: float, aluminum: float, h_al: float, calcium: float,
                  magnesium: float,
-                 copper: float, iron: float, manganese: float, zinc: float, base_saturation: float, cec: float,
-                 v: float,
-                 aluminum_saturation: float, effective_cec: float) -> None:
+                 copper: float, iron: float, manganese: float, zinc: float) -> None:
         verify_type(get_type_hints(Sample.__init__), locals())
-        self.__name_description: str = name_description
+        self.__description: str = description
         self.__total_area: float = total_area
-        self.__collection_depth: float = collection_depth
+        self.__depth: float = depth
+        self.__collection_date: str | None = collection_date
+        self.__latitude: float = latitude
+        self.__longitude: float = longitude
         self.__phosphorus: float = phosphorus
         self.__potassium: float = potassium
         self.__organic_matter: float = organic_matter
-        self.__pH: float = pH
-        self.__SMP: float = SMP
+        self.__ph: float = ph
+        self.__smp: float = smp
         self.__aluminum: float = aluminum
-        self.__H_Al: float = H_Al
+        self.__h_al: float = h_al
         self.__calcium: float = calcium
         self.__magnesium: float = magnesium
         self.__copper: float = copper
         self.__iron: float = iron
         self.__manganese: float = manganese
         self.__zinc: float = zinc
-        self.__base_saturation: float = base_saturation
-        self.__CEC: float = cec
-        self.__v: float = v
-        self.__aluminum_saturation: float = aluminum_saturation
-        self.__effective_CEC: float = effective_cec
+        self.__base_sum: float = self.__manganese + self.__calcium + self.__potassium
+        self.__ctc: float = self.__base_sum + self.__h_al
+        self.__v_percent: float = (100 * self.__base_sum)/self.__ctc
+        self.__aluminum_saturation: float = (100 * self.__aluminum) / (self.__base_sum + self.__aluminum)
+        self.__effective_ctc: float = self.__ctc + self.__aluminum
+        self.verify_valid_date(collection_date)
+
+
+    def verify_valid_date(self, collection_date: str) -> None:
+        try:
+            self.__collection_date: str = datetime.strptime(collection_date, '%d/%m/%Y').strftime("%d/%m/%Y")
+        except:
+            raise ValueError("Error with values of 'birth_date'")

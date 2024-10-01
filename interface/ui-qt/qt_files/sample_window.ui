@@ -55,7 +55,37 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="owner"/>
+          <widget class="QLineEdit" name="owner">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="frame_4">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Propriedade:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="property">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -79,7 +109,7 @@
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QPushButton" name="view_samples">
+          <widget class="QPushButton" name="generate_report">
            <property name="maximumSize">
             <size>
              <width>100</width>
@@ -87,7 +117,7 @@
             </size>
            </property>
            <property name="text">
-            <string>Ver amostras</string>
+            <string>Gerar Laudo</string>
            </property>
           </widget>
          </item>
@@ -150,17 +180,22 @@
         </column>
         <column>
          <property name="text">
-          <string>Nome</string>
+          <string>Nº da amostra</string>
          </property>
         </column>
         <column>
          <property name="text">
-          <string>Endereço</string>
+          <string>Descrição</string>
          </property>
         </column>
         <column>
          <property name="text">
-          <string>Nº de matrícula</string>
+          <string>Profundidade</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Data</string>
          </property>
         </column>
        </widget>

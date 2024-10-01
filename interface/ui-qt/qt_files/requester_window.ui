@@ -83,7 +83,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="register_property">
+          <widget class="QPushButton" name="view_properties">
            <property name="maximumSize">
             <size>
              <width>125</width>
@@ -91,7 +91,7 @@
             </size>
            </property>
            <property name="text">
-            <string>Cadastrar propriedade</string>
+            <string>Ver propriedades</string>
            </property>
           </widget>
          </item>

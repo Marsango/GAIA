@@ -7,6 +7,7 @@ from SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
 from RegisterProperty import RegisterProperty
 from backend.classes.Database import Database
+from SampleWindow import SampleWindow
 import sqlite3
 
 class PropertyWindow(QDialog, PropertyDialog):
@@ -22,6 +23,7 @@ class PropertyWindow(QDialog, PropertyDialog):
         self.add.clicked.connect(self.register_property)
         self.edit.clicked.connect(self.edit_property)
         self.delete_2.clicked.connect(self.delete_property)
+        self.view_samples.clicked.connect(self.open_sample_widget)
         self.refresh_table()
 
     def refresh_table(self) -> None:
@@ -82,5 +84,18 @@ class PropertyWindow(QDialog, PropertyDialog):
             widget.exec()
         self.refresh_table()
 
-
-
+    def open_sample_widget(self) -> None:
+        selected_items: list[QTableWidgetItem] = self.property_table.selectedIndexes()
+        if len(selected_items) == 0:
+            widget: ErrorWindow = ErrorWindow("Você deve selecionar uma propriedade para ver as amostras.")
+            widget.exec()
+            return
+        for data in selected_items:
+            if data.row() != selected_items[0].row():
+                widget: ErrorWindow = ErrorWindow("Você só pode ver as amostras de uma propriedade por vez.")
+                widget.exec()
+                return
+        widget: SampleWindow = SampleWindow(owner=self.owner.text(), owner_id=self.current_owner_id,
+                                            property=self.property_table.item(selected_items[0].row(), 1).text(),
+                                            property_id = int(self.property_table.item(selected_items[0].row(), 0).text()))
+        widget.exec()

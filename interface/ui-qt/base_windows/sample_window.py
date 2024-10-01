@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'property_window.ui'
+## Form generated from reading UI file 'sample_window.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.3
 ##
@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
     QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout,
     QWidget)
 
-class PropertyDialog(object):
+class SampleDialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
@@ -48,11 +48,32 @@ class PropertyDialog(object):
 
         self.owner = QLineEdit(self.frame_3)
         self.owner.setObjectName(u"owner")
+        self.owner.setReadOnly(True)
 
         self.horizontalLayout_2.addWidget(self.owner)
 
 
         self.verticalLayout_2.addWidget(self.frame_3)
+
+        self.frame_4 = QFrame(self.frame)
+        self.frame_4.setObjectName(u"frame_4")
+        self.frame_4.setFrameShape(QFrame.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_3 = QHBoxLayout(self.frame_4)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.label_2 = QLabel(self.frame_4)
+        self.label_2.setObjectName(u"label_2")
+
+        self.horizontalLayout_3.addWidget(self.label_2)
+
+        self._property = QLineEdit(self.frame_4)
+        self._property.setObjectName(u"property")
+        self._property.setReadOnly(True)
+
+        self.horizontalLayout_3.addWidget(self._property)
+
+
+        self.verticalLayout_2.addWidget(self.frame_4)
 
         self.frame_2 = QFrame(self.frame)
         self.frame_2.setObjectName(u"frame_2")
@@ -61,11 +82,11 @@ class PropertyDialog(object):
         self.frame_2.setFrameShape(QFrame.NoFrame)
         self.horizontalLayout = QHBoxLayout(self.frame_2)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.view_samples = QPushButton(self.frame_2)
-        self.view_samples.setObjectName(u"pushButton")
-        self.view_samples.setMaximumSize(QSize(100, 16777215))
+        self.generate_report = QPushButton(self.frame_2)
+        self.generate_report.setObjectName(u"generate_report")
+        self.generate_report.setMaximumSize(QSize(100, 16777215))
 
-        self.horizontalLayout.addWidget(self.view_samples)
+        self.horizontalLayout.addWidget(self.generate_report)
 
         self.add = QPushButton(self.frame_2)
         self.add.setObjectName(u"add")
@@ -89,8 +110,8 @@ class PropertyDialog(object):
         self.verticalLayout_2.addWidget(self.frame_2)
 
         self.property_table = QTableWidget(self.frame)
-        if (self.property_table.columnCount() < 4):
-            self.property_table.setColumnCount(4)
+        if (self.property_table.columnCount() < 5):
+            self.property_table.setColumnCount(5)
         font = QFont()
         font.setPointSize(8)
         __qtablewidgetitem = QTableWidgetItem()
@@ -102,6 +123,8 @@ class PropertyDialog(object):
         self.property_table.setHorizontalHeaderItem(2, __qtablewidgetitem2)
         __qtablewidgetitem3 = QTableWidgetItem()
         self.property_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
+        __qtablewidgetitem4 = QTableWidgetItem()
+        self.property_table.setHorizontalHeaderItem(4, __qtablewidgetitem4)
         self.property_table.setObjectName(u"property_table")
         self.property_table.horizontalHeader().setDefaultSectionSize(142)
 
@@ -119,17 +142,20 @@ class PropertyDialog(object):
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
         self.label.setText(QCoreApplication.translate("Dialog", u"Propriet\u00e1rio:", None))
-        self.view_samples.setText(QCoreApplication.translate("Dialog", u"Ver amostras", None))
+        self.label_2.setText(QCoreApplication.translate("Dialog", u"Propriedade:", None))
+        self.generate_report.setText(QCoreApplication.translate("Dialog", u"Gerar Laudo", None))
         self.add.setText(QCoreApplication.translate("Dialog", u"Adicionar", None))
         self.edit.setText(QCoreApplication.translate("Dialog", u"Editar", None))
         self.delete_2.setText(QCoreApplication.translate("Dialog", u"Excluir", None))
         ___qtablewidgetitem = self.property_table.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"id", None));
         ___qtablewidgetitem1 = self.property_table.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"Nome", None));
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"N\u00ba da amostra", None));
         ___qtablewidgetitem2 = self.property_table.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"Endere\u00e7o", None));
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"Descri\u00e7\u00e3o", None));
         ___qtablewidgetitem3 = self.property_table.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"N\u00ba de matr\u00edcula", None));
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"Profundidade", None));
+        ___qtablewidgetitem4 = self.property_table.horizontalHeaderItem(4)
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("Dialog", u"Data", None));
     # retranslateUi
 
