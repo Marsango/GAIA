@@ -109,26 +109,26 @@ class SampleDialog(object):
 
         self.verticalLayout_2.addWidget(self.frame_2)
 
-        self.property_table = QTableWidget(self.frame)
-        if (self.property_table.columnCount() < 5):
-            self.property_table.setColumnCount(5)
+        self.sample_table = QTableWidget(self.frame)
+        if (self.sample_table.columnCount() < 5):
+            self.sample_table.setColumnCount(5)
         font = QFont()
         font.setPointSize(8)
         __qtablewidgetitem = QTableWidgetItem()
         __qtablewidgetitem.setFont(font);
-        self.property_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        self.sample_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
-        self.property_table.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        self.sample_table.setHorizontalHeaderItem(1, __qtablewidgetitem1)
         __qtablewidgetitem2 = QTableWidgetItem()
-        self.property_table.setHorizontalHeaderItem(2, __qtablewidgetitem2)
+        self.sample_table.setHorizontalHeaderItem(2, __qtablewidgetitem2)
         __qtablewidgetitem3 = QTableWidgetItem()
-        self.property_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
+        self.sample_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
         __qtablewidgetitem4 = QTableWidgetItem()
-        self.property_table.setHorizontalHeaderItem(4, __qtablewidgetitem4)
-        self.property_table.setObjectName(u"property_table")
-        self.property_table.horizontalHeader().setDefaultSectionSize(142)
+        self.sample_table.setHorizontalHeaderItem(4, __qtablewidgetitem4)
+        self.sample_table.setObjectName(u"property_table")
+        self.sample_table.horizontalHeader().setDefaultSectionSize(142)
 
-        self.verticalLayout_2.addWidget(self.property_table)
+        self.verticalLayout_2.addWidget(self.sample_table)
 
 
         self.verticalLayout.addWidget(self.frame)
@@ -147,15 +147,15 @@ class SampleDialog(object):
         self.add.setText(QCoreApplication.translate("Dialog", u"Adicionar", None))
         self.edit.setText(QCoreApplication.translate("Dialog", u"Editar", None))
         self.delete_2.setText(QCoreApplication.translate("Dialog", u"Excluir", None))
-        ___qtablewidgetitem = self.property_table.horizontalHeaderItem(0)
+        ___qtablewidgetitem = self.sample_table.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"id", None));
-        ___qtablewidgetitem1 = self.property_table.horizontalHeaderItem(1)
+        ___qtablewidgetitem1 = self.sample_table.horizontalHeaderItem(1)
         ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"N\u00ba da amostra", None));
-        ___qtablewidgetitem2 = self.property_table.horizontalHeaderItem(2)
+        ___qtablewidgetitem2 = self.sample_table.horizontalHeaderItem(2)
         ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"Descri\u00e7\u00e3o", None));
-        ___qtablewidgetitem3 = self.property_table.horizontalHeaderItem(3)
+        ___qtablewidgetitem3 = self.sample_table.horizontalHeaderItem(3)
         ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"Profundidade", None));
-        ___qtablewidgetitem4 = self.property_table.horizontalHeaderItem(4)
+        ___qtablewidgetitem4 = self.sample_table.horizontalHeaderItem(4)
         ___qtablewidgetitem4.setText(QCoreApplication.translate("Dialog", u"Data", None));
     # retranslateUi
 

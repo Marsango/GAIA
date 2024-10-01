@@ -60,7 +60,7 @@ class Database:
         FOREIGN KEY (fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS sample(
         id INTEGER PRIMARY KEY, description varchar(255), sample_number integer, collection_date varchar(20), total_area float,
-        latitude float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
+        latitude float, smp float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
          zinc float, base_sum float, ctc float, v_percent float , aluminum_saturation float,
         effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
@@ -95,6 +95,21 @@ class Database:
             SET property_name = :name, location = :location, registration_number = :registration_number, fk_city_id = :city_id
             WHERE id = :id
         """, property_dict)
+        self.__con.commit()
+
+    def edit_sample(self, sample: Sample, sample_id: int) -> None:
+        sample_dict: dict[str, Any] = to_dict(sample)
+        sample_dict['id'] = sample_id
+        self.__cur.execute("""
+            UPDATE sample
+            SET description = :description, collection_date = :collection_date, 
+                total_area = :total_area, latitude = :latitude, longitude = :longitude, depth = :depth,
+                phosphorus = :phosphorus, potassium = :potassium, organic_matter = :organic_matter, ph = :ph,
+                aluminum = :aluminum, h_al = :h_al, calcium = :calcium, magnesium = :magnesium, copper = :copper,
+                iron = :iron, manganese = :manganese, zinc = :zinc, base_sum = :base_sum, ctc = :ctc, v_percent = :v_percent,
+                aluminum_saturation = :aluminum_saturation, effective_ctc = :effective_ctc, smp = :smp 
+            WHERE id = :id
+        """, sample_dict)
         self.__con.commit()
 
     def edit_company(self, company: Company, address: Address, id: int) -> None:
@@ -221,10 +236,10 @@ class Database:
         latitude, longitude , depth, phosphorus, potassium, organic_matter, ph,
          aluminum, h_al, calcium, magnesium, copper, iron, manganese, 
          zinc, base_sum, ctc, v_percent, aluminum_saturation,
-        effective_ctc, fk_property_id) 
+        effective_ctc, fk_property_id, smp) 
         VALUES(:description, :sample_number, :collection_date, :total_area, :latitude, :longitude, :depth, :phosphorus,
         :potassium, :organic_matter, :ph, :aluminum, :h_al, :calcium, :magnesium, :copper, :iron, :manganese,
-        :zinc, :base_sum, :ctc, :v_percent, :aluminum_saturation, :effective_ctc, :property_id)""", sample_dict)
+        :zinc, :base_sum, :ctc, :v_percent, :aluminum_saturation, :effective_ctc, :property_id, :smp)""", sample_dict)
         self.__con.commit()
 
     def get_countries(self) -> list[str]:
@@ -426,7 +441,11 @@ class Database:
             * from sample  
         """
         property_id = kwargs.get('property_id')
-        if property_id:
+        sample_id = kwargs.get('sample_id')
+        if sample_id:
+            query += "WHERE id = :sample_id"
+            params = {"sample_id": sample_id}
+        elif property_id:
             query += "WHERE fk_property_id = :property_id"
             params = {"property_id": property_id}
         else:

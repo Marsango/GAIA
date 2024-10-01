@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'register_sample.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.3
+## Created by: Qt User Interface Compiler version 6.7.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -23,11 +23,18 @@ class RegisterSampleDialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(576, 843)
-        Dialog.setMaximumSize(QSize(576, 892))
+        Dialog.resize(773, 697)
+        Dialog.setMaximumSize(QSize(773, 697))
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.groupBox = QGroupBox(Dialog)
+        self.frame_33 = QFrame(Dialog)
+        self.frame_33.setObjectName(u"frame_33")
+        self.frame_33.setMaximumSize(QSize(16777215, 240))
+        self.frame_33.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_33.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_9 = QHBoxLayout(self.frame_33)
+        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
+        self.groupBox = QGroupBox(self.frame_33)
         self.groupBox.setObjectName(u"groupBox")
         self.groupBox.setMinimumSize(QSize(0, 0))
         self.groupBox.setMaximumSize(QSize(563, 240))
@@ -35,20 +42,20 @@ class RegisterSampleDialog(object):
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
         self.frame_8 = QFrame(self.groupBox)
         self.frame_8.setObjectName(u"frame_8")
-        self.frame_8.setFrameShape(QFrame.StyledPanel)
-        self.frame_8.setFrameShadow(QFrame.Raised)
+        self.frame_8.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_8.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame_8)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.frame_31 = QFrame(self.frame_8)
         self.frame_31.setObjectName(u"frame_31")
-        self.frame_31.setFrameShape(QFrame.StyledPanel)
-        self.frame_31.setFrameShadow(QFrame.Raised)
+        self.frame_31.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_31.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_37 = QHBoxLayout(self.frame_31)
         self.horizontalLayout_37.setObjectName(u"horizontalLayout_37")
         self.frame_5 = QFrame(self.frame_31)
         self.frame_5.setObjectName(u"frame_5")
-        self.frame_5.setFrameShape(QFrame.StyledPanel)
-        self.frame_5.setFrameShadow(QFrame.Raised)
+        self.frame_5.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_5.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_5 = QHBoxLayout(self.frame_5)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.label_5 = QLabel(self.frame_5)
@@ -66,8 +73,8 @@ class RegisterSampleDialog(object):
 
         self.frame_7 = QFrame(self.frame_31)
         self.frame_7.setObjectName(u"frame_7")
-        self.frame_7.setFrameShape(QFrame.StyledPanel)
-        self.frame_7.setFrameShadow(QFrame.Raised)
+        self.frame_7.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_7.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_38 = QHBoxLayout(self.frame_7)
         self.horizontalLayout_38.setObjectName(u"horizontalLayout_38")
         self.label_3 = QLabel(self.frame_7)
@@ -76,7 +83,7 @@ class RegisterSampleDialog(object):
         self.horizontalLayout_38.addWidget(self.label_3)
 
         self.collection_depth = QLineEdit(self.frame_7)
-        self.collection_depth.setObjectName(u"depth")
+        self.collection_depth.setObjectName(u"collection_depth")
 
         self.horizontalLayout_38.addWidget(self.collection_depth)
 
@@ -85,8 +92,8 @@ class RegisterSampleDialog(object):
 
         self.frame_30 = QFrame(self.frame_31)
         self.frame_30.setObjectName(u"frame_30")
-        self.frame_30.setFrameShape(QFrame.StyledPanel)
-        self.frame_30.setFrameShadow(QFrame.Raised)
+        self.frame_30.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_30.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_36 = QHBoxLayout(self.frame_30)
         self.horizontalLayout_36.setObjectName(u"horizontalLayout_36")
         self.label_33 = QLabel(self.frame_30)
@@ -96,7 +103,7 @@ class RegisterSampleDialog(object):
 
         self.date = QLineEdit(self.frame_30)
         self.date.setObjectName(u"date")
-        self.date.setAlignment(Qt.AlignCenter)
+        self.date.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.horizontalLayout_36.addWidget(self.date)
 
@@ -108,14 +115,14 @@ class RegisterSampleDialog(object):
 
         self.frame_2 = QFrame(self.frame_8)
         self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setFrameShape(QFrame.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame_2)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.frame_32 = QFrame(self.frame_2)
         self.frame_32.setObjectName(u"frame_32")
-        self.frame_32.setFrameShape(QFrame.StyledPanel)
-        self.frame_32.setFrameShadow(QFrame.Raised)
+        self.frame_32.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_32.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_39 = QHBoxLayout(self.frame_32)
         self.horizontalLayout_39.setObjectName(u"horizontalLayout_39")
         self.label_2 = QLabel(self.frame_32)
@@ -134,8 +141,8 @@ class RegisterSampleDialog(object):
         self.frame_3 = QFrame(self.frame_2)
         self.frame_3.setObjectName(u"frame_3")
         self.frame_3.setMaximumSize(QSize(175, 16777215))
-        self.frame_3.setFrameShape(QFrame.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Raised)
+        self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.label_6 = QLabel(self.frame_3)
@@ -156,14 +163,14 @@ class RegisterSampleDialog(object):
 
         self.frame = QFrame(self.frame_8)
         self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.frame_6 = QFrame(self.frame)
         self.frame_6.setObjectName(u"frame_6")
-        self.frame_6.setFrameShape(QFrame.StyledPanel)
-        self.frame_6.setFrameShadow(QFrame.Raised)
+        self.frame_6.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_6.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_6 = QHBoxLayout(self.frame_6)
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
         self.label = QLabel(self.frame_6)
@@ -181,8 +188,8 @@ class RegisterSampleDialog(object):
 
         self.frame_4 = QFrame(self.frame)
         self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setFrameShape(QFrame.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Raised)
+        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_4 = QHBoxLayout(self.frame_4)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.label_4 = QLabel(self.frame_4)
@@ -205,23 +212,19 @@ class RegisterSampleDialog(object):
         self.horizontalLayout_7.addWidget(self.frame_8)
 
 
-        self.verticalLayout.addWidget(self.groupBox)
+        self.horizontalLayout_9.addWidget(self.groupBox)
 
-        self.groupBox_2 = QGroupBox(Dialog)
-        self.groupBox_2.setObjectName(u"groupBox_2")
-        self.horizontalLayout_20 = QHBoxLayout(self.groupBox_2)
-        self.horizontalLayout_20.setObjectName(u"horizontalLayout_20")
-        self.frame_19 = QFrame(self.groupBox_2)
+        self.frame_19 = QFrame(self.frame_33)
         self.frame_19.setObjectName(u"frame_19")
         self.frame_19.setMaximumSize(QSize(225, 16777215))
-        self.frame_19.setFrameShape(QFrame.StyledPanel)
-        self.frame_19.setFrameShadow(QFrame.Raised)
+        self.frame_19.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_19.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_3 = QVBoxLayout(self.frame_19)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.frame_9 = QFrame(self.frame_19)
         self.frame_9.setObjectName(u"frame_9")
-        self.frame_9.setFrameShape(QFrame.StyledPanel)
-        self.frame_9.setFrameShadow(QFrame.Raised)
+        self.frame_9.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_8 = QHBoxLayout(self.frame_9)
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.label_7 = QLabel(self.frame_9)
@@ -244,8 +247,8 @@ class RegisterSampleDialog(object):
 
         self.frame_10 = QFrame(self.frame_19)
         self.frame_10.setObjectName(u"frame_10")
-        self.frame_10.setFrameShape(QFrame.StyledPanel)
-        self.frame_10.setFrameShadow(QFrame.Raised)
+        self.frame_10.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_10.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_10 = QHBoxLayout(self.frame_10)
         self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
         self.label_11 = QLabel(self.frame_10)
@@ -268,8 +271,8 @@ class RegisterSampleDialog(object):
 
         self.frame_13 = QFrame(self.frame_19)
         self.frame_13.setObjectName(u"frame_13")
-        self.frame_13.setFrameShape(QFrame.StyledPanel)
-        self.frame_13.setFrameShadow(QFrame.Raised)
+        self.frame_13.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_13.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_13 = QHBoxLayout(self.frame_13)
         self.horizontalLayout_13.setObjectName(u"horizontalLayout_13")
         self.label_17 = QLabel(self.frame_13)
@@ -292,8 +295,8 @@ class RegisterSampleDialog(object):
 
         self.frame_12 = QFrame(self.frame_19)
         self.frame_12.setObjectName(u"frame_12")
-        self.frame_12.setFrameShape(QFrame.StyledPanel)
-        self.frame_12.setFrameShadow(QFrame.Raised)
+        self.frame_12.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_12.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_12 = QHBoxLayout(self.frame_12)
         self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
         self.label_15 = QLabel(self.frame_12)
@@ -316,8 +319,8 @@ class RegisterSampleDialog(object):
 
         self.frame_11 = QFrame(self.frame_19)
         self.frame_11.setObjectName(u"frame_11")
-        self.frame_11.setFrameShape(QFrame.StyledPanel)
-        self.frame_11.setFrameShadow(QFrame.Raised)
+        self.frame_11.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_11.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_11 = QHBoxLayout(self.frame_11)
         self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
         self.label_13 = QLabel(self.frame_11)
@@ -338,40 +341,24 @@ class RegisterSampleDialog(object):
 
         self.verticalLayout_3.addWidget(self.frame_11)
 
-        self.frame_33 = QFrame(self.frame_19)
-        self.frame_33.setObjectName(u"frame_33")
-        self.frame_33.setFrameShape(QFrame.StyledPanel)
-        self.frame_33.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_9 = QHBoxLayout(self.frame_33)
-        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
-        self.label_9 = QLabel(self.frame_33)
-        self.label_9.setObjectName(u"label_9")
 
-        self.horizontalLayout_9.addWidget(self.label_9)
-
-        self.h_plus_al = QLineEdit(self.frame_33)
-        self.h_plus_al.setObjectName(u"h_plus_al")
-
-        self.horizontalLayout_9.addWidget(self.h_plus_al)
-
-        self.label_10 = QLabel(self.frame_33)
-        self.label_10.setObjectName(u"label_10")
-
-        self.horizontalLayout_9.addWidget(self.label_10)
+        self.horizontalLayout_9.addWidget(self.frame_19)
 
 
-        self.verticalLayout_3.addWidget(self.frame_33)
+        self.verticalLayout.addWidget(self.frame_33)
 
-
-        self.horizontalLayout_20.addWidget(self.frame_19)
-
-        self.frame_18 = QFrame(self.groupBox_2)
-        self.frame_18.setObjectName(u"frame_18")
-        self.frame_18.setFrameShape(QFrame.StyledPanel)
-        self.frame_18.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_5 = QVBoxLayout(self.frame_18)
-        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.groupBox_3 = QGroupBox(self.frame_18)
+        self.groupBox_2 = QGroupBox(Dialog)
+        self.groupBox_2.setObjectName(u"groupBox_2")
+        self.groupBox_2.setMaximumSize(QSize(16777215, 340))
+        self.horizontalLayout_20 = QHBoxLayout(self.groupBox_2)
+        self.horizontalLayout_20.setObjectName(u"horizontalLayout_20")
+        self.frame_36 = QFrame(self.groupBox_2)
+        self.frame_36.setObjectName(u"frame_36")
+        self.frame_36.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_36.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_6 = QVBoxLayout(self.frame_36)
+        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.groupBox_3 = QGroupBox(self.frame_36)
         self.groupBox_3.setObjectName(u"groupBox_3")
         self.groupBox_3.setMinimumSize(QSize(0, 0))
         self.groupBox_3.setMaximumSize(QSize(400, 70))
@@ -381,8 +368,8 @@ class RegisterSampleDialog(object):
         self.frame_14.setObjectName(u"frame_14")
         self.frame_14.setMinimumSize(QSize(0, 0))
         self.frame_14.setMaximumSize(QSize(100, 16777215))
-        self.frame_14.setFrameShape(QFrame.StyledPanel)
-        self.frame_14.setFrameShadow(QFrame.Raised)
+        self.frame_14.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_14.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_14 = QHBoxLayout(self.frame_14)
         self.horizontalLayout_14.setObjectName(u"horizontalLayout_14")
         self.label_20 = QLabel(self.frame_14)
@@ -403,8 +390,8 @@ class RegisterSampleDialog(object):
         self.frame_15 = QFrame(self.groupBox_3)
         self.frame_15.setObjectName(u"frame_15")
         self.frame_15.setMaximumSize(QSize(170, 16777215))
-        self.frame_15.setFrameShape(QFrame.StyledPanel)
-        self.frame_15.setFrameShadow(QFrame.Raised)
+        self.frame_15.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_15.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_15 = QHBoxLayout(self.frame_15)
         self.horizontalLayout_15.setObjectName(u"horizontalLayout_15")
         self.label_19 = QLabel(self.frame_15)
@@ -422,115 +409,9 @@ class RegisterSampleDialog(object):
         self.horizontalLayout_16.addWidget(self.frame_15)
 
 
-        self.verticalLayout_5.addWidget(self.groupBox_3)
+        self.verticalLayout_6.addWidget(self.groupBox_3)
 
-        self.groupBox_4 = QGroupBox(self.frame_18)
-        self.groupBox_4.setObjectName(u"groupBox_4")
-        self.groupBox_4.setMinimumSize(QSize(0, 0))
-        self.groupBox_4.setMaximumSize(QSize(400, 70))
-        self.horizontalLayout_17 = QHBoxLayout(self.groupBox_4)
-        self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
-        self.frame_16 = QFrame(self.groupBox_4)
-        self.frame_16.setObjectName(u"frame_16")
-        self.frame_16.setMinimumSize(QSize(0, 0))
-        self.frame_16.setMaximumSize(QSize(100, 16777215))
-        self.frame_16.setFrameShape(QFrame.StyledPanel)
-        self.frame_16.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_18 = QHBoxLayout(self.frame_16)
-        self.horizontalLayout_18.setObjectName(u"horizontalLayout_18")
-        self.label_21 = QLabel(self.frame_16)
-        self.label_21.setObjectName(u"label_21")
-        self.label_21.setMaximumSize(QSize(35, 20))
-
-        self.horizontalLayout_18.addWidget(self.label_21)
-
-        self.read_calcium = QLineEdit(self.frame_16)
-        self.read_calcium.setObjectName(u"read_calcium")
-        self.read_calcium.setMaximumSize(QSize(50, 20))
-
-        self.horizontalLayout_18.addWidget(self.read_calcium)
-
-
-        self.horizontalLayout_17.addWidget(self.frame_16)
-
-        self.frame_17 = QFrame(self.groupBox_4)
-        self.frame_17.setObjectName(u"frame_17")
-        self.frame_17.setMaximumSize(QSize(170, 16777215))
-        self.frame_17.setFrameShape(QFrame.StyledPanel)
-        self.frame_17.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_19 = QHBoxLayout(self.frame_17)
-        self.horizontalLayout_19.setObjectName(u"horizontalLayout_19")
-        self.label_22 = QLabel(self.frame_17)
-        self.label_22.setObjectName(u"label_22")
-
-        self.horizontalLayout_19.addWidget(self.label_22)
-
-        self.blank_test_calcium = QLineEdit(self.frame_17)
-        self.blank_test_calcium.setObjectName(u"blank_test_calcium")
-        self.blank_test_calcium.setMaximumSize(QSize(50, 16777215))
-
-        self.horizontalLayout_19.addWidget(self.blank_test_calcium)
-
-
-        self.horizontalLayout_17.addWidget(self.frame_17)
-
-
-        self.verticalLayout_5.addWidget(self.groupBox_4)
-
-        self.groupBox_5 = QGroupBox(self.frame_18)
-        self.groupBox_5.setObjectName(u"groupBox_5")
-        self.groupBox_5.setMinimumSize(QSize(0, 0))
-        self.groupBox_5.setMaximumSize(QSize(400, 70))
-        self.horizontalLayout_21 = QHBoxLayout(self.groupBox_5)
-        self.horizontalLayout_21.setObjectName(u"horizontalLayout_21")
-        self.frame_20 = QFrame(self.groupBox_5)
-        self.frame_20.setObjectName(u"frame_20")
-        self.frame_20.setMinimumSize(QSize(0, 0))
-        self.frame_20.setMaximumSize(QSize(100, 16777215))
-        self.frame_20.setFrameShape(QFrame.StyledPanel)
-        self.frame_20.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_22 = QHBoxLayout(self.frame_20)
-        self.horizontalLayout_22.setObjectName(u"horizontalLayout_22")
-        self.label_23 = QLabel(self.frame_20)
-        self.label_23.setObjectName(u"label_23")
-        self.label_23.setMaximumSize(QSize(35, 20))
-
-        self.horizontalLayout_22.addWidget(self.label_23)
-
-        self.read_magnesium = QLineEdit(self.frame_20)
-        self.read_magnesium.setObjectName(u"read_magnesium")
-        self.read_magnesium.setMaximumSize(QSize(50, 20))
-
-        self.horizontalLayout_22.addWidget(self.read_magnesium)
-
-
-        self.horizontalLayout_21.addWidget(self.frame_20)
-
-        self.frame_21 = QFrame(self.groupBox_5)
-        self.frame_21.setObjectName(u"frame_21")
-        self.frame_21.setMaximumSize(QSize(170, 16777215))
-        self.frame_21.setFrameShape(QFrame.StyledPanel)
-        self.frame_21.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_23 = QHBoxLayout(self.frame_21)
-        self.horizontalLayout_23.setObjectName(u"horizontalLayout_23")
-        self.label_24 = QLabel(self.frame_21)
-        self.label_24.setObjectName(u"label_24")
-
-        self.horizontalLayout_23.addWidget(self.label_24)
-
-        self.blank_test_magnesium = QLineEdit(self.frame_21)
-        self.blank_test_magnesium.setObjectName(u"blank_test_magnesium")
-        self.blank_test_magnesium.setMaximumSize(QSize(50, 16777215))
-
-        self.horizontalLayout_23.addWidget(self.blank_test_magnesium)
-
-
-        self.horizontalLayout_21.addWidget(self.frame_21)
-
-
-        self.verticalLayout_5.addWidget(self.groupBox_5)
-
-        self.groupBox_6 = QGroupBox(self.frame_18)
+        self.groupBox_6 = QGroupBox(self.frame_36)
         self.groupBox_6.setObjectName(u"groupBox_6")
         self.groupBox_6.setMinimumSize(QSize(0, 0))
         self.groupBox_6.setMaximumSize(QSize(400, 70))
@@ -540,8 +421,8 @@ class RegisterSampleDialog(object):
         self.frame_22.setObjectName(u"frame_22")
         self.frame_22.setMinimumSize(QSize(0, 0))
         self.frame_22.setMaximumSize(QSize(100, 16777215))
-        self.frame_22.setFrameShape(QFrame.StyledPanel)
-        self.frame_22.setFrameShadow(QFrame.Raised)
+        self.frame_22.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_22.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_25 = QHBoxLayout(self.frame_22)
         self.horizontalLayout_25.setObjectName(u"horizontalLayout_25")
         self.label_25 = QLabel(self.frame_22)
@@ -562,8 +443,8 @@ class RegisterSampleDialog(object):
         self.frame_23 = QFrame(self.groupBox_6)
         self.frame_23.setObjectName(u"frame_23")
         self.frame_23.setMaximumSize(QSize(170, 16777215))
-        self.frame_23.setFrameShape(QFrame.StyledPanel)
-        self.frame_23.setFrameShadow(QFrame.Raised)
+        self.frame_23.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_23.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_26 = QHBoxLayout(self.frame_23)
         self.horizontalLayout_26.setObjectName(u"horizontalLayout_26")
         self.label_26 = QLabel(self.frame_23)
@@ -581,7 +462,122 @@ class RegisterSampleDialog(object):
         self.horizontalLayout_24.addWidget(self.frame_23)
 
 
-        self.verticalLayout_5.addWidget(self.groupBox_6)
+        self.verticalLayout_6.addWidget(self.groupBox_6)
+
+        self.groupBox_4 = QGroupBox(self.frame_36)
+        self.groupBox_4.setObjectName(u"groupBox_4")
+        self.groupBox_4.setMinimumSize(QSize(0, 0))
+        self.groupBox_4.setMaximumSize(QSize(400, 70))
+        self.horizontalLayout_17 = QHBoxLayout(self.groupBox_4)
+        self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
+        self.frame_16 = QFrame(self.groupBox_4)
+        self.frame_16.setObjectName(u"frame_16")
+        self.frame_16.setMinimumSize(QSize(0, 0))
+        self.frame_16.setMaximumSize(QSize(100, 16777215))
+        self.frame_16.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_16.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_18 = QHBoxLayout(self.frame_16)
+        self.horizontalLayout_18.setObjectName(u"horizontalLayout_18")
+        self.label_21 = QLabel(self.frame_16)
+        self.label_21.setObjectName(u"label_21")
+        self.label_21.setMaximumSize(QSize(35, 20))
+
+        self.horizontalLayout_18.addWidget(self.label_21)
+
+        self.read_calcium = QLineEdit(self.frame_16)
+        self.read_calcium.setObjectName(u"read_calcium")
+        self.read_calcium.setMaximumSize(QSize(50, 20))
+
+        self.horizontalLayout_18.addWidget(self.read_calcium)
+
+
+        self.horizontalLayout_17.addWidget(self.frame_16)
+
+        self.frame_17 = QFrame(self.groupBox_4)
+        self.frame_17.setObjectName(u"frame_17")
+        self.frame_17.setMaximumSize(QSize(170, 16777215))
+        self.frame_17.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_17.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_19 = QHBoxLayout(self.frame_17)
+        self.horizontalLayout_19.setObjectName(u"horizontalLayout_19")
+        self.label_22 = QLabel(self.frame_17)
+        self.label_22.setObjectName(u"label_22")
+
+        self.horizontalLayout_19.addWidget(self.label_22)
+
+        self.blank_test_calcium = QLineEdit(self.frame_17)
+        self.blank_test_calcium.setObjectName(u"blank_test_calcium")
+        self.blank_test_calcium.setMaximumSize(QSize(50, 16777215))
+
+        self.horizontalLayout_19.addWidget(self.blank_test_calcium)
+
+
+        self.horizontalLayout_17.addWidget(self.frame_17)
+
+
+        self.verticalLayout_6.addWidget(self.groupBox_4)
+
+
+        self.horizontalLayout_20.addWidget(self.frame_36)
+
+        self.frame_18 = QFrame(self.groupBox_2)
+        self.frame_18.setObjectName(u"frame_18")
+        self.frame_18.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_18.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_5 = QVBoxLayout(self.frame_18)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.groupBox_5 = QGroupBox(self.frame_18)
+        self.groupBox_5.setObjectName(u"groupBox_5")
+        self.groupBox_5.setMinimumSize(QSize(0, 0))
+        self.groupBox_5.setMaximumSize(QSize(400, 70))
+        self.horizontalLayout_21 = QHBoxLayout(self.groupBox_5)
+        self.horizontalLayout_21.setObjectName(u"horizontalLayout_21")
+        self.frame_20 = QFrame(self.groupBox_5)
+        self.frame_20.setObjectName(u"frame_20")
+        self.frame_20.setMinimumSize(QSize(0, 0))
+        self.frame_20.setMaximumSize(QSize(100, 16777215))
+        self.frame_20.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_20.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_22 = QHBoxLayout(self.frame_20)
+        self.horizontalLayout_22.setObjectName(u"horizontalLayout_22")
+        self.label_23 = QLabel(self.frame_20)
+        self.label_23.setObjectName(u"label_23")
+        self.label_23.setMaximumSize(QSize(35, 20))
+
+        self.horizontalLayout_22.addWidget(self.label_23)
+
+        self.read_magnesium = QLineEdit(self.frame_20)
+        self.read_magnesium.setObjectName(u"read_magnesium")
+        self.read_magnesium.setMaximumSize(QSize(50, 20))
+
+        self.horizontalLayout_22.addWidget(self.read_magnesium)
+
+
+        self.horizontalLayout_21.addWidget(self.frame_20)
+
+        self.frame_21 = QFrame(self.groupBox_5)
+        self.frame_21.setObjectName(u"frame_21")
+        self.frame_21.setMaximumSize(QSize(170, 16777215))
+        self.frame_21.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_21.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_23 = QHBoxLayout(self.frame_21)
+        self.horizontalLayout_23.setObjectName(u"horizontalLayout_23")
+        self.label_24 = QLabel(self.frame_21)
+        self.label_24.setObjectName(u"label_24")
+
+        self.horizontalLayout_23.addWidget(self.label_24)
+
+        self.blank_test_magnesium = QLineEdit(self.frame_21)
+        self.blank_test_magnesium.setObjectName(u"blank_test_magnesium")
+        self.blank_test_magnesium.setMaximumSize(QSize(50, 16777215))
+
+        self.horizontalLayout_23.addWidget(self.blank_test_magnesium)
+
+
+        self.horizontalLayout_21.addWidget(self.frame_21)
+
+
+        self.verticalLayout_5.addWidget(self.groupBox_5)
 
         self.groupBox_7 = QGroupBox(self.frame_18)
         self.groupBox_7.setObjectName(u"groupBox_7")
@@ -593,8 +589,8 @@ class RegisterSampleDialog(object):
         self.frame_24.setObjectName(u"frame_24")
         self.frame_24.setMinimumSize(QSize(0, 0))
         self.frame_24.setMaximumSize(QSize(100, 16777215))
-        self.frame_24.setFrameShape(QFrame.StyledPanel)
-        self.frame_24.setFrameShadow(QFrame.Raised)
+        self.frame_24.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_24.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_28 = QHBoxLayout(self.frame_24)
         self.horizontalLayout_28.setObjectName(u"horizontalLayout_28")
         self.label_27 = QLabel(self.frame_24)
@@ -615,8 +611,8 @@ class RegisterSampleDialog(object):
         self.frame_25 = QFrame(self.groupBox_7)
         self.frame_25.setObjectName(u"frame_25")
         self.frame_25.setMaximumSize(QSize(170, 16777215))
-        self.frame_25.setFrameShape(QFrame.StyledPanel)
-        self.frame_25.setFrameShadow(QFrame.Raised)
+        self.frame_25.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_25.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_29 = QHBoxLayout(self.frame_25)
         self.horizontalLayout_29.setObjectName(u"horizontalLayout_29")
         self.label_28 = QLabel(self.frame_25)
@@ -646,8 +642,8 @@ class RegisterSampleDialog(object):
         self.frame_26.setObjectName(u"frame_26")
         self.frame_26.setMinimumSize(QSize(0, 0))
         self.frame_26.setMaximumSize(QSize(100, 16777215))
-        self.frame_26.setFrameShape(QFrame.StyledPanel)
-        self.frame_26.setFrameShadow(QFrame.Raised)
+        self.frame_26.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_26.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_31 = QHBoxLayout(self.frame_26)
         self.horizontalLayout_31.setObjectName(u"horizontalLayout_31")
         self.label_29 = QLabel(self.frame_26)
@@ -668,8 +664,8 @@ class RegisterSampleDialog(object):
         self.frame_27 = QFrame(self.groupBox_8)
         self.frame_27.setObjectName(u"frame_27")
         self.frame_27.setMaximumSize(QSize(170, 16777215))
-        self.frame_27.setFrameShape(QFrame.StyledPanel)
-        self.frame_27.setFrameShadow(QFrame.Raised)
+        self.frame_27.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_27.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_32 = QHBoxLayout(self.frame_27)
         self.horizontalLayout_32.setObjectName(u"horizontalLayout_32")
         self.label_30 = QLabel(self.frame_27)
@@ -699,8 +695,8 @@ class RegisterSampleDialog(object):
         self.frame_28.setObjectName(u"frame_28")
         self.frame_28.setMinimumSize(QSize(0, 0))
         self.frame_28.setMaximumSize(QSize(100, 16777215))
-        self.frame_28.setFrameShape(QFrame.StyledPanel)
-        self.frame_28.setFrameShadow(QFrame.Raised)
+        self.frame_28.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_28.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_34 = QHBoxLayout(self.frame_28)
         self.horizontalLayout_34.setObjectName(u"horizontalLayout_34")
         self.label_31 = QLabel(self.frame_28)
@@ -721,8 +717,8 @@ class RegisterSampleDialog(object):
         self.frame_29 = QFrame(self.groupBox_9)
         self.frame_29.setObjectName(u"frame_29")
         self.frame_29.setMaximumSize(QSize(170, 16777215))
-        self.frame_29.setFrameShape(QFrame.StyledPanel)
-        self.frame_29.setFrameShadow(QFrame.Raised)
+        self.frame_29.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_29.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_35 = QHBoxLayout(self.frame_29)
         self.horizontalLayout_35.setObjectName(u"horizontalLayout_35")
         self.label_32 = QLabel(self.frame_29)
@@ -750,12 +746,13 @@ class RegisterSampleDialog(object):
 
         self.frame_34 = QFrame(Dialog)
         self.frame_34.setObjectName(u"frame_34")
-        self.frame_34.setFrameShape(QFrame.StyledPanel)
-        self.frame_34.setFrameShadow(QFrame.Raised)
+        self.frame_34.setMaximumSize(QSize(16777215, 45))
+        self.frame_34.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_34.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_40 = QHBoxLayout(self.frame_34)
         self.horizontalLayout_40.setObjectName(u"horizontalLayout_40")
         self.register_button = QPushButton(self.frame_34)
-        self.register_button.setObjectName(u"pushButton")
+        self.register_button.setObjectName(u"register_button")
         self.register_button.setMaximumSize(QSize(150, 16777215))
 
         self.horizontalLayout_40.addWidget(self.register_button)
@@ -780,7 +777,6 @@ class RegisterSampleDialog(object):
         self.label_6.setText(QCoreApplication.translate("Dialog", u"\u00c1rea total (m\u00b2):", None))
         self.label.setText(QCoreApplication.translate("Dialog", u"Latitude:", None))
         self.label_4.setText(QCoreApplication.translate("Dialog", u"Longitude:", None))
-        self.groupBox_2.setTitle(QCoreApplication.translate("Dialog", u"Valores de medi\u00e7\u00e3o", None))
         self.label_7.setText(QCoreApplication.translate("Dialog", u"F\u00f3sforo (P)", None))
         self.label_8.setText(QCoreApplication.translate("Dialog", u"mg/dm-\u00b3", None))
         self.label_11.setText(QCoreApplication.translate("Dialog", u"Pot\u00e1ssio (K)", None))
@@ -791,20 +787,19 @@ class RegisterSampleDialog(object):
         self.label_16.setText("")
         self.label_13.setText(QCoreApplication.translate("Dialog", u"\u00cdndice SMP", None))
         self.label_14.setText("")
-        self.label_9.setText(QCoreApplication.translate("Dialog", u"H + Al", None))
-        self.label_10.setText(QCoreApplication.translate("Dialog", u"mg/dm-\u00b3", None))
+        self.groupBox_2.setTitle(QCoreApplication.translate("Dialog", u"Valores de medi\u00e7\u00e3o", None))
         self.groupBox_3.setTitle(QCoreApplication.translate("Dialog", u"Alum\u00ednio (Al) - cmol/dm-\u00b3", None))
         self.label_20.setText(QCoreApplication.translate("Dialog", u"Leitura:", None))
         self.label_19.setText(QCoreApplication.translate("Dialog", u"Prova em branco:", None))
+        self.groupBox_6.setTitle(QCoreApplication.translate("Dialog", u"Cobre (Cu) - mg/dm-\u00b3", None))
+        self.label_25.setText(QCoreApplication.translate("Dialog", u"Leitura:", None))
+        self.label_26.setText(QCoreApplication.translate("Dialog", u"Prova em branco:", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("Dialog", u"C\u00e1lcio (Ca) - cmol/dm-\u00b3", None))
         self.label_21.setText(QCoreApplication.translate("Dialog", u"Leitura:", None))
         self.label_22.setText(QCoreApplication.translate("Dialog", u"Prova em branco:", None))
         self.groupBox_5.setTitle(QCoreApplication.translate("Dialog", u"Magn\u00e9sio (Mg) - cmol/dm-\u00b3", None))
         self.label_23.setText(QCoreApplication.translate("Dialog", u"Leitura:", None))
         self.label_24.setText(QCoreApplication.translate("Dialog", u"Prova em branco:", None))
-        self.groupBox_6.setTitle(QCoreApplication.translate("Dialog", u"Cobre (Cu) - mg/dm-\u00b3", None))
-        self.label_25.setText(QCoreApplication.translate("Dialog", u"Leitura:", None))
-        self.label_26.setText(QCoreApplication.translate("Dialog", u"Prova em branco:", None))
         self.groupBox_7.setTitle(QCoreApplication.translate("Dialog", u"Ferro (Fe) - mg/dm-\u00b3", None))
         self.label_27.setText(QCoreApplication.translate("Dialog", u"Leitura:", None))
         self.label_28.setText(QCoreApplication.translate("Dialog", u"Prova em branco:", None))
