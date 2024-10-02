@@ -23,6 +23,8 @@ class DeleteConfirmation(QDialog, DeleteDialog):
                 db.delete_company(id)
             elif self.table_type == 'property':
                 db.delete_property(id)
+            elif self.table_type == 'sample':
+                db.delete_sample(id)
         db.close_connection()
         self.close()
 

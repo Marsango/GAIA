@@ -24,7 +24,7 @@ class SampleWindow(QDialog, SampleDialog):
         self.current_property_id: int = kwargs.get('property_id')
         self.add.clicked.connect(self.register_sample)
         self.edit.clicked.connect(self.edit_sample)
-        # self.delete_2.clicked.connect(self.delete_sample)
+        self.delete_2.clicked.connect(self.delete_sample)
         self.refresh_table()
 
     def refresh_table(self) -> None:
@@ -65,25 +65,25 @@ class SampleWindow(QDialog, SampleDialog):
         dialog.edit_mode(sample)
         dialog.exec()
         self.refresh_table()
-    #
-    # def delete_sample(self) -> None:
-    #     try:
-    #         selected_items: list[QTableWidgetItem] = self.property_table.selectedIndexes()
-    #         if len(selected_items) == 0:
-    #             widget: ErrorWindow = ErrorWindow("Você deve selecionar ao menos uma propriedade para deletar.")
-    #             widget.exec()
-    #             return
-    #         selected_properties: set[int] = {selected_item.row() for selected_item in selected_items}
-    #         list_of_ids: list[int] = [int(self.property_table.item(item_row, 0).text()) for item_row in selected_properties]
-    #         dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, table_type="property", message="Deseja deletar todos as propriedades selecionadas?")
-    #         dialog.exec()
-    #         sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Propriedade deletada com sucesso!")
-    #         sucessful_dialog.exec()
-    #     except Exception as e:
-    #         error = handle_exception(e)
-    #         widget: ErrorWindow = ErrorWindow(error)
-    #         widget.exec()
-    #     self.refresh_table()
+
+    def delete_sample(self) -> None:
+        try:
+            selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
+            if len(selected_items) == 0:
+                widget: ErrorWindow = ErrorWindow("Você deve selecionar ao menos uma propriedade para deletar.")
+                widget.exec()
+                return
+            selected_samples: set[int] = {selected_item.row() for selected_item in selected_items}
+            list_of_ids: list[int] = [int(self.sample_table.item(item_row, 0).text()) for item_row in selected_samples]
+            dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, table_type="sample", message="Deseja deletar todas as amostras selecionadas?")
+            dialog.exec()
+            sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Amostras deletadas com sucesso!")
+            sucessful_dialog.exec()
+        except Exception as e:
+            error = handle_exception(e)
+            widget: ErrorWindow = ErrorWindow(error)
+            widget.exec()
+        self.refresh_table()
 
 
 

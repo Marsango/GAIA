@@ -1,6 +1,9 @@
 import math
 from typing import get_type_hints
+from backend.classes.Configuration import Configuration
 from backend.classes.utils import verify_type
+from interface.SucessfulRegister import SucessfulRegister
+from interface.ConfigurationWindow import ConfigurationWindow
 from datetime import datetime
 from datetime import date
 conversion_table = {
@@ -23,15 +26,23 @@ class Sample:
                  magnesium: float,
                  copper: float, iron: float, manganese: float, zinc: float) -> None:
         verify_type(get_type_hints(Sample.__init__), locals())
+        try:
+            current_config: Configuration = Configuration()
+        except:
+            dialog_message: SucessfulRegister = SucessfulRegister(sucess_message="Os fatores variáveis precisam ser configurados.")
+            dialog_message.exec()
+            dialog_config: ConfigurationWindow = ConfigurationWindow()
+            dialog_config.exec()
+            current_config: Configuration = Configuration()
         self.__description: str = description
         self.__total_area: float = total_area
         self.__depth: float = depth
         self.__collection_date: str | None = collection_date
         self.__latitude: float = latitude
         self.__longitude: float = longitude
-        self.__phosphorus: float = phosphorus
-        self.__potassium: float = potassium
-        self.__organic_matter: float = organic_matter
+        self.__phosphorus: float = phosphorus * current_config.get_phosphor_factor()
+        self.__potassium: float = potassium * current_config.get_phosphor_factor()
+        self.__organic_matter: float = organic_matter * 1.724
         self.__ph: float = ph
         self.__smp: float = smp
         self.__aluminum: float = aluminum
@@ -75,4 +86,3 @@ class Sample:
         else:
             raise ValueError("Error with values of 'longitude'")
 
-    

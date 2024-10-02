@@ -140,6 +140,11 @@ class Database:
         WHERE id = :id """, {'id': id})
         self.__con.commit()
 
+    def delete_sample(self, id: int) -> None:
+        self.__cur.execute("""DELETE from sample
+        WHERE id = :id """, {'id': id})
+        self.__con.commit()
+
     def edit_address(self, address: Address, id: int, requester_type: Person | Company):
         requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else self.get_companies(id=id)[0]
         address_dict: dict[str, str] = to_dict(address)
