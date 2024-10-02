@@ -61,7 +61,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
         self.frame.setSizePolicy(sizePolicy)
         self.frame.setStyleSheet(u"color: rgb(70, 0, 0);")
-        self.frame.setFrameShape(QFrame.NoFrame)
+        self.frame.setFrameShape(QFrame.Shape.NoFrame)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
@@ -72,7 +72,7 @@ class Ui_MainWindow(object):
         self.label.setSizePolicy(sizePolicy)
         self.label.setPixmap(QPixmap(u"../../../../Downloads/UpscaleImage_1_20240722.jpeg"))
         self.label.setScaledContents(False)
-        self.label.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
 
         self.horizontalLayout.addWidget(self.label)
 
@@ -82,23 +82,16 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1958, 21))
+        self.menubar.setGeometry(QRect(0, 0, 1958, 33))
         self.menuCadastro = QMenu(self.menubar)
         self.menuCadastro.setObjectName(u"menuCadastro")
-        self.menuLaudo = QMenu(self.menubar)
-        self.menuLaudo.setObjectName(u"menuLaudo")
         self.menuConfigura_es = QMenu(self.menubar)
         self.menuConfigura_es.setObjectName(u"menuConfigura_es")
         MainWindow.setMenuBar(self.menubar)
 
         self.menubar.addAction(self.menuCadastro.menuAction())
-        self.menubar.addAction(self.menuLaudo.menuAction())
         self.menubar.addAction(self.menuConfigura_es.menuAction())
         self.menuCadastro.addAction(self.actionSolicitantes)
-        self.menuCadastro.addAction(self.actionPropriedade)
-        self.menuCadastro.addAction(self.actionAmostra)
-        self.menuLaudo.addAction(self.actionGerar_laudo)
-        self.menuLaudo.addAction(self.actionConsultar_laudo)
         self.menuConfigura_es.addAction(self.actionGr_ficos)
         self.menuConfigura_es.addAction(self.actionFatores_vari_veis)
 
@@ -120,7 +113,6 @@ class Ui_MainWindow(object):
         self.actionSolicitantes.setText(QCoreApplication.translate("MainWindow", u"Solicitantes", None))
         self.label.setText("")
         self.menuCadastro.setTitle(QCoreApplication.translate("MainWindow", u"Cadastro", None))
-        self.menuLaudo.setTitle(QCoreApplication.translate("MainWindow", u"Laudo", None))
         self.menuConfigura_es.setTitle(QCoreApplication.translate("MainWindow", u"Configuracoes", None))
     # retranslateUi
 
