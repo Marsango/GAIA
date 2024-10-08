@@ -1,13 +1,13 @@
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView)
-from base_windows.requester_window import RequesterDialog
-from ErrorWindow import ErrorWindow
-from DeleteConfirmation import DeleteConfirmation
-from SucessfulRegister import SucessfulRegister
+from interface.base_windows.requester_window import RequesterDialog
+from interface.ErrorWindow import ErrorWindow
+from interface.DeleteConfirmation import DeleteConfirmation
+from interface.SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
-from RegisterCompany import RegisterCompany
-from RegisterPerson import RegisterPerson
+from interface.RegisterCompany import RegisterCompany
+from interface.RegisterPerson import RegisterPerson
 from backend.classes.Database import Database
-from PropertyWindow import PropertyWindow
+from interface.PropertyWindow import PropertyWindow
 import sqlite3
 
 

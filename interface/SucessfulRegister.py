@@ -1,4 +1,4 @@
-from base_windows.sucessful_register import SucessfulDialog
+from interface.base_windows.sucessful_register import SucessfulDialog
 from PySide6.QtWidgets import (QDialog)
 
 class SucessfulRegister(QDialog, SucessfulDialog):

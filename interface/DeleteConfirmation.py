@@ -1,5 +1,5 @@
 from backend.classes.Database import Database
-from base_windows.delete_confirmation import DeleteDialog
+from interface.base_windows.delete_confirmation import DeleteDialog
 from PySide6.QtWidgets import (QDialog)
 
 class DeleteConfirmation(QDialog, DeleteDialog):

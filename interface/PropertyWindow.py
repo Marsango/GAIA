@@ -1,13 +1,13 @@
 from PySide6.QtWidgets import (QDialog, QCompleter, QTableWidgetItem)
-from base_windows.property_window import PropertyDialog
+from interface.base_windows.property_window import PropertyDialog
 from PySide6.QtCore import Qt
-from ErrorWindow import ErrorWindow
-from DeleteConfirmation import DeleteConfirmation
-from SucessfulRegister import SucessfulRegister
+from interface.ErrorWindow import ErrorWindow
+from interface.DeleteConfirmation import DeleteConfirmation
+from interface.SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
-from RegisterProperty import RegisterProperty
+from interface.RegisterProperty import RegisterProperty
 from backend.classes.Database import Database
-from SampleWindow import SampleWindow
+from interface.SampleWindow import SampleWindow
 import sqlite3
 
 class PropertyWindow(QDialog, PropertyDialog):

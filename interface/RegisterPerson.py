@@ -1,11 +1,11 @@
 from PySide6.QtWidgets import (QDialog, QCompleter)
-from base_windows.register_person import RegisterPersonDialog
+from interface.base_windows.register_person import RegisterPersonDialog
 from PySide6.QtCore import Qt
 from backend.classes.Database import Database
 from backend.classes.Address import Address
 from backend.classes.Person import Person
-from ErrorWindow import ErrorWindow
-from SucessfulRegister import SucessfulRegister
+from interface.ErrorWindow import ErrorWindow
+from interface.SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
 class RegisterPerson(QDialog, RegisterPersonDialog):
     def __init__(self) -> None:

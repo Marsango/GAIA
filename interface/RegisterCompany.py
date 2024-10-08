@@ -1,9 +1,9 @@
-from base_windows.register_company import RegisterCompanyDialog
+from interface.base_windows.register_company import RegisterCompanyDialog
 from backend.classes.Company import Company
 from backend.classes.Address import Address
 from PySide6.QtCore import Qt
-from ErrorWindow import ErrorWindow
-from SucessfulRegister import SucessfulRegister
+from interface.ErrorWindow import ErrorWindow
+from interface.SucessfulRegister import SucessfulRegister
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from backend.classes.Database import Database
 from backend.classes.utils import handle_exception
