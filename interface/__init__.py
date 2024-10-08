@@ -5,7 +5,6 @@ from interface.base_windows.main_window import Ui_MainWindow
 from interface.RequesterWindow import RequesterWindow
 from interface.ConfigurationWindow import ConfigurationWindow
 
-
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self) -> None:
         super(MainWindow, self).__init__()
