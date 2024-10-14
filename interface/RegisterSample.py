@@ -20,6 +20,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.sample_number.setReadOnly(True)
         self.sample_number.setText(str(sample_number))
 
+
     def edit_mode(self, sample_data) -> None:
         self.sample_number.clear()
         self.sample_number.insert(str(sample_data["sample_number"]))

@@ -20,6 +20,7 @@ class SampleWindow(QDialog, SampleDialog):
         self.owner.setReadOnly(True)
         self._property.setText(_property)
         self._property.setReadOnly(True)
+        self.sample_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.current_owner_id: int = kwargs.get('owner_id')
         self.current_property_id: int = kwargs.get('property_id')
         self.add.clicked.connect(self.register_sample)
