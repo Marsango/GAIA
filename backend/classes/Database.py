@@ -457,3 +457,28 @@ class Database:
             params = {}
         self.__cur.execute(query, params)
         return self.__cur.fetchall()
+
+    def get_sample_info(self, sample_id: int):
+        self.__cur.execute("""SELECT
+            COALESCE(person.name, company.company_name) AS requester_name,
+            CONCAT(street.street_name, ', ', address.address_number, ', ', city.city_name, ', ', state.state_name, ', ', country.country_name) AS address,
+            property.property_name,
+            sample.description AS sample_name,
+            sample.sample_number,
+            sample.collection_date,
+            sample.depth,
+            property.registration_number
+            FROM
+                sample
+            JOIN property ON sample.fk_property_id = property.id
+            JOIN requester ON property.fk_requester_id = requester.requester_id
+            LEFT JOIN person ON person.fk_requester_id = requester.requester_id
+            LEFT JOIN company ON company.fk_requester_id = requester.requester_id
+            JOIN address ON requester.fk_address_id = address.address_id
+            JOIN street ON address.fk_street_id = street.street_id
+            JOIN city ON address.fk_city_id = city.city_id
+            JOIN state ON address.fk_state_id = state.state_id
+            JOIN country ON address.fk_country_id = country.country_id
+            WHERE sample.id = ?;
+        """, (sample_id,))
+        return self.__cur.fetchone()

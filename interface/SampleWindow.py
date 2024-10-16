@@ -6,6 +6,7 @@ from interface.SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
 from backend.classes.Database import Database
 from interface.RegisterSample import RegisterSample
+from interface.GenerateReport import GenerateReport
 import sqlite3
 
 
@@ -27,6 +28,7 @@ class SampleWindow(QDialog, SampleDialog):
         self.edit.clicked.connect(self.edit_sample)
         self.delete_2.clicked.connect(self.delete_sample)
         self.refresh_table()
+        self.generate_report.clicked.connect(self.report_window)
 
     def refresh_table(self) -> None:
         db: Database = Database()
@@ -71,7 +73,7 @@ class SampleWindow(QDialog, SampleDialog):
         try:
             selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
             if len(selected_items) == 0:
-                widget: ErrorWindow = ErrorWindow("Você deve selecionar ao menos uma propriedade para deletar.")
+                widget: ErrorWindow = ErrorWindow("Você deve selecionar ao menos uma amostra para deletar.")
                 widget.exec()
                 return
             selected_samples: set[int] = {selected_item.row() for selected_item in selected_items}
@@ -86,5 +88,18 @@ class SampleWindow(QDialog, SampleDialog):
             widget.exec()
         self.refresh_table()
 
-
-
+    def report_window(self):
+        selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
+        if len(selected_items) == 0:
+            widget: ErrorWindow = ErrorWindow("Você deve selecionar uma amostra para gerar um laudo.")
+            widget.exec()
+            return
+        for data in selected_items:
+            if data.row() != selected_items[0].row():
+                widget: ErrorWindow = ErrorWindow("Você gerar laudo de uma amostra por vez.")
+                widget.exec()
+                return
+        row: int = selected_items[0].row()
+        sample_id: int = int(self.sample_table.item(row, 0).text())
+        dialog: GenerateReport = GenerateReport(sample_id)
+        dialog.exec()
