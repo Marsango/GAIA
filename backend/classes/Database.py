@@ -62,7 +62,7 @@ class Database:
         id INTEGER PRIMARY KEY, description varchar(255), sample_number integer, collection_date varchar(20), total_area float,
         latitude float, smp float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
-         zinc float, base_sum float, ctc float, v_percent float , aluminum_saturation float,
+         zinc float, base_sum float, ctc float, v_percent float, aluminum_saturation float,
         effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
         self.__con.commit()
 
