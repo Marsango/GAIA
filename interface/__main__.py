@@ -2,6 +2,8 @@ import sys
 import os
 from PySide6.QtSvgWidgets import *
 from PySide6.QtWidgets import (QApplication, QMainWindow)
+
+from interface.GenerateReport import GenerateReport
 from interface.base_windows.main_window import Ui_MainWindow
 from interface.RequesterWindow import RequesterWindow
 from interface.ConfigurationWindow import ConfigurationWindow
@@ -19,6 +21,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.horizontalLayout.addWidget(self.svg_widget)
         self.actionSolicitantes.triggered.connect(self.open_requester_window)
         self.actionFatores_vari_veis.triggered.connect(self.open_config_window)
+        self.actionGr_ficos.triggered.connect(self.open_test_window)
 
 
     def open_requester_window(self) -> None:
@@ -28,6 +31,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def open_config_window(self) -> None:
         dialog: ConfigurationWindow = ConfigurationWindow()
         dialog.load()
+        dialog.exec()
+
+    def open_test_window(self):
+        dialog: GenerateReport = GenerateReport()
         dialog.exec()
 
 

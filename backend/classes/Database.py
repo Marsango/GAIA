@@ -62,7 +62,7 @@ class Database:
         id INTEGER PRIMARY KEY, description varchar(255), sample_number integer, collection_date varchar(20), total_area float,
         latitude float, smp float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
-         zinc float, base_sum float, ctc float, v_percent float , aluminum_saturation float,
+         zinc float, base_sum float, ctc float, v_percent float, aluminum_saturation float,
         effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
         self.__con.commit()
 
@@ -471,3 +471,28 @@ class Database:
             params = {}
         self.__cur.execute(query, params)
         return self.__cur.fetchall()
+
+    def get_sample_info(self, sample_id: int):
+        self.__cur.execute("""SELECT
+            COALESCE(person.name, company.company_name) AS requester_name,
+            CONCAT(street.street_name, ', ', address.address_number, ', ', city.city_name, ', ', state.state_name, ', ', country.country_name) AS address,
+            property.property_name,
+            sample.description AS sample_name,
+            sample.sample_number,
+            sample.collection_date,
+            sample.depth,
+            property.registration_number
+            FROM
+                sample
+            JOIN property ON sample.fk_property_id = property.id
+            JOIN requester ON property.fk_requester_id = requester.requester_id
+            LEFT JOIN person ON person.fk_requester_id = requester.requester_id
+            LEFT JOIN company ON company.fk_requester_id = requester.requester_id
+            JOIN address ON requester.fk_address_id = address.address_id
+            JOIN street ON address.fk_street_id = street.street_id
+            JOIN city ON address.fk_city_id = city.city_id
+            JOIN state ON address.fk_state_id = state.state_id
+            JOIN country ON address.fk_country_id = country.country_id
+            WHERE sample.id = ?;
+        """, (sample_id,))
+        return self.__cur.fetchone()

@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QDialog, QCompleter, QTableWidgetItem)
+from PySide6.QtWidgets import (QDialog, QCompleter, QTableWidgetItem, QAbstractItemView)
 from interface.base_windows.property_window import PropertyDialog
 from PySide6.QtCore import Qt
 from interface.ErrorWindow import ErrorWindow
@@ -23,6 +23,7 @@ class PropertyWindow(QDialog, PropertyDialog):
         self.add.clicked.connect(self.register_property)
         self.edit.clicked.connect(self.edit_property)
         self.delete_2.clicked.connect(self.delete_property)
+        self.property_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view_samples.clicked.connect(self.open_sample_widget)
         self.refresh_table()
 
