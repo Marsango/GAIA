@@ -1,13 +1,13 @@
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView)
-from base_windows.requester_window import RequesterDialog
-from ErrorWindow import ErrorWindow
-from DeleteConfirmation import DeleteConfirmation
-from SucessfulRegister import SucessfulRegister
+from interface.base_windows.requester_window import RequesterDialog
+from interface.ErrorWindow import ErrorWindow
+from interface.DeleteConfirmation import DeleteConfirmation
+from interface.SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
-from RegisterCompany import RegisterCompany
-from RegisterPerson import RegisterPerson
+from interface.RegisterCompany import RegisterCompany
+from interface.RegisterPerson import RegisterPerson
 from backend.classes.Database import Database
-from PropertyWindow import PropertyWindow
+from interface.PropertyWindow import PropertyWindow
 import sqlite3
 
 
@@ -60,17 +60,34 @@ class RequesterWindow(QDialog, RequesterDialog):
                 widget: ErrorWindow = ErrorWindow("Você deve selecionar um solicitante para deletar.")
                 widget.exec()
                 return
+
             selected_requesters: set[int] = {selected_item.row() for selected_item in selected_items}
             list_of_ids: list[int] = [int(self.requester_table.item(item_row, 0).text()) for item_row in selected_requesters]
-            dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, requester_type=self.current_table_type)
-            dialog.exec()
-            sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Solicitante deletado com sucesso!")
-            sucessful_dialog.exec()
+
+            # Exibir janela de confirmação antes de proceder com a exclusão
+            dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids,  table_type=self.current_table_type, message="Deseja deletar todos os solicitantes selecionados?")
+            if dialog.exec() == QDialog.Accepted:  # Só deletar se o usuário confirmar
+                db: Database = Database()
+
+                # Deletar solicitantes da base de dados
+                for requester_id in list_of_ids:
+                    if self.current_table_type == 'person':
+                        db.delete_person(requester_id)
+                    else:
+                        db.delete_company(requester_id)
+
+                db.close_connection()
+
+                # Exibir diálogo de sucesso
+                sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Solicitante deletado com sucesso!")
+                sucessful_dialog.exec()
+
         except Exception as e:
             error = handle_exception(e)
             widget: ErrorWindow = ErrorWindow(error)
             widget.exec()
         self.refresh_table()
+
 
 
     def type_change(self) -> None:

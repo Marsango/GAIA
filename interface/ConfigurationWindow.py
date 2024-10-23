@@ -1,4 +1,4 @@
-from base_windows.configuration_window import ConfigurationDialog
+from interface.base_windows.configuration_window import ConfigurationDialog
 from backend.classes.Configuration import Configuration
 from PySide6.QtWidgets import (QDialog)
 

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'error_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.7.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -22,7 +22,7 @@ class ErrorDialog(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(411, 199)
+        Form.resize(756, 216)
         Form.setStyleSheet(u"QFrame { \n"
 " border: none; background: transparent;\n"
 " }")
@@ -30,38 +30,19 @@ class ErrorDialog(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.frame_3 = QFrame(Form)
         self.frame_3.setObjectName(u"frame_3")
-        self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_3.setFrameShape(QFrame.NoFrame)
         self.horizontalLayout = QHBoxLayout(self.frame_3)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.frame_2 = QFrame(self.frame_3)
-        self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setMinimumSize(QSize(0, 115))
-        self.frame_2.setMaximumSize(QSize(100, 16777215))
-        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_2 = QHBoxLayout(self.frame_2)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.label = QLabel(self.frame_2)
-        self.label.setObjectName(u"label")
-        self.label.setMinimumSize(QSize(50, 50))
-        self.label.setMaximumSize(QSize(50, 50))
-        self.label.setPixmap(QPixmap(u"../images/error-icon-4 (2).png"))
-
-        self.horizontalLayout_2.addWidget(self.label)
-
-
-        self.horizontalLayout.addWidget(self.frame_2)
-
         self.frame_4 = QFrame(self.frame_3)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setMinimumSize(QSize(0, 115))
-        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_4.setFrameShape(QFrame.NoFrame)
         self.verticalLayout_2 = QVBoxLayout(self.frame_4)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.label_2 = QLabel(self.frame_4)
         self.label_2.setObjectName(u"label_2")
+        self.label_2.setAlignment(Qt.AlignCenter)
+        self.label_2.setStyleSheet("font-size: 16pt;")
 
         self.verticalLayout_2.addWidget(self.label_2)
 
@@ -73,8 +54,7 @@ class ErrorDialog(object):
 
         self.frame = QFrame(Form)
         self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.NoFrame)
         self.horizontalLayout_3 = QHBoxLayout(self.frame)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.pushButton = QPushButton(self.frame)
@@ -96,7 +76,6 @@ class ErrorDialog(object):
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
-        self.label.setText("")
         self.label_2.setText(QCoreApplication.translate("Form", u"<html><head/><body><p align=\"center\"><span style=\" font-size:12pt;\">TextLabel</span></p></body></html>", None))
         self.pushButton.setText(QCoreApplication.translate("Form", u"Ok", None))
     # retranslateUi

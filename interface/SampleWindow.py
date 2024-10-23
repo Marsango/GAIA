@@ -1,11 +1,11 @@
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView)
-from base_windows.sample_window import SampleDialog
-from ErrorWindow import ErrorWindow
-from DeleteConfirmation import DeleteConfirmation
-from SucessfulRegister import SucessfulRegister
+from interface.base_windows.sample_window import SampleDialog
+from interface.ErrorWindow import ErrorWindow
+from interface.DeleteConfirmation import DeleteConfirmation
+from interface.SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
 from backend.classes.Database import Database
-from RegisterSample import RegisterSample
+from interface.RegisterSample import RegisterSample
 import sqlite3
 
 
@@ -70,15 +70,28 @@ class SampleWindow(QDialog, SampleDialog):
         try:
             selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
             if len(selected_items) == 0:
-                widget: ErrorWindow = ErrorWindow("Você deve selecionar ao menos uma propriedade para deletar.")
+                widget: ErrorWindow = ErrorWindow("Você deve selecionar ao menos uma amostra para deletar.")
                 widget.exec()
                 return
+        
             selected_samples: set[int] = {selected_item.row() for selected_item in selected_items}
             list_of_ids: list[int] = [int(self.sample_table.item(item_row, 0).text()) for item_row in selected_samples]
+
             dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, table_type="sample", message="Deseja deletar todas as amostras selecionadas?")
-            dialog.exec()
-            sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Amostras deletadas com sucesso!")
-            sucessful_dialog.exec()
+            if dialog.exec() == QDialog.Accepted:  # Só deletar se o usuário confirmar
+                db: Database = Database()
+
+                # Deletar solicitantes da base de dados
+                for requester_id in list_of_ids:
+                    if self.current_table_type == 'sample':
+                        db.delete_sample(requester_id)
+
+                db.close_connection()
+
+                # Exibir diálogo de sucesso
+                sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Solicitante deletado com sucesso!")
+                sucessful_dialog.exec()
+
         except Exception as e:
             error = handle_exception(e)
             widget: ErrorWindow = ErrorWindow(error)

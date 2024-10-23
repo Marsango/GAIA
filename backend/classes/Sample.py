@@ -51,8 +51,9 @@ class Sample:
         else:
             try:
                 self.__h_al: float = conversion_table[round(self.__smp, 1)]
-            except:
-                raise ValueError("Error with values of 'SMP'")
+            except KeyError:
+                raise ValueError(f"Error with values of 'SMP'. No conversion found for {round(self.__smp, 1)}.") #raise ValueError("Error with values of 'SMP'")
+                
         self.__h_al: float = 1.0
         self.__calcium: float = calcium
         self.__magnesium: float = magnesium
@@ -66,6 +67,7 @@ class Sample:
         self.__aluminum_saturation: float = (100 * self.__aluminum) / (self.__base_sum + self.__aluminum)
         self.__effective_ctc: float = self.__ctc + self.__aluminum
         self.verify_valid_date(collection_date)
+
 
 
     def verify_valid_date(self, collection_date: str) -> None:

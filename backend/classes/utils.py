@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from .exceptions import CPFAlreadyExistsError
 
 
 def read_current_stored_config() -> dict[str, float]:
@@ -35,8 +36,8 @@ def translate_errors(field):
     else:
         return field
 
-
 def handle_exception(e):
+    # Verifica se é um erro de tipo ou valor
     if isinstance(e, TypeError) or isinstance(e, ValueError):
         if 'is empty' in str(e):
             empty_field = str(e).split("'")[1]
@@ -44,5 +45,11 @@ def handle_exception(e):
         elif 'Error with values of' in str(e):
             invalid_field = str(e).split("'")[1]
             return f"O campo {translate_errors(invalid_field)} é inválido!"
+    
+    # Verifica se é um erro de CPF duplicado
+    elif isinstance(e, CPFAlreadyExistsError):
+        return str(e) 
+
+    # Trata outros tipos de erro como desconhecido
     else:
         return "Erro desconhecido!"

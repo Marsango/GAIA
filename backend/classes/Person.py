@@ -4,10 +4,15 @@ from typing import get_type_hints, Any
 from backend.classes.utils import verify_type
 from backend.classes.Address import Address
 from datetime import datetime
+from .exceptions import CPFAlreadyExistsError
 
 
 class Person(Requester):
+    cpf_database: list[str] = []
+
     def __init__(self, phone_number: str, email: str, name: str, birth_date: str, cpf: str, address: Address) -> None:
+        if cpf in Person.cpf_database:
+            raise CPFAlreadyExistsError(cpf)
         self.__birth_date: date | None = None
         self.__cpf: str | None = None
         verify_type(get_type_hints(Person.__init__), locals())
@@ -15,6 +20,7 @@ class Person(Requester):
         self.verify_valid_cpf(cpf)
         self.__name: str | None = None
         self.verify_name(name)
+        Person.cpf_database.append(cpf)
         Requester.__init__(self, phone_number, email, address)
 
     def verify_valid_date(self, birth_date: str) -> None:

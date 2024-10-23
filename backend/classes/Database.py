@@ -124,10 +124,24 @@ class Database:
         self.__con.commit()
 
     def delete_person(self, id: int) -> None:
-        person_dict: sqlite3.Row = self.get_persons(id=id)[0]
-        self.__cur.execute("""DELETE from address 
-        WHERE address_id = :address_id """, {'address_id': person_dict['address_id']})
+        person_records = self.get_persons(id=id)
+        if not person_records:
+            raise ValueError("Solicitante não encontrado.")
+        
+        person_dict: sqlite3.Row = person_records[0]
+    
+        # Exclua da tabela person
+        self.__cur.execute("""DELETE FROM person WHERE id = :id""", {'id': id})
+
+        # Exclua da tabela requester
+        self.__cur.execute("""DELETE FROM requester WHERE requester_id = :requester_id""", {'requester_id': person_dict['requester_id']})
+
+        # Exclua o endereço (caso a exclusão em cascata não esteja funcionando)
+        self.__cur.execute("""DELETE FROM address WHERE address_id = :address_id""", {'address_id': person_dict['address_id']})
+
+        # Confirme as alterações
         self.__con.commit()
+
 
     def delete_company(self, id: int) -> None:
         company_dict: sqlite3.Row = self.get_companies(id=id)[0]

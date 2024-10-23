@@ -1,10 +1,10 @@
 from PySide6.QtWidgets import (QDialog, QCompleter)
-from base_windows.register_property import RegisterPropertyDialog
+from interface.base_windows.register_property import RegisterPropertyDialog
 from PySide6.QtCore import Qt
 from backend.classes.Database import Database
 from backend.classes.Property import Property
-from ErrorWindow import ErrorWindow
-from SucessfulRegister import SucessfulRegister
+from interface.ErrorWindow import ErrorWindow
+from interface.SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
 
 

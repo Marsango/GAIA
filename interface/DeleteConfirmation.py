@@ -1,10 +1,10 @@
 from backend.classes.Database import Database
-from base_windows.delete_confirmation import DeleteDialog
+from interface.base_windows.delete_confirmation import DeleteDialog
 from PySide6.QtWidgets import (QDialog)
 
 class DeleteConfirmation(QDialog, DeleteDialog):
     def __init__(self, list_of_ids: list[int], table_type: str, **kwargs) -> None:
-        super(DeleteConfirmation, self).__init__()
+        super().__init__()
         self.setupUi(self)
         self.confirm_button.clicked.connect(self.delete_action)
         self.cancel_button.clicked.connect(self.close)
@@ -15,16 +15,20 @@ class DeleteConfirmation(QDialog, DeleteDialog):
             self.label.setText(f"<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">{message}</span></p></body></html>")
 
     def delete_action(self) -> None:
-        db: Database = Database()
-        for id in self.list_of_ids:
-            if self.table_type == 'person':
-                db.delete_person(id)
-            elif self.table_type == 'company':
-                db.delete_company(id)
-            elif self.table_type == 'property':
-                db.delete_property(id)
-            elif self.table_type == 'sample':
-                db.delete_sample(id)
-        db.close_connection()
-        self.close()
+        try:
+            db: Database = Database()
+            for id in self.list_of_ids:
+                if self.table_type == 'person':
+                    db.delete_person(id)
+                elif self.table_type == 'company':
+                    db.delete_company(id)
+                elif self.table_type == 'property':
+                    db.delete_property(id)
+                elif self.table_type == 'sample':
+                    db.delete_sample(id)
+        except Exception as e:
+            print(f"Erro ao deletar: {e}")
+        finally:
+            db.close_connection()
+            self.close()
 

@@ -1,4 +1,4 @@
-from base_windows.error_window import ErrorDialog
+from interface.base_windows.error_window import ErrorDialog
 from PySide6.QtWidgets import (QDialog)
 
 
