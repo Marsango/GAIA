@@ -1,7 +1,9 @@
 import sqlite3
 import os
+
 from typing import Any
 from datetime import datetime
+from backend.classes.exceptions import CPFAlreadyExistsError
 from backend.classes.Person import Person
 from backend.classes.Address import Address
 from backend.classes.Company import Company
@@ -71,8 +73,12 @@ class Database:
         requester_id: int = self.insert_requester(person, address_id)
         person_dict: dict[str, Any] = to_dict(person)
         person_dict['requester_id'] = requester_id
-        self.__cur.execute("""INSERT INTO person(name, birth_date, cpf, fk_requester_id)
-        VALUES(:name, :birth_date, :cpf, :requester_id)""", person_dict)
+        try:
+            self.__cur.execute("""INSERT INTO person(name, birth_date, cpf, fk_requester_id)
+            VALUES(:name, :birth_date, :cpf, :requester_id)""", person_dict)
+        except sqlite3.IntegrityError as e:
+            if 'UNIQUE constraint failed: person.cpf' in str(e):
+                raise CPFAlreadyExistsError(person_dict['cpf'])
         self.__con.commit()
 
     def edit_person(self, person: Person, address: Address, id: int) -> None:
