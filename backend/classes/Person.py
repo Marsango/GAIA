@@ -50,5 +50,5 @@ class Person(Requester):
 
     def verify_name(self, name: str):
         if any(char.isdigit() for char in name):
-            raise ValueError("Error with values of 'cpf'")
+            raise ValueError("Error with values of 'name'")
         self.__name = name
