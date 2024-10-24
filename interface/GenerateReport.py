@@ -65,7 +65,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
             self.tableWidget.setItem(row, 5, QTableWidgetItem(str(parameters["very high"])))
 
     def open_save_dialog(self) -> None:
-        filename: QFileDialog.getSaveFileName = QFileDialog.getSaveFileName()
+        filename: QFileDialog.getSaveFileName = QFileDialog.getSaveFileName(filter="*.pdf")
         db: Database = Database()
         sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
         self.generate_pdf(filename[0], sample_info)

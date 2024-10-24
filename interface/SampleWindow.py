@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView)
+from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.sample_window import SampleDialog
 from interface.ErrorWindow import ErrorWindow
 from interface.DeleteConfirmation import DeleteConfirmation
@@ -22,6 +22,9 @@ class SampleWindow(QDialog, SampleDialog):
         self._property.setText(_property)
         self._property.setReadOnly(True)
         self.sample_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.sample_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.sample_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.sample_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.current_owner_id: int = kwargs.get('owner_id')
         self.current_property_id: int = kwargs.get('property_id')
         self.add.clicked.connect(self.register_sample)
