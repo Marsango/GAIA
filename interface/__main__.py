@@ -21,7 +21,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.horizontalLayout.addWidget(self.svg_widget)
         self.actionSolicitantes.triggered.connect(self.open_requester_window)
         self.actionFatores_vari_veis.triggered.connect(self.open_config_window)
-        self.actionGr_ficos.triggered.connect(self.open_test_window)
 
 
     def open_requester_window(self) -> None:
@@ -33,9 +32,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         dialog.load()
         dialog.exec()
 
-    def open_test_window(self):
-        dialog: GenerateReport = GenerateReport()
-        dialog.exec()
 
 
 
