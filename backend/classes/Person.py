@@ -42,7 +42,7 @@ class Person(Requester):
             digit_sum: int = sum([int(x)*(len(cpf_fraction) + 1 - i) for i, x in enumerate(cpf_fraction)])
             calculated_digit: int = (digit_sum * 10 % 11) % 10
             if int(expected_digit) != calculated_digit:
-                raise ValueError("Error with values of 'cpf'")
+                raise ValueError(f"CPF inválido: erro no dígito verificador {verifier_digit}.")
 
         verify_valid_digit(first_digit_verification, cpf[:9])
         verify_valid_digit(second_digit_verification, cpf[:10])

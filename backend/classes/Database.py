@@ -496,3 +496,15 @@ class Database:
             WHERE sample.id = ?;
         """, (sample_id,))
         return self.__cur.fetchone()
+
+    def get_cpf_excluding_current(self, cpf: str, current_person_id: int) -> bool:
+        query = """
+            SELECT id 
+            FROM person 
+            WHERE cpf = :cpf AND id != :current_person_id
+        """
+        self.__cur.execute(query, {'cpf': cpf, 'current_person_id': current_person_id})
+        result = self.__cur.fetchone()
+
+        # Se o resultado não for None, significa que o CPF já está em uso por outra pessoa
+        return result is not None
