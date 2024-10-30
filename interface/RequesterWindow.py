@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView)
+from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.requester_window import RequesterDialog
 from interface.ErrorWindow import ErrorWindow
 from interface.DeleteConfirmation import DeleteConfirmation
@@ -18,6 +18,8 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.setupUi(self)
         self.setWindowTitle('Solicitantes registrados')
         self.current_table = 'person'
+        self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.requester_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.add.clicked.connect(self.register_person)
         self.edit.clicked.connect(self.edit_requester)
         self.delete_2.clicked.connect(self.delete_requester)

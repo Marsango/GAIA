@@ -9,6 +9,8 @@ from reportlab.pdfbase import pdfmetrics
 from backend.classes.GraphParameters import GraphParameters
 from backend.classes.Database import Database
 from interface.base_windows.generate_report import GenerateReportDialog
+from interface.ErrorWindow import ErrorWindow
+from backend.classes.utils import handle_exception
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QHeaderView, QFileDialog)
 
 
@@ -35,7 +37,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
         self.get_graph_values()
         self.select_all.clicked.connect(self.select_all_function)
         self.tableWidget.itemChanged.connect(self.update_graph_values)
-        self.generate_report.clicked.connect(self.open_save_dialog)
+        self.generate_report.clicked.connect(self.create_report)
 
     def select_all_function(self) -> None:
         for row in range(self.tableWidget.rowCount()):
@@ -64,11 +66,33 @@ class GenerateReport(QDialog, GenerateReportDialog):
             self.tableWidget.setItem(row, 4, QTableWidgetItem(str(parameters["high"])))
             self.tableWidget.setItem(row, 5, QTableWidgetItem(str(parameters["very high"])))
 
-    def open_save_dialog(self) -> None:
-        filename: QFileDialog.getSaveFileName = QFileDialog.getSaveFileName()
+    def create_report(self):
         db: Database = Database()
-        sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
-        self.generate_pdf(filename[0], sample_info)
+        try:
+            if self.technician_input.text() == '':
+                raise ValueError("Error with values of 'técnico'")
+            file_path = self.open_save_dialog()
+            sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
+            self.generate_pdf(file_path, sample_info)
+            current_sample: sqlite3.Row = db.get_samples(id=self.sample_id)[0]
+            selected_parameters: dict[str, dict[str, float]] = self.get_selected_parameters()
+            v_percent_intervals: dict[str, float] = selected_parameters.pop('V (%)')
+            aluminum_intervals: dict[str, float] = selected_parameters.pop(' Sat. Alumínio')
+            self.plot_bar_graphs(selected_parameters, current_sample)
+            self.plot_v_percent(current_sample['v_percent'], current_sample['ctc'], v_percent_intervals)
+            self.plot_aluminum(current_sample['aluminum_saturation'], current_sample['base_sum'], aluminum_intervals)
+            self.plot_ctc_graph(current_sample['potassium'], current_sample['magnesium'],
+                                current_sample['calcium'], current_sample['h_al'])
+        except Exception as e:
+            error = handle_exception(e)
+            widget: ErrorWindow = ErrorWindow(error)
+            widget.exec()
+        finally:
+            db.close_connection()
+
+    def open_save_dialog(self) -> str:
+        filename: QFileDialog.getSaveFileName = QFileDialog.getSaveFileName(filter="*.pdf")
+        return filename[0]
 
     def add_fonts(self) -> None:
         pdfmetrics.registerFont(TTFont('arial', 'fonts/arial.ttf'))
@@ -78,25 +102,9 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdfmetrics.registerFont(TTFont('arilbk', 'fonts/ariblk.ttf'))
 
     def generate_pdf(self, path: str, sample_info: sqlite3.Row) -> None:
-        # def drawMyRuler(pdf):
-        #     pdf.drawString(100, 810, 'x100')
-        #     pdf.drawString(200, 810, 'x200')
-        #     pdf.drawString(300, 810, 'x300')
-        #     pdf.drawString(400, 810, 'x400')
-        #     pdf.drawString(500, 810, 'x500')
-        #
-        #     pdf.drawString(10, 100, 'y100')
-        #     pdf.drawString(10, 200, 'y200')
-        #     pdf.drawString(10, 300, 'y300')
-        #     pdf.drawString(10, 400, 'y400')
-        #     pdf.drawString(10, 500, 'y500')
-        #     pdf.drawString(10, 600, 'y600')
-        #     pdf.drawString(10, 700, 'y700')
-        #     pdf.drawString(10, 800, 'y800')
         self.add_fonts()
         pdf: canvas.Canvas = canvas.Canvas(f'{path}.pdf')
         pdf.setTitle('Laudo - 001')
-        # drawMyRuler(pdf)
         pdf.line(30, 750, 560, 750)
         pdf.setFont('arialbd', 14)
         pdf.drawCentredString(300, 730, 'Laudo de Análise de Solo')
@@ -119,22 +127,12 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdf.drawString(75, 700, f"Endereço: {sample_info['address']}")
         pdf.drawString(75, 690, f"Propriedade: {sample_info['property_name']}")
         pdf.drawString(75, 680, f"Talhão: {sample_info['sample_name']}")
-        pdf.drawString(75, 670, f"Técnico: -/-")
+        pdf.drawString(75, 670, f"Técnico: {self.technician_input.text()}")
         pdf.drawString(400, 710, f"Laudo: -/-")
         pdf.drawString(400, 700, f"Amostra: {sample_info['sample_number']}")
         pdf.drawString(400, 690, f"Data: {sample_info['collection_date']}")
         pdf.drawString(400, 680, f"Profundidade: {sample_info['depth']}")
         pdf.drawString(400, 670, f"Nº Matrícula: {sample_info['registration_number']}")
-        db: Database = Database()
-        current_sample: sqlite3.Row = db.get_samples(id=self.sample_id)[0]
-        selected_parameters: dict[str, dict[str, float]] = self.get_selected_parameters()
-        v_percent_intervals: dict[str, float] = selected_parameters.pop('V (%)')
-        aluminum_intervals: dict[str, float] = selected_parameters.pop(' Sat. Alumínio')
-        self.plot_bar_graphs(selected_parameters, current_sample)
-        self.plot_v_percent(current_sample['v_percent'], current_sample['ctc'], v_percent_intervals)
-        self.plot_aluminum(current_sample['aluminum_saturation'], current_sample['base_sum'], aluminum_intervals)
-        self.plot_ctc_graph(current_sample['potassium'], current_sample['magnesium'],
-                            current_sample['calcium'], current_sample['h_al'])
         pdf.drawImage('images/auxgraph.png', 85, 275, 400, 500, preserveAspectRatio=True, mask='auto')
         pdf.drawImage('images/v_percent_graph.png', 75, 225, 200, 200, preserveAspectRatio=True, mask='auto')
         pdf.drawImage('images/aluminum_graph.png', 300, 225, 200, 200, preserveAspectRatio=True, mask='auto')

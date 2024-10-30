@@ -16,8 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
-    QHeaderView, QPushButton, QSizePolicy, QTableWidget,
-    QTableWidgetItem, QVBoxLayout, QWidget)
+    QHeaderView, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget)
 
 class GenerateReportDialog(object):
     def setupUi(self, Dialog):
@@ -44,6 +45,25 @@ class GenerateReportDialog(object):
         self.tableWidget.setObjectName(u"tableWidget")
 
         self.verticalLayout.addWidget(self.tableWidget)
+
+        self.frame_2 = QFrame(Dialog)
+        self.frame_2.setObjectName(u"frame_2")
+        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_2 = QHBoxLayout(self.frame_2)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.label = QLabel(self.frame_2)
+        self.label.setObjectName(u"label")
+
+        self.horizontalLayout_2.addWidget(self.label)
+
+        self.technician_input = QLineEdit(self.frame_2)
+        self.technician_input.setObjectName(u"technician_input")
+
+        self.horizontalLayout_2.addWidget(self.technician_input)
+
+
+        self.verticalLayout.addWidget(self.frame_2)
 
         self.frame = QFrame(Dialog)
         self.frame.setObjectName(u"frame")
@@ -86,6 +106,7 @@ class GenerateReportDialog(object):
         ___qtablewidgetitem4.setText(QCoreApplication.translate("Dialog", u"Alto", None));
         ___qtablewidgetitem5 = self.tableWidget.horizontalHeaderItem(5)
         ___qtablewidgetitem5.setText(QCoreApplication.translate("Dialog", u"Muito Alto", None));
+        self.label.setText(QCoreApplication.translate("Dialog", u"T\u00e9cnico:", None))
         self.select_all.setText(QCoreApplication.translate("Dialog", u"Selecionar Todos", None))
         self.generate_report.setText(QCoreApplication.translate("Dialog", u"Gerar Laudo", None))
     # retranslateUi

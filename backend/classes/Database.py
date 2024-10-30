@@ -1,7 +1,9 @@
 import sqlite3
 import os
+
 from typing import Any
 from datetime import datetime
+from backend.classes.exceptions import CPFAlreadyExistsError
 from backend.classes.Person import Person
 from backend.classes.Address import Address
 from backend.classes.Company import Company
@@ -71,8 +73,12 @@ class Database:
         requester_id: int = self.insert_requester(person, address_id)
         person_dict: dict[str, Any] = to_dict(person)
         person_dict['requester_id'] = requester_id
-        self.__cur.execute("""INSERT INTO person(name, birth_date, cpf, fk_requester_id)
-        VALUES(:name, :birth_date, :cpf, :requester_id)""", person_dict)
+        try:
+            self.__cur.execute("""INSERT INTO person(name, birth_date, cpf, fk_requester_id)
+            VALUES(:name, :birth_date, :cpf, :requester_id)""", person_dict)
+        except sqlite3.IntegrityError as e:
+            if 'UNIQUE constraint failed: person.cpf' in str(e):
+                raise CPFAlreadyExistsError(person_dict['cpf'])
         self.__con.commit()
 
     def edit_person(self, person: Person, address: Address, id: int) -> None:
@@ -158,6 +164,24 @@ class Database:
         self.__cur.execute("""DELETE from sample
         WHERE id = :id """, {'id': id})
         self.__con.commit()
+
+    def verify_valid_cpf(self, cpf: str) -> None:
+        if len(cpf) != 11:
+            raise ValueError("Error with values of 'cpf'")
+        equal_numbers: list[str] = [x for x in cpf if x == cpf[0]]
+        if len(equal_numbers) == 11:
+            raise ValueError("Error with values of 'cpf'")
+        first_digit_verification: int = int(cpf[-2])
+        second_digit_verification: int = int(cpf[-1])
+
+        def verify_valid_digit(expected_digit, cpf_fraction) -> None:
+            digit_sum: int = sum([int(x)*(len(cpf_fraction) + 1 - i) for i, x in enumerate(cpf_fraction)])
+            calculated_digit: int = (digit_sum * 10 % 11) % 10
+            if int(expected_digit) != calculated_digit:
+                raise ValueError(f"CPF inválido: erro no dígito verificador {verifier_digit}.")
+
+        verify_valid_digit(first_digit_verification, cpf[:9])
+        verify_valid_digit(second_digit_verification, cpf[:10])
 
     def edit_address(self, address: Address, id: int, requester_type: Person | Company):
         requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else self.get_companies(id=id)[0]
