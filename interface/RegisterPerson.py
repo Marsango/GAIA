@@ -7,6 +7,7 @@ from backend.classes.Person import Person
 from interface.ErrorWindow import ErrorWindow
 from interface.SucessfulRegister import SucessfulRegister
 from backend.classes.utils import handle_exception
+
 class RegisterPerson(QDialog, RegisterPersonDialog):
     def __init__(self) -> None:
         super(RegisterPerson, self).__init__()

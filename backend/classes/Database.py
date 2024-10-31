@@ -1,9 +1,6 @@
 import sqlite3
 import os
-
-from typing import Any
-from datetime import datetime
-from backend.classes.exceptions import CPFAlreadyExistsError
+from backend.classes.Report import Report
 from backend.classes.Person import Person
 from backend.classes.Address import Address
 from backend.classes.Company import Company
@@ -66,6 +63,8 @@ class Database:
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
          zinc float, base_sum float, ctc float, v_percent float, aluminum_saturation float,
         effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
+        self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), technician varchar(255), fk_sample_id integer,
+        FOREIGN KEY (fk_sample_id) REFERENCES sample(id) ON DELETE CASCADE)""")
         self.__con.commit()
 
     def insert_person(self, person: Person, address: Address) -> None:
@@ -266,6 +265,19 @@ class Database:
         :potassium, :organic_matter, :ph, :aluminum, :h_al, :calcium, :magnesium, :copper, :iron, :manganese,
         :zinc, :base_sum, :ctc, :v_percent, :aluminum_saturation, :effective_ctc, :property_id, :smp)""", sample_dict)
         self.__con.commit()
+
+    def insert_report(self, report: Report, sample_id: int) -> None:
+        report_dict: dict[str, Any] = to_dict(report)
+        report_dict['sample_id'] = sample_id
+        self.__cur.execute("""INSERT INTO report(file_location, technician, fk_sample_id) 
+        VALUES(:file_location, :technician, :sample_id)""", report_dict)
+        self.__con.commit()
+
+    def get_next_report_id(self) -> int:
+        self.__cur.execute("""SELECT id from report""")
+        list_of_report_ids: list[sqlite3.Row] = self.__cur.fetchall()
+        return len(list_of_report_ids) + 1
+
 
     def get_countries(self) -> list[str]:
         self.__cur.execute("""SELECT country_name, country_id from country""")

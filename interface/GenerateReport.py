@@ -1,4 +1,5 @@
 import sqlite3
+from pathlib import Path
 from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +12,9 @@ from backend.classes.Database import Database
 from interface.base_windows.generate_report import GenerateReportDialog
 from interface.ErrorWindow import ErrorWindow
 from backend.classes.utils import handle_exception
+from backend.classes.Report import Report
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QHeaderView, QFileDialog)
+import shutil
 
 
 class GenerateReport(QDialog, GenerateReportDialog):
@@ -73,16 +76,23 @@ class GenerateReport(QDialog, GenerateReportDialog):
                 raise ValueError("Error with values of 'técnico'")
             file_path = self.open_save_dialog()
             sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
-            self.generate_pdf(file_path, sample_info)
             current_sample: sqlite3.Row = db.get_samples(id=self.sample_id)[0]
             selected_parameters: dict[str, dict[str, float]] = self.get_selected_parameters()
             v_percent_intervals: dict[str, float] = selected_parameters.pop('V (%)')
             aluminum_intervals: dict[str, float] = selected_parameters.pop(' Sat. Alumínio')
+            report_id: int  = db.get_next_report_id()
             self.plot_bar_graphs(selected_parameters, current_sample)
             self.plot_v_percent(current_sample['v_percent'], current_sample['ctc'], v_percent_intervals)
             self.plot_aluminum(current_sample['aluminum_saturation'], current_sample['base_sum'], aluminum_intervals)
             self.plot_ctc_graph(current_sample['potassium'], current_sample['magnesium'],
                                 current_sample['calcium'], current_sample['h_al'])
+            self.generate_pdf(file_path, sample_info, report_id)
+            script_path: Path = Path(__file__).resolve()
+            backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
+            shutil.copy(file_path, backup_path)
+            report: Report = Report(file_location=str(backup_path), technician=self.technician_input.text())
+            db.insert_report(report, self.sample_id)
+
         except Exception as e:
             error = handle_exception(e)
             widget: ErrorWindow = ErrorWindow(error)
@@ -101,9 +111,9 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdfmetrics.registerFont(TTFont('ariali', 'fonts/ariali.ttf'))
         pdfmetrics.registerFont(TTFont('arilbk', 'fonts/ariblk.ttf'))
 
-    def generate_pdf(self, path: str, sample_info: sqlite3.Row) -> None:
+    def generate_pdf(self, path: str, sample_info: sqlite3.Row, report_id: int) -> None:
         self.add_fonts()
-        pdf: canvas.Canvas = canvas.Canvas(f'{path}.pdf')
+        pdf: canvas.Canvas = canvas.Canvas(f'{path}')
         pdf.setTitle('Laudo - 001')
         pdf.line(30, 750, 560, 750)
         pdf.setFont('arialbd', 14)
@@ -128,7 +138,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdf.drawString(75, 690, f"Propriedade: {sample_info['property_name']}")
         pdf.drawString(75, 680, f"Talhão: {sample_info['sample_name']}")
         pdf.drawString(75, 670, f"Técnico: {self.technician_input.text()}")
-        pdf.drawString(400, 710, f"Laudo: -/-")
+        pdf.drawString(400, 710, f"Laudo: {report_id}")
         pdf.drawString(400, 700, f"Amostra: {sample_info['sample_number']}")
         pdf.drawString(400, 690, f"Data: {sample_info['collection_date']}")
         pdf.drawString(400, 680, f"Profundidade: {sample_info['depth']}")
