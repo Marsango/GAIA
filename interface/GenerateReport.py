@@ -1,4 +1,5 @@
 import sqlite3
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 import matplotlib.pyplot as plt
@@ -114,7 +115,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
     def generate_pdf(self, path: str, sample_info: sqlite3.Row, report_id: int) -> None:
         self.add_fonts()
         pdf: canvas.Canvas = canvas.Canvas(f'{path}')
-        pdf.setTitle('Laudo - 001')
+        pdf.setTitle(f'Laudo - {report_id}')
         pdf.line(30, 750, 560, 750)
         pdf.setFont('arialbd', 14)
         pdf.drawCentredString(300, 730, 'Laudo de Análise de Solo')
@@ -157,16 +158,24 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdf.drawCentredString(300, 55, f"Telefone/WhatsApp: (46) 3220-2539")
         pdf.save()
 
+    def verify_consistency(self, selected_parameters: dict[str, dict[str, float]]) -> None:
+        for parameter, values in selected_parameters.items():
+            for (key_a, val_a), (key_b, val_b) in pairwise(values.items()):
+                if val_a >= val_b:
+                    raise ValueError(f"Error with values of '{parameter}'")
+
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:
         selected_parameters: dict[str, dict[str, float]] = {}
         for row in range(self.tableWidget.rowCount()):
-            if self.tableWidget.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked:
+            if self.tableWidget.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked or self.tableWidget.item(row, 0).text() == ' Sat. Alumínio'\
+                    or self.tableWidget.item(row, 0).text() == 'V (%)':
                 selected_parameters[self.tableWidget.item(row, 0).text()] = {
                     'very low': float(self.tableWidget.item(row, 1).text()),
                     'low': float(self.tableWidget.item(row, 2).text()),
                     'medium': float(self.tableWidget.item(row, 3).text()),
                     'high': float(self.tableWidget.item(row, 4).text()),
                     'very high': float(self.tableWidget.item(row, 5).text())}
+        self.verify_consistency(selected_parameters)
         return selected_parameters
 
     def traducao_intervalo(self, intervalo) -> str:
