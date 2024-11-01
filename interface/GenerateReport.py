@@ -197,11 +197,29 @@ class GenerateReport(QDialog, GenerateReportDialog):
             "Muito Baixo": "blue"
         }
 
-        def get_color(value, intervals) -> str:
-            for key, val in intervals.items():
-                if value <= val:
-                    return colors[self.traducao_intervalo(key)]
-            return colors["Muito Alto"]
+        sizes = {
+            "Muito Alto": 4,
+            "Alto": 3,
+            "Médio": 2,
+            "Baixo": 1,
+            "Muito Baixo": 0
+        }
+
+        def get_color_and_bar_size(value, intervals) -> dict[str, Any]:
+            interval_keys = list(intervals.keys())
+            interval_values = list(intervals.values())
+            for i in range(len(interval_values) - 1):
+                if interval_values[i] <= value < interval_values[i + 1]:
+                    key = interval_keys[i]
+                    return {
+                        'color': colors[self.traducao_intervalo(key)],
+                        'size': sizes[self.traducao_intervalo(key)]
+                    }
+            key = interval_keys[-1]
+            return {
+                'color': colors[self.traducao_intervalo(key)],
+                'size': sizes[self.traducao_intervalo(key)]
+            }
 
         def translate_params(params) -> str:
             translate_dict = {
@@ -228,18 +246,21 @@ class GenerateReport(QDialog, GenerateReportDialog):
         fig, ax = plt.subplots(figsize=(10, 6))
         bar_width: float = 0.4
         bar_positions: np.arrange = np.arange(len(data))
+        x_label: list[str] = []
         for i, (param, intervals) in enumerate(data.items()):
             if param.strip() not in dont_plot_list:
                 value = sample_data[translate_params(param.strip())]
-                color = get_color(value, intervals)
+                color, bar_size = get_color_and_bar_size(value, intervals).values()
 
-                ax.bar(i, value, color=color, width=bar_width, label=f"{param} ({value})")
+                ax.bar(i, bar_size, color=color, width=bar_width, label=f"{param} ({value})")
+                x_label.append(f'{round(value, 2)}\n{param}')
         handles: list[plt.Rectangle] = [plt.Rectangle((0, 0), 1, 1, color=colors[key]) for key in colors]
         labels: list[str] = [key for key in colors]
-        ax.legend(handles, labels, title="Intervalos")
+        ax.legend(handles, labels, title="Intervalos", loc='upper right', bbox_to_anchor=(1, 1))
         ax.set_xticks(bar_positions)
-        ax.set_xticklabels(data.keys(), rotation=45, ha='right')
-        ax.set_ylabel('Valores')
+        ax.set_xticklabels(x_label, rotation=45, ha='right')
+        ax.set_yticks(range(len(list(sizes.keys()))))
+        ax.set_yticklabels(list(sizes.keys())[::-1])
         ax.set_title('Gráfico das amostras')
         plt.tight_layout()
         plt.savefig('images/auxgraph.png', bbox_inches='tight')
