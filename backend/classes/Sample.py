@@ -2,7 +2,7 @@ import math
 from typing import get_type_hints
 from backend.classes.Configuration import Configuration
 from backend.classes.utils import verify_type
-from interface.SucessfulRegister import SucessfulRegister
+from interface.AlertWindow import AlertWindow
 from interface.ConfigurationWindow import ConfigurationWindow
 from datetime import datetime
 from datetime import date
@@ -29,7 +29,7 @@ class Sample:
         try:
             current_config: Configuration = Configuration()
         except:
-            dialog_message: SucessfulRegister = SucessfulRegister(sucess_message="Os fatores variáveis precisam ser configurados.")
+            dialog_message: AlertWindow = AlertWindow(sucess_message="Os fatores variáveis precisam ser configurados.")
             dialog_message.exec()
             dialog_config: ConfigurationWindow = ConfigurationWindow()
             dialog_config.exec()

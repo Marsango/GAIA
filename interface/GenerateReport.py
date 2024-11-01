@@ -11,12 +11,12 @@ from reportlab.pdfbase import pdfmetrics
 from backend.classes.GraphParameters import GraphParameters
 from backend.classes.Database import Database
 from interface.base_windows.generate_report import GenerateReportDialog
-from interface.ErrorWindow import ErrorWindow
+from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from backend.classes.Report import Report
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QHeaderView, QFileDialog)
 import shutil
-import traceback
+
 
 class GenerateReport(QDialog, GenerateReportDialog):
     def __init__(self, sample_id: int) -> None:
@@ -61,9 +61,8 @@ class GenerateReport(QDialog, GenerateReportDialog):
                 graph_name: str = self.parameters_table.item(item.row(), 0).text()
                 graph_parameters.set_graph_parameters(graph_name, new_values)
             except Exception as e:
-                traceback.print_exc()
                 error = handle_exception(e)
-                widget: ErrorWindow = ErrorWindow(error)
+                widget: AlertWindow = AlertWindow(error)
                 widget.exec()
                 self.parameters_table.blockSignals(True)
                 self.get_graph_values()
@@ -106,7 +105,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
 
         except Exception as e:
             error = handle_exception(e)
-            widget: ErrorWindow = ErrorWindow(error)
+            widget: AlertWindow = AlertWindow(error)
             widget.exec()
         finally:
             db.close_connection()

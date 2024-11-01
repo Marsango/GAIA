@@ -2,8 +2,7 @@ from interface.base_windows.register_company import RegisterCompanyDialog
 from backend.classes.Company import Company
 from backend.classes.Address import Address
 from PySide6.QtCore import Qt
-from interface.ErrorWindow import ErrorWindow
-from interface.SucessfulRegister import SucessfulRegister
+from interface.AlertWindow import AlertWindow
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from backend.classes.Database import Database
 from backend.classes.utils import handle_exception
@@ -64,17 +63,17 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
                                        .replace('(', '').replace(')', '').replace('-', ''), address=address)
             if self.mode == 'register':
                 db.insert_company(company, address)
-                sucess_text: str = "Solicitante registrado com sucesso!"
+                success_text: str = "Solicitante registrado com sucesso!"
             elif self.mode == 'edit':
                 db.edit_company(company, address, self.current_company_id)
-                sucess_text: str = "Alterações salvas com sucesso!"
-            widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
+                success_text: str = "Alterações salvas com sucesso!"
+            widget: AlertWindow = AlertWindow(success_text)
             widget.exec()
             if self.mode == 'register':
                 self.clean_input()
         except Exception as e:
             error = handle_exception(e)
-            widget: ErrorWindow = ErrorWindow(error)
+            widget: AlertWindow = AlertWindow(error)
             widget.exec()
 
         db.close_connection()

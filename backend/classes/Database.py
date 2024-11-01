@@ -134,17 +134,10 @@ class Database:
             raise ValueError("Solicitante não encontrado.")
         
         person_dict: sqlite3.Row = person_records[0]
-    
-        # Exclua da tabela person
+
         self.__cur.execute("""DELETE FROM person WHERE id = :id""", {'id': id})
-
-        # Exclua da tabela requester
         self.__cur.execute("""DELETE FROM requester WHERE requester_id = :requester_id""", {'requester_id': person_dict['requester_id']})
-
-        # Exclua o endereço (caso a exclusão em cascata não esteja funcionando)
         self.__cur.execute("""DELETE FROM address WHERE address_id = :address_id""", {'address_id': person_dict['address_id']})
-
-        # Confirme as alterações
         self.__con.commit()
 
 

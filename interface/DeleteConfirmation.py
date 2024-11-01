@@ -1,4 +1,6 @@
 from backend.classes.Database import Database
+from backend.classes.utils import handle_exception
+from interface.AlertWindow import AlertWindow
 from interface.base_windows.delete_confirmation import DeleteDialog
 from PySide6.QtWidgets import (QDialog)
 
@@ -16,8 +18,8 @@ class DeleteConfirmation(QDialog, DeleteDialog):
             self.label.setText(f"<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">{message}</span></p></body></html>")
 
     def delete_action(self) -> None:
+        db: Database = Database()
         try:
-            db: Database = Database()
             for id in self.list_of_ids:
                 if self.table_type == 'person':
                     db.delete_person(id)
@@ -28,7 +30,9 @@ class DeleteConfirmation(QDialog, DeleteDialog):
                 elif self.table_type == 'sample':
                     db.delete_sample(id)
         except Exception as e:
-            print(f"Erro ao deletar: {e}")
+            error = handle_exception(e)
+            widget: AlertWindow = AlertWindow(error)
+            widget.exec()
         finally:
             db.close_connection()
             self.close()

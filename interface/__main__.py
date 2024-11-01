@@ -2,8 +2,6 @@ import sys
 import os
 from PySide6.QtSvgWidgets import *
 from PySide6.QtWidgets import (QApplication, QMainWindow)
-
-from interface.GenerateReport import GenerateReport
 from interface.GetReport import GetReport
 from interface.InfoWindow import InfoWindow
 from interface.base_windows.main_window import Ui_MainWindow

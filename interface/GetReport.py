@@ -1,10 +1,7 @@
 import shutil
 from pathlib import Path
-
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView, QFileDialog)
-
-from interface.ErrorWindow import ErrorWindow
-from interface.SucessfulRegister import SucessfulRegister
+from interface.AlertWindow import AlertWindow
 from interface.base_windows.get_report import GetReportDialog
 from backend.classes.Database import Database
 import sqlite3
@@ -37,12 +34,12 @@ class GetReport(QDialog, GetReportDialog):
     def make_copy(self) -> None:
         selected_items: list[QTableWidgetItem] = self.report_table.selectedIndexes()
         if len(selected_items) == 0:
-            widget: ErrorWindow = ErrorWindow("Você deve selecionar um laudo para copiar.")
+            widget: AlertWindow = AlertWindow("Você deve selecionar um laudo para copiar.")
             widget.exec()
             return
         for data in selected_items:
             if data.row() != selected_items[0].row():
-                widget: ErrorWindow = ErrorWindow("Você só pode copiar um laudo por vez.")
+                widget: AlertWindow = AlertWindow("Você só pode copiar um laudo por vez.")
                 widget.exec()
                 return
         row: int = selected_items[0].row()
@@ -51,7 +48,7 @@ class GetReport(QDialog, GetReportDialog):
         script_path: Path = Path(__file__).resolve()
         backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {id}.pdf"
         shutil.copy(backup_path, file_path)
-        widget: SucessfulRegister = SucessfulRegister(sucess_message="Cópia feita com sucesso!")
+        widget: AlertWindow = AlertWindow("Cópia feita com sucesso!")
         widget.exec()
 
     def open_save_dialog(self) -> str:

@@ -1,11 +1,8 @@
-from PySide6.QtWidgets import (QDialog, QCompleter)
+from PySide6.QtWidgets import (QDialog)
 from interface.base_windows.register_sample import RegisterSampleDialog
-from PySide6.QtCore import Qt
 from backend.classes.Database import Database
 from backend.classes.Sample import Sample
-from interface.ErrorWindow import ErrorWindow
-from interface.SucessfulRegister import SucessfulRegister
-from backend.classes.utils import handle_exception
+from interface.AlertWindow import AlertWindow
 
 
 class RegisterSample(QDialog, RegisterSampleDialog):
@@ -57,11 +54,8 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         db: Database = Database()
 
         try:
-            # Verifica se os campos obrigatórios estão preenchidos
             if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text():
                 raise ValueError("Por favor, preencha todos os campos obrigatórios.")
-            
-            # Tenta converter os valores para float, se o campo estiver vazio, atribui 0.0
             depth = float(self.collection_depth.text()) if self.collection_depth.text() != '' else 0.0
             total_area = float(self.area.text()) if self.area.text() != '' else 0.0
             latitude = float(self.latitude.text()) if self.latitude.text() != '' else 0.0
@@ -85,8 +79,6 @@ class RegisterSample(QDialog, RegisterSampleDialog):
             blank_manganese = float(self.blank_test_manganese.text()) if self.blank_test_manganese.text() != '' else 0.0
             zinc = float(self.read_zinc.text()) if self.read_zinc.text() != '' else 0.0
             blank_zinc = float(self.blank_test_zinc.text()) if self.blank_test_zinc.text() != '' else 0.0
-
-            # Criação do objeto Sample com os valores
             sample: Sample = Sample(depth=depth, collection_date=self.date.text(),
                                     description=self.description.text(), total_area=total_area,
                                     latitude=latitude, longitude=longitude,
@@ -99,23 +91,20 @@ class RegisterSample(QDialog, RegisterSampleDialog):
                                     iron=iron - blank_iron,
                                     manganese=manganese - blank_manganese,
                                     zinc=zinc - blank_zinc)
-
-            # Verifica se estamos registrando ou editando
             if self.mode == 'register':
                 db.insert_sample(sample, self.current_property_id, int(self.sample_number.text()))
-                sucess_text: str = "Amostra registrada com sucesso!"
+                success: str = "Amostra registrada com sucesso!"
             elif self.mode == 'edit':
                 db.edit_sample(sample, self.current_sample_id)
-                sucess_text: str = "Alterações salvas com sucesso!"
+                success: str = "Alterações salvas com sucesso!"
 
-            widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
+            widget: AlertWindow = AlertWindow(success)
             widget.exec()
 
             if self.mode == 'register':
                 self.clean_input()
         except ValueError as e:
-            # Mostra uma janela de erro se houver um ValueError, como campo vazio
-            widget: ErrorWindow = ErrorWindow(f"Erro: {str(e)}")
+            widget: AlertWindow = AlertWindow(f"Erro: {str(e)}")
             widget.exec()
 
         db.close_connection()
