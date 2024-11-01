@@ -27,24 +27,24 @@ class GenerateReportDialog(object):
         Dialog.resize(621, 368)
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.tableWidget = QTableWidget(Dialog)
-        if (self.tableWidget.columnCount() < 6):
-            self.tableWidget.setColumnCount(6)
+        self.parameters_table = QTableWidget(Dialog)
+        if (self.parameters_table.columnCount() < 6):
+            self.parameters_table.setColumnCount(6)
         __qtablewidgetitem = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        self.parameters_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        self.parameters_table.setHorizontalHeaderItem(1, __qtablewidgetitem1)
         __qtablewidgetitem2 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(2, __qtablewidgetitem2)
+        self.parameters_table.setHorizontalHeaderItem(2, __qtablewidgetitem2)
         __qtablewidgetitem3 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(3, __qtablewidgetitem3)
+        self.parameters_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
         __qtablewidgetitem4 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(4, __qtablewidgetitem4)
+        self.parameters_table.setHorizontalHeaderItem(4, __qtablewidgetitem4)
         __qtablewidgetitem5 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(5, __qtablewidgetitem5)
-        self.tableWidget.setObjectName(u"tableWidget")
+        self.parameters_table.setHorizontalHeaderItem(5, __qtablewidgetitem5)
+        self.parameters_table.setObjectName(u"parameters_table")
 
-        self.verticalLayout.addWidget(self.tableWidget)
+        self.verticalLayout.addWidget(self.parameters_table)
 
         self.frame_2 = QFrame(Dialog)
         self.frame_2.setObjectName(u"frame_2")
@@ -94,17 +94,17 @@ class GenerateReportDialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
-        ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
+        ___qtablewidgetitem = self.parameters_table.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"Gr\u00e1fico", None));
-        ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
+        ___qtablewidgetitem1 = self.parameters_table.horizontalHeaderItem(1)
         ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"Muito Baixo", None));
-        ___qtablewidgetitem2 = self.tableWidget.horizontalHeaderItem(2)
+        ___qtablewidgetitem2 = self.parameters_table.horizontalHeaderItem(2)
         ___qtablewidgetitem2.setText(QCoreApplication.translate("Dialog", u"Baixo", None));
-        ___qtablewidgetitem3 = self.tableWidget.horizontalHeaderItem(3)
+        ___qtablewidgetitem3 = self.parameters_table.horizontalHeaderItem(3)
         ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"M\u00e9dio", None));
-        ___qtablewidgetitem4 = self.tableWidget.horizontalHeaderItem(4)
+        ___qtablewidgetitem4 = self.parameters_table.horizontalHeaderItem(4)
         ___qtablewidgetitem4.setText(QCoreApplication.translate("Dialog", u"Alto", None));
-        ___qtablewidgetitem5 = self.tableWidget.horizontalHeaderItem(5)
+        ___qtablewidgetitem5 = self.parameters_table.horizontalHeaderItem(5)
         ___qtablewidgetitem5.setText(QCoreApplication.translate("Dialog", u"Muito Alto", None));
         self.label.setText(QCoreApplication.translate("Dialog", u"T\u00e9cnico:", None))
         self.select_all.setText(QCoreApplication.translate("Dialog", u"Selecionar Todos", None))

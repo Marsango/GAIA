@@ -4,6 +4,7 @@ from PySide6.QtSvgWidgets import *
 from PySide6.QtWidgets import (QApplication, QMainWindow)
 
 from interface.GenerateReport import GenerateReport
+from interface.GetReport import GetReport
 from interface.InfoWindow import InfoWindow
 from interface.base_windows.main_window import Ui_MainWindow
 from interface.RequesterWindow import RequesterWindow
@@ -23,6 +24,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionSolicitantes.triggered.connect(self.open_requester_window)
         self.actionFatores_vari_veis.triggered.connect(self.open_config_window)
         self.actionSobre.triggered.connect(self.open_info_window)
+        self.actionConsultar_laudo_2.triggered.connect(self.open_get_report_window)
 
     def open_requester_window(self) -> None:
         dialog: RequesterWindow = RequesterWindow()
@@ -37,6 +39,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         dialog: InfoWindow = InfoWindow()
         dialog.exec()
 
+    def open_get_report_window(self) -> None:
+        dialog: GetReport = GetReport()
+        dialog.exec()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

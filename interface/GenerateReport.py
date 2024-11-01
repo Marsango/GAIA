@@ -24,10 +24,10 @@ class GenerateReport(QDialog, GenerateReportDialog):
         self.setupUi(self)
         self.setWindowTitle('Gerar Relatório')
         self.sample_id = sample_id
-        self.tableWidget.setRowCount(16)
-        self.tableWidget.verticalHeader().setVisible(False)
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.tableWidget.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.parameters_table.setRowCount(16)
+        self.parameters_table.verticalHeader().setVisible(False)
+        self.parameters_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.parameters_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         available_graphs: list[str] = ['Fósforo - P', 'Potássio - K', 'Cobre - Cu', 'Matéria Orgânica - MO',
                                        'Ferro - Fe',
                                        'Zinco - Zn', 'Manganês - Mn', 'pH CaCl', 'Índice SMP', 'Alumínio - Al',
@@ -38,47 +38,47 @@ class GenerateReport(QDialog, GenerateReportDialog):
             check_box_item.setText(name)
             check_box_item.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
             check_box_item.setCheckState(QtCore.Qt.CheckState.Unchecked)
-            self.tableWidget.setItem(row, 0, check_box_item)
+            self.parameters_table.setItem(row, 0, check_box_item)
         self.get_graph_values()
         self.select_all.clicked.connect(self.select_all_function)
-        self.tableWidget.itemChanged.connect(self.update_graph_values)
+        self.parameters_table.itemChanged.connect(self.update_graph_values)
         self.generate_report.clicked.connect(self.create_report)
 
     def select_all_function(self) -> None:
-        for row in range(self.tableWidget.rowCount()):
-            item = self.tableWidget.item(row, 0)
+        for row in range(self.parameters_table.rowCount()):
+            item = self.parameters_table.item(row, 0)
             item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:
         if item.column() != 0:
             try:
-                new_values: dict[str, float] = {'very low': float(self.tableWidget.item(item.row(), 1).text()),
-                                                'low': float(self.tableWidget.item(item.row(), 2).text()),
-                                                'medium': float(self.tableWidget.item(item.row(), 3).text()),
-                                                'high': float(self.tableWidget.item(item.row(), 4).text()),
-                                                'very high': float(self.tableWidget.item(item.row(), 5).text())}
+                new_values: dict[str, float] = {'very low': float(self.parameters_table.item(item.row(), 1).text()),
+                                                'low': float(self.parameters_table.item(item.row(), 2).text()),
+                                                'medium': float(self.parameters_table.item(item.row(), 3).text()),
+                                                'high': float(self.parameters_table.item(item.row(), 4).text()),
+                                                'very high': float(self.parameters_table.item(item.row(), 5).text())}
                 graph_parameters: GraphParameters = GraphParameters()
-                graph_name: str = self.tableWidget.item(item.row(), 0).text()
+                graph_name: str = self.parameters_table.item(item.row(), 0).text()
                 graph_parameters.set_graph_parameters(graph_name, new_values)
             except Exception as e:
                 traceback.print_exc()
                 error = handle_exception(e)
                 widget: ErrorWindow = ErrorWindow(error)
                 widget.exec()
-                self.tableWidget.blockSignals(True)
+                self.parameters_table.blockSignals(True)
                 self.get_graph_values()
-                self.tableWidget.blockSignals(False)
+                self.parameters_table.blockSignals(False)
 
     def get_graph_values(self) -> None:
         graph_parameters: GraphParameters = GraphParameters()
-        for row in range(self.tableWidget.rowCount()):
-            current_row: str = self.tableWidget.item(row, 0).text()
+        for row in range(self.parameters_table.rowCount()):
+            current_row: str = self.parameters_table.item(row, 0).text()
             parameters: dict[str, float] = graph_parameters.get_graph_parameters(current_row)
-            self.tableWidget.setItem(row, 1, QTableWidgetItem(str(parameters["very low"])))
-            self.tableWidget.setItem(row, 2, QTableWidgetItem(str(parameters["low"])))
-            self.tableWidget.setItem(row, 3, QTableWidgetItem(str(parameters["medium"])))
-            self.tableWidget.setItem(row, 4, QTableWidgetItem(str(parameters["high"])))
-            self.tableWidget.setItem(row, 5, QTableWidgetItem(str(parameters["very high"])))
+            self.parameters_table.setItem(row, 1, QTableWidgetItem(str(parameters["very low"])))
+            self.parameters_table.setItem(row, 2, QTableWidgetItem(str(parameters["low"])))
+            self.parameters_table.setItem(row, 3, QTableWidgetItem(str(parameters["medium"])))
+            self.parameters_table.setItem(row, 4, QTableWidgetItem(str(parameters["high"])))
+            self.parameters_table.setItem(row, 5, QTableWidgetItem(str(parameters["very high"])))
 
     def create_report(self):
         db: Database = Database()
@@ -192,15 +192,15 @@ class GenerateReport(QDialog, GenerateReportDialog):
 
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:
         selected_parameters: dict[str, dict[str, float]] = {}
-        for row in range(self.tableWidget.rowCount()):
-            if self.tableWidget.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked or self.tableWidget.item(row, 0).text() == ' Sat. Alumínio'\
-                    or self.tableWidget.item(row, 0).text() == 'V (%)':
-                selected_parameters[self.tableWidget.item(row, 0).text()] = {
-                    'very low': float(self.tableWidget.item(row, 1).text()),
-                    'low': float(self.tableWidget.item(row, 2).text()),
-                    'medium': float(self.tableWidget.item(row, 3).text()),
-                    'high': float(self.tableWidget.item(row, 4).text()),
-                    'very high': float(self.tableWidget.item(row, 5).text())}
+        for row in range(self.parameters_table.rowCount()):
+            if self.parameters_table.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked or self.parameters_table.item(row, 0).text() == ' Sat. Alumínio'\
+                    or self.parameters_table.item(row, 0).text() == 'V (%)':
+                selected_parameters[self.parameters_table.item(row, 0).text()] = {
+                    'very low': float(self.parameters_table.item(row, 1).text()),
+                    'low': float(self.parameters_table.item(row, 2).text()),
+                    'medium': float(self.parameters_table.item(row, 3).text()),
+                    'high': float(self.parameters_table.item(row, 4).text()),
+                    'very high': float(self.parameters_table.item(row, 5).text())}
         self.verify_consistency(selected_parameters)
         return selected_parameters
 
