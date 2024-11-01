@@ -121,10 +121,13 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdfmetrics.registerFont(TTFont('ariali', 'fonts/ariali.ttf'))
         pdfmetrics.registerFont(TTFont('arilbk', 'fonts/ariblk.ttf'))
 
-    def generate_pdf(self, path: str, sample_info: sqlite3.Row, report_id: int) -> None:
+    def setup_pdf(self, path: str, report_id: int) -> canvas.Canvas:
         self.add_fonts()
         pdf: canvas.Canvas = canvas.Canvas(f'{path}')
         pdf.setTitle(f'Laudo - {report_id}')
+        return pdf
+
+    def draw_header(self, pdf: canvas.Canvas) -> None:
         pdf.line(30, 750, 560, 750)
         pdf.setFont('arialbd', 14)
         pdf.drawCentredString(300, 730, 'Laudo de Análise de Solo')
@@ -138,10 +141,15 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdf.drawString(420, 785, 'Governo do Estado do Paraná')
         pdf.drawString(420, 775, 'Secretaria de Agricultura e Abastecimento')
         pdf.drawString(420, 765, 'Instituto Agronômico do Paraná')
-        pdf.line(70, 720, 520, 720)
-        pdf.line(70, 720, 70, 665)
-        pdf.line(70, 665, 520, 665)
-        pdf.line(520, 720, 520, 665)
+
+    def draw_square(self, pdf: canvas.Canvas, pos_horizontal1: int, pos_horizontal2: int, pos_vertical1: int, pos_vertical2: int) -> None:
+        pdf.line(pos_horizontal1, pos_vertical1, pos_horizontal2, pos_vertical1)
+        pdf.line(pos_horizontal1, pos_vertical1, pos_horizontal1, pos_vertical2)
+        pdf.line(pos_horizontal1, pos_vertical2, pos_horizontal2, pos_vertical2)
+        pdf.line(pos_horizontal2, pos_vertical1, pos_horizontal2, pos_vertical2)
+
+    def write_main_info_square(self, pdf: canvas.Canvas, sample_info: sqlite3.Row, report_id: int) -> None:
+        self.draw_square(pdf, 70, 520, 720, 665)
         pdf.setFont('arial', 10)
         pdf.drawString(75, 710, f"Solicitante: {sample_info['requester_name']}")
         pdf.drawString(75, 700, f"Endereço: {sample_info['address']}")
@@ -153,18 +161,26 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdf.drawString(400, 690, f"Data: {sample_info['collection_date']}")
         pdf.drawString(400, 680, f"Profundidade: {sample_info['depth']} cm")
         pdf.drawString(400, 670, f"Nº Matrícula: {sample_info['registration_number']}")
+
+    def draw_graphs(self, pdf) -> None:
         pdf.drawImage('images/auxgraph.png', 85, 275, 400, 500, preserveAspectRatio=True, mask='auto')
         pdf.drawImage('images/v_percent_graph.png', 75, 225, 200, 200, preserveAspectRatio=True, mask='auto')
         pdf.drawImage('images/aluminum_graph.png', 300, 225, 200, 200, preserveAspectRatio=True, mask='auto')
         pdf.drawImage('images/ctc_and_values.png', 200, 65, 200, 200, preserveAspectRatio=True, mask='auto')
-        pdf.line(70, 75, 520, 75)
-        pdf.line(70, 75, 70, 50)
-        pdf.line(70, 50, 520, 50)
-        pdf.line(520, 75, 520, 50)
+
+    def draw_footer(self, pdf):
+        self.draw_square(pdf, 70, 520, 75, 50)
         pdf.setFont('arial', 8)
         pdf.drawCentredString(300, 65,
                               f"Laboratório de Análise de Solos UTFPR/IAPAR, Via do conhecimento, KM 01, CEP 85503-390, Pato Branco - PR")
         pdf.drawCentredString(300, 55, f"Telefone/WhatsApp: (46) 3220-2539")
+
+    def generate_pdf(self, path: str, sample_info: sqlite3.Row, report_id: int) -> None:
+        pdf = self.setup_pdf(path, report_id)
+        self.draw_header(pdf)
+        self.write_main_info_square(pdf, sample_info, report_id)
+        self.draw_graphs(pdf)
+        self.draw_footer(pdf)
         pdf.save()
 
     def verify_consistency(self, selected_parameters: dict[str, dict[str, float]]) -> None:
