@@ -6,6 +6,7 @@ class DeleteConfirmation(QDialog, DeleteDialog):
     def __init__(self, list_of_ids: list[int], table_type: str, **kwargs) -> None:
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle('Confirmação')
         self.confirm_button.clicked.connect(self.delete_action)
         self.cancel_button.clicked.connect(self.close)
         self.list_of_ids: list[int] = list_of_ids

@@ -22,6 +22,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
     def __init__(self, sample_id: int) -> None:
         super(GenerateReport, self).__init__()
         self.setupUi(self)
+        self.setWindowTitle('Gerar Relatório')
         self.sample_id = sample_id
         self.tableWidget.setRowCount(16)
         self.tableWidget.verticalHeader().setVisible(False)

@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (QDialog)
 class SucessfulRegister(QDialog, SucessfulDialog):
     def __init__(self, **kwargs) -> None:
         super(SucessfulRegister, self).__init__()
+        self.setWindowTitle('Sucesso!')
         self.setupUi(self)
         message: str = kwargs.get('sucess_message')
         if message:
