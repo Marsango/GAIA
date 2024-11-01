@@ -16,7 +16,7 @@ from backend.classes.utils import handle_exception
 from backend.classes.Report import Report
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QHeaderView, QFileDialog)
 import shutil
-
+import traceback
 
 class GenerateReport(QDialog, GenerateReportDialog):
     def __init__(self, sample_id: int) -> None:
@@ -50,14 +50,23 @@ class GenerateReport(QDialog, GenerateReportDialog):
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:
         if item.column() != 0:
-            new_values: dict[str, float] = {'very low': float(self.tableWidget.item(item.row(), 1).text()),
-                                            'low': float(self.tableWidget.item(item.row(), 2).text()),
-                                            'medium': float(self.tableWidget.item(item.row(), 3).text()),
-                                            'high': float(self.tableWidget.item(item.row(), 4).text()),
-                                            'very high': float(self.tableWidget.item(item.row(), 5).text())}
-            graph_parameters: GraphParameters = GraphParameters()
-            graph_name: str = self.tableWidget.item(item.row(), 0).text()
-            graph_parameters.set_graph_parameters(graph_name, new_values)
+            try:
+                new_values: dict[str, float] = {'very low': float(self.tableWidget.item(item.row(), 1).text()),
+                                                'low': float(self.tableWidget.item(item.row(), 2).text()),
+                                                'medium': float(self.tableWidget.item(item.row(), 3).text()),
+                                                'high': float(self.tableWidget.item(item.row(), 4).text()),
+                                                'very high': float(self.tableWidget.item(item.row(), 5).text())}
+                graph_parameters: GraphParameters = GraphParameters()
+                graph_name: str = self.tableWidget.item(item.row(), 0).text()
+                graph_parameters.set_graph_parameters(graph_name, new_values)
+            except Exception as e:
+                traceback.print_exc()
+                error = handle_exception(e)
+                widget: ErrorWindow = ErrorWindow(error)
+                widget.exec()
+                self.tableWidget.blockSignals(True)
+                self.get_graph_values()
+                self.tableWidget.blockSignals(False)
 
     def get_graph_values(self) -> None:
         graph_parameters: GraphParameters = GraphParameters()
