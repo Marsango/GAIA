@@ -77,7 +77,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
                 raise ValueError("Error with values of 'técnico'")
             file_path = self.open_save_dialog()
             sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
-            current_sample: sqlite3.Row = db.get_samples(id=self.sample_id)[0]
+            current_sample: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
             selected_parameters: dict[str, dict[str, float]] = self.get_selected_parameters()
             v_percent_intervals: dict[str, float] = selected_parameters.pop('V (%)')
             aluminum_intervals: dict[str, float] = selected_parameters.pop(' Sat. Alumínio')
@@ -142,7 +142,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
         pdf.drawString(400, 710, f"Laudo: {report_id}")
         pdf.drawString(400, 700, f"Amostra: {sample_info['sample_number']}")
         pdf.drawString(400, 690, f"Data: {sample_info['collection_date']}")
-        pdf.drawString(400, 680, f"Profundidade: {sample_info['depth']}")
+        pdf.drawString(400, 680, f"Profundidade: {sample_info['depth']} cm")
         pdf.drawString(400, 670, f"Nº Matrícula: {sample_info['registration_number']}")
         pdf.drawImage('images/auxgraph.png', 85, 275, 400, 500, preserveAspectRatio=True, mask='auto')
         pdf.drawImage('images/v_percent_graph.png', 75, 225, 200, 200, preserveAspectRatio=True, mask='auto')

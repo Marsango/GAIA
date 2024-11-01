@@ -37,9 +37,9 @@ class Sample:
         self.__description: str = description
         self.__total_area: float = total_area
         self.__depth: float = depth
-        self.__collection_date: str | None = collection_date
-        self.__latitude: float = latitude
-        self.__longitude: float = longitude
+        self.__collection_date: str | None = None
+        self.__longitude: float | None = None
+        self.__latitude: float | None = None
         self.__phosphorus: float = phosphorus * current_config.get_phosphor_factor()
         self.__potassium: float = potassium * current_config.get_phosphor_factor()
         self.__organic_matter: float = organic_matter * 1.724
@@ -53,8 +53,6 @@ class Sample:
                 self.__h_al: float = conversion_table[round(self.__smp, 1)]
             except KeyError:
                 raise ValueError(f"Error with values of 'SMP'. No conversion found for {round(self.__smp, 1)}.") #raise ValueError("Error with values of 'SMP'")
-                
-        self.__h_al: float = 1.0
         self.__calcium: float = calcium
         self.__magnesium: float = magnesium
         self.__copper: float = copper
@@ -67,14 +65,15 @@ class Sample:
         self.__aluminum_saturation: float = (100 * self.__aluminum) / (self.__base_sum + self.__aluminum)
         self.__effective_ctc: float = self.__ctc + self.__aluminum
         self.verify_valid_date(collection_date)
-
+        self.verify_valid_latitude(latitude)
+        self.verify_valid_longitude(longitude)
 
 
     def verify_valid_date(self, collection_date: str) -> None:
         try:
             self.__collection_date: str = datetime.strptime(collection_date, '%d/%m/%Y').strftime("%d/%m/%Y")
         except:
-            raise ValueError("Error with values of 'birth_date'")
+            raise ValueError("Error with values of 'Data'")
 
     def verify_valid_latitude(self, latitude: float) -> None:
         if -90 <= latitude <= 90:

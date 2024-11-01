@@ -52,7 +52,6 @@ class SampleWindow(QDialog, SampleDialog):
         self.refresh_table()
 
     def edit_sample(self) -> None:
-        dialog: RegisterSample = RegisterSample(self.current_property_id, self.sample_table.rowCount() + 1)
         selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
         if len(selected_items) == 0:
             widget: ErrorWindow = ErrorWindow("Você deve selecionar uma amostra para editar.")
@@ -66,8 +65,9 @@ class SampleWindow(QDialog, SampleDialog):
         row: int = selected_items[0].row()
         id: str = self.sample_table.item(row, 0).text()
         db: Database = Database()
-        sample: sqlite3.Row = db.get_samples(id=id)[0]
+        sample: sqlite3.Row = db.get_samples(sample_id=id)[0]
         db.close_connection()
+        dialog: RegisterSample = RegisterSample(self.current_property_id, self.sample_table.rowCount() + 1)
         dialog.edit_mode(sample)
         dialog.exec()
         self.refresh_table()
