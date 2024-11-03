@@ -14,8 +14,8 @@ class PropertyWindow(QDialog, PropertyDialog):
         self.setupUi(self)
         self.setWindowTitle('Propriedades cadastradas')
         self.requester_list: list[sqlite3.Row] | None = None
-        self.property_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.property_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.property_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.property_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.current_owner: str = kwargs.get('owner') if kwargs.get('owner') else ''
         self.owner.setText(self.current_owner)

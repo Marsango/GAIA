@@ -16,7 +16,6 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.setupUi(self)
         self.setWindowTitle('Solicitantes registrados')
         self.current_table = 'person'
-        self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.requester_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.add.clicked.connect(self.register_person)
         self.edit.clicked.connect(self.edit_requester)
@@ -161,7 +160,13 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.setItem(row_position, 3, QTableWidgetItem(company['phone_number']))
                 self.requester_table.setItem(row_position, 4, QTableWidgetItem(company['email']))
                 self.requester_table.setItem(row_position, 5, QTableWidgetItem(f"{company['street']}, {company['address_number']} - {company['cep']}, {company['city']}, {company['state']}, {company['country']}"))
+        if self.requester_table.rowCount() == 0:
+            self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        else:
+            self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         db.close_connection()
+
+
     def register_person(self) -> None:
         dialog: RegisterPerson = RegisterPerson()
         dialog.exec()

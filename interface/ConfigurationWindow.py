@@ -1,6 +1,7 @@
 from interface.base_windows.configuration_window import ConfigurationDialog
 from backend.classes.Configuration import Configuration
 from PySide6.QtWidgets import (QDialog)
+from interface.AlertWindow import AlertWindow
 
 
 class ConfigurationWindow(QDialog, ConfigurationDialog):
@@ -11,14 +12,21 @@ class ConfigurationWindow(QDialog, ConfigurationDialog):
         self.save_config.clicked.connect(self.save)
 
     def save(self) -> None:
-        config: Configuration = Configuration(float(self.phosphorum_factor.text()), float(self.potassium_factor.text()))
-        config.save_config()
-        self.close()
+        try:
+            config: Configuration = Configuration(float(self.phosphorum_factor.text()), float(self.potassium_factor.text()))
+            config.save_config()
+            dialog: AlertWindow = AlertWindow("Configurações salvas com sucesso!")
+            dialog.exec()
+            self.close()
+        except:
+            dialog: AlertWindow = AlertWindow("Por favor insira um número válido.")
+            dialog.exec()
+            self.load()
 
     def load(self) -> None:
         try:
             config: Configuration = Configuration()
-            self.phosphorum_factor.insert(str(config.get_phosphor_factor()))
-            self.potassium_factor.insert(str(config.get_potassium_factor()))
+            self.phosphorum_factor.setText(str(config.get_phosphor_factor()))
+            self.potassium_factor.setText(str(config.get_potassium_factor()))
         except:
             return
