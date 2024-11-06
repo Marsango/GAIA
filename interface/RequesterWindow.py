@@ -1,8 +1,7 @@
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.requester_window import RequesterDialog
-from interface.ErrorWindow import ErrorWindow
 from interface.DeleteConfirmation import DeleteConfirmation
-from interface.SucessfulRegister import SucessfulRegister
+from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from interface.RegisterCompany import RegisterCompany
 from interface.RegisterPerson import RegisterPerson
@@ -18,7 +17,6 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.setupUi(self)
         self.setWindowTitle('Solicitantes registrados')
         self.current_table = 'person'
-        self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.requester_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.add.clicked.connect(self.register_person)
         self.edit.clicked.connect(self.edit_requester)
@@ -32,12 +30,12 @@ class RequesterWindow(QDialog, RequesterDialog):
     def register_property_action(self) -> None:
         selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
         if len(selected_items) == 0:
-            widget: ErrorWindow = ErrorWindow("Você deve selecionar um solicitante para cadastrar uma propriedade.")
+            widget: AlertWindow = AlertWindow("Você deve selecionar um solicitante para cadastrar uma propriedade.")
             widget.exec()
             return
         for data in selected_items:
             if data.row() != selected_items[0].row():
-                widget: ErrorWindow = ErrorWindow("Você só pode adicionar propriedades a um solicitante por vez.")
+                widget: AlertWindow = AlertWindow("Você só pode adicionar propriedades a um solicitante por vez.")
                 widget.exec()
                 return
         row: int = selected_items[0].row()
@@ -60,34 +58,20 @@ class RequesterWindow(QDialog, RequesterDialog):
         try:
             selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
             if len(selected_items) == 0:
-                widget: ErrorWindow = ErrorWindow("Você deve selecionar um solicitante para deletar.")
+                widget: AlertWindow = AlertWindow("Você deve selecionar um solicitante para deletar.")
                 widget.exec()
                 return
 
             selected_requesters: set[int] = {selected_item.row() for selected_item in selected_items}
             list_of_ids: list[int] = [int(self.requester_table.item(item_row, 0).text()) for item_row in selected_requesters]
-
-            # Exibir janela de confirmação antes de proceder com a exclusão
             dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids,  table_type=self.current_table_type, message="Deseja deletar todos os solicitantes selecionados?")
-            if dialog.exec() == QDialog.Accepted:  # Só deletar se o usuário confirmar
-                db: Database = Database()
-
-                # Deletar solicitantes da base de dados
-                for requester_id in list_of_ids:
-                    if self.current_table_type == 'person':
-                        db.delete_person(requester_id)
-                    else:
-                        db.delete_company(requester_id)
-
-                db.close_connection()
-
-                # Exibir diálogo de sucesso
-                sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Solicitante deletado com sucesso!")
-                sucessful_dialog.exec()
+            dialog.exec()
+            sucessful_dialog: AlertWindow = AlertWindow("Solicitante deletado com sucesso!")
+            sucessful_dialog.exec()
 
         except Exception as e:
             error = handle_exception(e)
-            widget: ErrorWindow = ErrorWindow(error)
+            widget: AlertWindow = AlertWindow(error)
             widget.exec()
         self.refresh_table()
 
@@ -111,13 +95,13 @@ class RequesterWindow(QDialog, RequesterDialog):
         selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
 
         if len(selected_items) == 0:
-            widget: ErrorWindow = ErrorWindow("Você deve selecionar um solicitante para editar.")
+            widget: AlertWindow = AlertWindow("Você deve selecionar um solicitante para editar.")
             widget.exec()
             return
 
         for data in selected_items:
             if data.row() != selected_items[0].row():
-                widget: ErrorWindow = ErrorWindow("Você só pode editar um solicitante por vez.")
+                widget: AlertWindow = AlertWindow("Você só pode editar um solicitante por vez.")
                 widget.exec()
                 return
 
@@ -204,7 +188,13 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.setItem(row_position, 3, QTableWidgetItem(company['phone_number']))
                 self.requester_table.setItem(row_position, 4, QTableWidgetItem(company['email']))
                 self.requester_table.setItem(row_position, 5, QTableWidgetItem(f"{company['street']}, {company['address_number']} - {company['cep']}, {company['city']}, {company['state']}, {company['country']}"))
+        if self.requester_table.rowCount() == 0:
+            self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        else:
+            self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         db.close_connection()
+
+
     def register_person(self) -> None:
         dialog: RegisterPerson = RegisterPerson()
         dialog.exec()

@@ -54,7 +54,7 @@
        <string notr="true">color: rgb(70, 0, 0);</string>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Shape::NoFrame</enum>
+       <enum>QFrame::NoFrame</enum>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="spacing">
@@ -87,7 +87,7 @@
           <bool>false</bool>
          </property>
          <property name="textInteractionFlags">
-          <set>Qt::TextInteractionFlag::NoTextInteraction</set>
+          <set>Qt::NoTextInteraction</set>
          </property>
         </widget>
        </item>
@@ -102,7 +102,7 @@
      <x>0</x>
      <y>0</y>
      <width>1958</width>
-     <height>33</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCadastro">
@@ -110,13 +110,14 @@
      <string>Cadastro</string>
     </property>
     <addaction name="actionSolicitantes"/>
+    <addaction name="actionConsultar_laudo_2"/>
    </widget>
    <widget class="QMenu" name="menuConfigura_es">
     <property name="title">
      <string>Configuracoes</string>
     </property>
-    <addaction name="actionGr_ficos"/>
     <addaction name="actionFatores_vari_veis"/>
+    <addaction name="actionSobre"/>
    </widget>
    <addaction name="menuCadastro"/>
    <addaction name="menuConfigura_es"/>
@@ -164,6 +165,16 @@
   <action name="actionSolicitantes">
    <property name="text">
     <string>Solicitantes</string>
+   </property>
+  </action>
+  <action name="actionSobre">
+   <property name="text">
+    <string>Sobre</string>
+   </property>
+  </action>
+  <action name="actionConsultar_laudo_2">
+   <property name="text">
+    <string>Consultar laudo</string>
    </property>
   </action>
  </widget>

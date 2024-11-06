@@ -1,9 +1,6 @@
 import sqlite3
 import os
-
-from typing import Any
-from datetime import datetime
-from backend.classes.exceptions import CPFAlreadyExistsError
+from backend.classes.Report import Report
 from backend.classes.Person import Person
 from backend.classes.Address import Address
 from backend.classes.Company import Company
@@ -67,6 +64,8 @@ class Database:
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
          zinc float, base_sum float, ctc float, v_percent float, aluminum_saturation float,
         effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
+        self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), technician varchar(255), fk_sample_id integer,
+        FOREIGN KEY (fk_sample_id) REFERENCES sample(id) ON DELETE CASCADE)""")
         self.__con.commit()
 
     def insert_person(self, person: Person, address: Address) -> None:
@@ -138,17 +137,10 @@ class Database:
             raise ValueError("Solicitante não encontrado.")
         
         person_dict: sqlite3.Row = person_records[0]
-    
-        # Exclua da tabela person
+
         self.__cur.execute("""DELETE FROM person WHERE id = :id""", {'id': id})
-
-        # Exclua da tabela requester
         self.__cur.execute("""DELETE FROM requester WHERE requester_id = :requester_id""", {'requester_id': person_dict['requester_id']})
-
-        # Exclua o endereço (caso a exclusão em cascata não esteja funcionando)
         self.__cur.execute("""DELETE FROM address WHERE address_id = :address_id""", {'address_id': person_dict['address_id']})
-
-        # Confirme as alterações
         self.__con.commit()
 
 
@@ -287,6 +279,19 @@ class Database:
         :potassium, :organic_matter, :ph, :aluminum, :h_al, :calcium, :magnesium, :copper, :iron, :manganese,
         :zinc, :base_sum, :ctc, :v_percent, :aluminum_saturation, :effective_ctc, :property_id, :smp)""", sample_dict)
         self.__con.commit()
+
+    def insert_report(self, report: Report, sample_id: int) -> None:
+        report_dict: dict[str, Any] = to_dict(report)
+        report_dict['sample_id'] = sample_id
+        self.__cur.execute("""INSERT INTO report(file_location, technician, fk_sample_id) 
+        VALUES(:file_location, :technician, :sample_id)""", report_dict)
+        self.__con.commit()
+
+    def get_next_report_id(self) -> int:
+        self.__cur.execute("""SELECT id from report""")
+        list_of_report_ids: list[sqlite3.Row] = self.__cur.fetchall()
+        return len(list_of_report_ids) + 1
+
 
     def get_countries(self) -> list[str]:
         self.__cur.execute("""SELECT country_name, country_id from country""")
@@ -524,6 +529,7 @@ class Database:
         """, (sample_id,))
         return self.__cur.fetchone()
 
+<<<<<<< HEAD
     def get_cpf_excluding_current(self, cpf: str, current_person_id: int) -> bool:
         query = """
             SELECT id 
@@ -535,3 +541,19 @@ class Database:
 
         # Se o resultado não for None, significa que o CPF já está em uso por outra pessoa
         return result is not None
+=======
+    def get_report_info(self) -> list[sqlite3.Row]:
+        self.__cur.execute("""SELECT 
+                report.id AS id, 
+                COALESCE(person.name, company.company_name) AS requester_name,
+                sample.collection_date AS date,
+                property.property_name AS property 
+                FROM  
+                report 
+                JOIN sample ON report.fk_sample_id = sample.id 
+                JOIN property ON sample.fk_property_id = property.id 
+                JOIN requester ON property.fk_requester_id = requester.requester_id 
+                LEFT JOIN person ON requester.requester_id = person.fk_requester_id 
+                LEFT JOIN company ON requester.requester_id = company.fk_requester_id;""")
+        return self.__cur.fetchall()
+>>>>>>> 60f2571f4704ddeb7ccb8eee8e47ee97085f3a2e

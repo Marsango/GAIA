@@ -3,8 +3,7 @@ from interface.base_windows.register_property import RegisterPropertyDialog
 from PySide6.QtCore import Qt
 from backend.classes.Database import Database
 from backend.classes.Property import Property
-from interface.ErrorWindow import ErrorWindow
-from interface.SucessfulRegister import SucessfulRegister
+from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 
 
@@ -65,17 +64,17 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
                                           registration_number=self.registration_number_input.text())
             if self.mode == 'register':
                 db.insert_property(property, self.requester_id)
-                sucess_text: str = "Propriedade registrada com sucesso!"
+                success: str = "Propriedade registrada com sucesso!"
             elif self.mode == 'edit':
                 db.edit_property(property, self.current_property_id)
-                sucess_text: str = "Alterações salvas com sucesso!"
-            widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
+                success: str = "Alterações salvas com sucesso!"
+            widget: AlertWindow = AlertWindow(success)
             widget.exec()
             if self.mode == 'register':
                 self.clean_input()
         except Exception as e:
             error = handle_exception(e)
-            widget: ErrorWindow = ErrorWindow(error)
+            widget: AlertWindow = AlertWindow(error)
             widget.exec()
         db.close_connection()
 

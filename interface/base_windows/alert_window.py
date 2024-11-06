@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'error_window.ui'
+## Form generated from reading UI file 'alert_window.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.3
 ##
@@ -18,7 +18,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
     QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
-class ErrorDialog(object):
+class AlertDialog(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")

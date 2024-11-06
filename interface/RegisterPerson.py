@@ -4,9 +4,9 @@ from PySide6.QtCore import Qt
 from backend.classes.Database import Database
 from backend.classes.Address import Address
 from backend.classes.Person import Person
-from interface.ErrorWindow import ErrorWindow
-from interface.SucessfulRegister import SucessfulRegister
+from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
+
 class RegisterPerson(QDialog, RegisterPersonDialog):
     def __init__(self) -> None:
         super(RegisterPerson, self).__init__()
@@ -83,17 +83,17 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
                                     .replace('-', '').replace('(', '').replace(')', ''), address=address)
             if self.mode == 'register':
                 db.insert_person(person, address)
-                sucess_text: str = "Solicitante registrado com sucesso!"
+                success_text: str = "Solicitante registrado com sucesso!"
             elif self.mode == 'edit':
                 db.edit_person(person, address, self.current_person_id)
-                sucess_text: str = "Alterações salvas com sucesso!"
-            widget: SucessfulRegister = SucessfulRegister(sucess_message=sucess_text)
+                success_text: str = "Alterações salvas com sucesso!"
+            widget: AlertWindow = AlertWindow(success_text)
             widget.exec()
             if self.mode == 'register':
                 self.clean_input()
         except Exception as e:
             error = handle_exception(e)
-            widget: ErrorWindow = ErrorWindow(error)
+            widget: AlertWindow = AlertWindow(error)
             widget.exec()
 
         db.close_connection()

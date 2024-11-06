@@ -1,9 +1,7 @@
-from PySide6.QtWidgets import (QDialog, QCompleter, QTableWidgetItem, QAbstractItemView, QHeaderView)
+from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.property_window import PropertyDialog
-from PySide6.QtCore import Qt
-from interface.ErrorWindow import ErrorWindow
 from interface.DeleteConfirmation import DeleteConfirmation
-from interface.SucessfulRegister import SucessfulRegister
+from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from interface.RegisterProperty import RegisterProperty
 from backend.classes.Database import Database
@@ -16,8 +14,8 @@ class PropertyWindow(QDialog, PropertyDialog):
         self.setupUi(self)
         self.setWindowTitle('Propriedades cadastradas')
         self.requester_list: list[sqlite3.Row] | None = None
-        self.property_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.property_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.property_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.property_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.current_owner: str = kwargs.get('owner') if kwargs.get('owner') else ''
         self.owner.setText(self.current_owner)
@@ -52,12 +50,12 @@ class PropertyWindow(QDialog, PropertyDialog):
         dialog: RegisterProperty = RegisterProperty(self.current_owner_id)
         selected_items: list[QTableWidgetItem] = self.property_table.selectedIndexes()
         if len(selected_items) == 0:
-            widget: ErrorWindow = ErrorWindow("Você deve selecionar um solicitante para editar.")
+            widget: AlertWindow = AlertWindow("Você deve selecionar um solicitante para editar.")
             widget.exec()
             return
         for data in selected_items:
             if data.row() != selected_items[0].row():
-                widget: ErrorWindow = ErrorWindow("Você só pode editar um solicitante por vez.")
+                widget: AlertWindow = AlertWindow("Você só pode editar um solicitante por vez.")
                 widget.exec()
                 return
         row: int = selected_items[0].row()
@@ -73,7 +71,7 @@ class PropertyWindow(QDialog, PropertyDialog):
         try:
             selected_items: list[QTableWidgetItem] = self.property_table.selectedIndexes()
             if len(selected_items) == 0:
-                widget: ErrorWindow = ErrorWindow("Você deve selecionar ao menos uma propriedade para deletar.")
+                widget: AlertWindow = AlertWindow("Você deve selecionar ao menos uma propriedade para deletar.")
                 widget.exec()
                 return
 
@@ -81,35 +79,25 @@ class PropertyWindow(QDialog, PropertyDialog):
             list_of_ids: list[int] = [int(self.property_table.item(item_row, 0).text()) for item_row in selected_properties]
 
             dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, table_type="property", message="Deseja deletar todos as propriedades selecionadas?")
-            if dialog.exec() == QDialog.Accepted:  # Só deletar se o usuário confirmar
-                db: Database = Database()
-
-                # Deletar solicitantes da base de dados
-                for requester_id in list_of_ids:
-                    if self.current_table_type == 'property':
-                        db.delete_property(requester_id)
-
-                db.close_connection()
-
-                # Exibir diálogo de sucesso
-                sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Solicitante deletado com sucesso!")
-                sucessful_dialog.exec()        
+            dialog.exec()
+            successful_dialog: AlertWindow = AlertWindow("Solicitante deletado com sucesso!")
+            successful_dialog.exec()
 
         except Exception as e:
             error = handle_exception(e)
-            widget: ErrorWindow = ErrorWindow(error)
+            widget: AlertWindow = AlertWindow(error)
             widget.exec()
         self.refresh_table()
 
     def open_sample_widget(self) -> None:
         selected_items: list[QTableWidgetItem] = self.property_table.selectedIndexes()
         if len(selected_items) == 0:
-            widget: ErrorWindow = ErrorWindow("Você deve selecionar uma propriedade para ver as amostras.")
+            widget: AlertWindow = AlertWindow("Você deve selecionar uma propriedade para ver as amostras.")
             widget.exec()
             return
         for data in selected_items:
             if data.row() != selected_items[0].row():
-                widget: ErrorWindow = ErrorWindow("Você só pode ver as amostras de uma propriedade por vez.")
+                widget: AlertWindow = AlertWindow("Você só pode ver as amostras de uma propriedade por vez.")
                 widget.exec()
                 return
         widget: SampleWindow = SampleWindow(owner=self.owner.text(), owner_id=self.current_owner_id,

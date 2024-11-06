@@ -1,8 +1,7 @@
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.sample_window import SampleDialog
-from interface.ErrorWindow import ErrorWindow
 from interface.DeleteConfirmation import DeleteConfirmation
-from interface.SucessfulRegister import SucessfulRegister
+from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from backend.classes.Database import Database
 from interface.RegisterSample import RegisterSample
@@ -52,22 +51,22 @@ class SampleWindow(QDialog, SampleDialog):
         self.refresh_table()
 
     def edit_sample(self) -> None:
-        dialog: RegisterSample = RegisterSample(self.current_property_id, self.sample_table.rowCount() + 1)
         selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
         if len(selected_items) == 0:
-            widget: ErrorWindow = ErrorWindow("Você deve selecionar uma amostra para editar.")
+            widget: AlertWindow = AlertWindow("Você deve selecionar uma amostra para editar.")
             widget.exec()
             return
         for data in selected_items:
             if data.row() != selected_items[0].row():
-                widget: ErrorWindow = ErrorWindow("Você só pode editar uma amostra por vez.")
+                widget: AlertWindow = AlertWindow("Você só pode editar uma amostra por vez.")
                 widget.exec()
                 return
         row: int = selected_items[0].row()
         id: str = self.sample_table.item(row, 0).text()
         db: Database = Database()
-        sample: sqlite3.Row = db.get_samples(id=id)[0]
+        sample: sqlite3.Row = db.get_samples(sample_id=id)[0]
         db.close_connection()
+        dialog: RegisterSample = RegisterSample(self.current_property_id, self.sample_table.rowCount() + 1)
         dialog.edit_mode(sample)
         dialog.exec()
         self.refresh_table()
@@ -76,7 +75,7 @@ class SampleWindow(QDialog, SampleDialog):
         try:
             selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
             if len(selected_items) == 0:
-                widget: ErrorWindow = ErrorWindow("Você deve selecionar ao menos uma amostra para deletar.")
+                widget: AlertWindow = AlertWindow("Você deve selecionar ao menos uma amostra para deletar.")
                 widget.exec()
                 return
         
@@ -84,35 +83,25 @@ class SampleWindow(QDialog, SampleDialog):
             list_of_ids: list[int] = [int(self.sample_table.item(item_row, 0).text()) for item_row in selected_samples]
 
             dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, table_type="sample", message="Deseja deletar todas as amostras selecionadas?")
-            if dialog.exec() == QDialog.Accepted:  # Só deletar se o usuário confirmar
-                db: Database = Database()
-
-                # Deletar solicitantes da base de dados
-                for requester_id in list_of_ids:
-                    if self.current_table_type == 'sample':
-                        db.delete_sample(requester_id)
-
-                db.close_connection()
-
-                # Exibir diálogo de sucesso
-                sucessful_dialog: SucessfulRegister = SucessfulRegister(sucess_message="Solicitante deletado com sucesso!")
-                sucessful_dialog.exec()
+            dialog.exec()
+            sucessful_dialog: AlertWindow = AlertWindow("Solicitante deletado com sucesso!")
+            sucessful_dialog.exec()
 
         except Exception as e:
             error = handle_exception(e)
-            widget: ErrorWindow = ErrorWindow(error)
+            widget: AlertWindow = AlertWindow(error)
             widget.exec()
         self.refresh_table()
 
     def report_window(self):
         selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
         if len(selected_items) == 0:
-            widget: ErrorWindow = ErrorWindow("Você deve selecionar uma amostra para gerar um laudo.")
+            widget: AlertWindow = AlertWindow("Você deve selecionar uma amostra para gerar um laudo.")
             widget.exec()
             return
         for data in selected_items:
             if data.row() != selected_items[0].row():
-                widget: ErrorWindow = ErrorWindow("Você gerar laudo de uma amostra por vez.")
+                widget: AlertWindow = AlertWindow("Você gerar laudo de uma amostra por vez.")
                 widget.exec()
                 return
         row: int = selected_items[0].row()
