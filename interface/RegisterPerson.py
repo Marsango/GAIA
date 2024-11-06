@@ -32,6 +32,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         self.cpf_input.insert(person_data['cpf'])
         self.birth_date_input.insert(person_data['birth_date'])
         self.phone_number_input.insert(person_data['phone_number'])
+
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de Pessoa Física')
         self.mode = 'edit'

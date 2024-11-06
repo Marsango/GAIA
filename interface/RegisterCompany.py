@@ -80,6 +80,17 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         db.close_connection()
 
     def edit_mode(self, company_data) -> None:
+        self.country_input.clear()
+        self.state_input.clear()
+        self.city_input.clear()
+        self.street_input.clear()
+        self.address_number_input.clear()
+        self.cep_input.clear()
+        self.company_name_input.clear()
+        self.email_input.clear()
+        self.cnpj_input.clear()
+        self.phone_number_input.clear()
+
         self.country_input.insert(company_data['country'])
         self.state_input.insert(company_data['state'])
         self.city_input.insert(company_data['city'])
@@ -90,6 +101,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         self.email_input.insert(company_data['email'])
         self.cnpj_input.insert(company_data['cnpj'])
         self.phone_number_input.insert(company_data['phone_number'])
+
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de Pessoa Física')
         self.mode = 'edit'

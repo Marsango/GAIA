@@ -50,7 +50,8 @@ class Database:
         FOREIGN KEY(fk_street_id) REFERENCES street(street_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS person(
         id INTEGER PRIMARY KEY,
-        name varchar(255), birth_date varchar(20), cpf varchar(15) UNIQUE, fk_requester_id integer,
+        name varchar(255), birth_date varchar(20), cpf varchar(15) UNIQUE, email VARCHAR(255),
+        phone_number VARCHAR(15), fk_requester_id integer,
         FOREIGN KEY(fk_requester_id) REFERENCES requester(requester_id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS company(
         id INTEGER PRIMARY KEY,
@@ -84,10 +85,12 @@ class Database:
     def edit_person(self, person: Person, address: Address, id: int) -> None:
         person_dict: dict[str, Any] = to_dict(person)
         person_dict['id'] = id
+        person_dict['email'] = person.email
+        person_dict['phone_number'] = person.phone_number 
         self.edit_address(address, id, person)
         self.__cur.execute("""
             UPDATE person
-            SET name = :name, birth_date = :birth_date, cpf = :cpf
+            SET name = :name, birth_date = :birth_date, cpf = :cpf, email = :email, phone_number = :phone_number
             WHERE id = :id
         """, person_dict)
         self.__con.commit()

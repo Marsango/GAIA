@@ -136,13 +136,14 @@ class RequesterWindow(QDialog, RequesterDialog):
         requester = requesters[0]
 
         # Aqui você pode simplesmente verificar se o CPF é válido
-        try:
-            db.verify_valid_cpf(requester['cpf'])  # Verifica se o CPF é válido
-        except ValueError as e:
-            widget: ErrorWindow = ErrorWindow(str(e))  # Exibe a mensagem de erro se o CPF for inválido
-            widget.exec()
-            db.close_connection()
-            return
+        if(self.current_table_type == 'person'):
+            try:
+                db.verify_valid_cpf(requester['cpf'])  # Verifica se o CPF é válido
+            except ValueError as e:
+                widget: ErrorWindow = ErrorWindow(str(e))  # Exibe a mensagem de erro se o CPF for inválido
+                widget.exec()
+                db.close_connection()
+                return
 
         db.close_connection()
 
