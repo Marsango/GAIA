@@ -98,7 +98,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
                 db.edit_sample(sample, self.current_sample_id)
                 success: str = "Alterações salvas com sucesso!"
 
-            widget: AlertWindow = AlertWindow(success)
+            widget: AlertWindow = AlertWindow(message=success)
             widget.exec()
 
             if self.mode == 'register':
