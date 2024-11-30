@@ -488,7 +488,7 @@ class Database:
             COALESCE(person.name, company.company_name) AS requester_name,
             CONCAT(street.street_name, ', ', address.address_number, ', ', city.city_name, ', ', state.state_name, ', ', country.country_name) AS address,
             property.property_name,
-            sample.description AS sample_name,
+            sample.description AS sample_description,
             sample.sample_number,
             sample.collection_date,
             sample.depth,
