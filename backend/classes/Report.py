@@ -53,7 +53,7 @@ class Report:
         self.__pdf.setFont('arial', 10)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 772, 'Universidade Tecnólogica Federal do Paraná')
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 759, 'Campus Pato Branco')
-        self.__pdf.drawImage(f'{self.__images_location}/logo_lab-no-bg.png', 410, 730, 125, 125, preserveAspectRatio=True, mask='auto')
+        self.__pdf.drawImage(f'{self.__images_location}/logo_lab.png', 410, 730, 125, 125, preserveAspectRatio=True, mask='auto')
         self.__pdf.setFont('arial', 8)
 
     def draw_square(self, pos_horizontal1: int, pos_horizontal2: int, pos_vertical1: int,

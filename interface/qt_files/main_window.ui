@@ -54,7 +54,7 @@
        <string notr="true">color: rgb(70, 0, 0);</string>
       </property>
       <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
+       <enum>QFrame::Shape::NoFrame</enum>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="spacing">
@@ -87,7 +87,7 @@
           <bool>false</bool>
          </property>
          <property name="textInteractionFlags">
-          <set>Qt::NoTextInteraction</set>
+          <set>Qt::TextInteractionFlag::NoTextInteraction</set>
          </property>
         </widget>
        </item>
@@ -102,7 +102,7 @@
      <x>0</x>
      <y>0</y>
      <width>1958</width>
-     <height>21</height>
+     <height>33</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCadastro">
@@ -118,6 +118,7 @@
     </property>
     <addaction name="actionFatores_vari_veis"/>
     <addaction name="actionSobre"/>
+    <addaction name="actionLogo"/>
    </widget>
    <addaction name="menuCadastro"/>
    <addaction name="menuConfigura_es"/>
@@ -175,6 +176,11 @@
   <action name="actionConsultar_laudo_2">
    <property name="text">
     <string>Consultar laudo</string>
+   </property>
+  </action>
+  <action name="actionLogo">
+   <property name="text">
+    <string>Logo</string>
    </property>
   </action>
  </widget>

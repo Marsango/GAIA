@@ -7,6 +7,7 @@ from interface.InfoWindow import InfoWindow
 from interface.base_windows.main_window import Ui_MainWindow
 from interface.RequesterWindow import RequesterWindow
 from interface.ConfigurationWindow import ConfigurationWindow
+from interface.UploadLogo import UploadLogo
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -23,6 +24,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionFatores_vari_veis.triggered.connect(self.open_config_window)
         self.actionSobre.triggered.connect(self.open_info_window)
         self.actionConsultar_laudo_2.triggered.connect(self.open_get_report_window)
+        self.actionLogo.triggered.connect(self.open_upload_logo_window)
 
     def open_requester_window(self) -> None:
         dialog: RequesterWindow = RequesterWindow()
@@ -39,6 +41,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def open_get_report_window(self) -> None:
         dialog: GetReport = GetReport()
+        dialog.exec()
+
+    def open_upload_logo_window(self) -> None:
+        dialog: UploadLogo = UploadLogo()
         dialog.exec()
 
 if __name__ == '__main__':

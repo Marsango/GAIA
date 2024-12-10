@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindow.ui'
+## Form generated from reading UI file 'main_window.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.3
 ##
@@ -53,6 +53,8 @@ class Ui_MainWindow(object):
         self.actionSobre.setObjectName(u"actionSobre")
         self.actionConsultar_laudo_2 = QAction(MainWindow)
         self.actionConsultar_laudo_2.setObjectName(u"actionConsultar_laudo_2")
+        self.actionLogo = QAction(MainWindow)
+        self.actionLogo.setObjectName(u"actionLogo")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_2 = QHBoxLayout(self.centralwidget)
@@ -65,7 +67,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
         self.frame.setSizePolicy(sizePolicy)
         self.frame.setStyleSheet(u"color: rgb(70, 0, 0);")
-        self.frame.setFrameShape(QFrame.NoFrame)
+        self.frame.setFrameShape(QFrame.Shape.NoFrame)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
@@ -76,7 +78,7 @@ class Ui_MainWindow(object):
         self.label.setSizePolicy(sizePolicy)
         self.label.setPixmap(QPixmap(u"../../../../Downloads/UpscaleImage_1_20240722.jpeg"))
         self.label.setScaledContents(False)
-        self.label.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
 
         self.horizontalLayout.addWidget(self.label)
 
@@ -86,7 +88,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1958, 21))
+        self.menubar.setGeometry(QRect(0, 0, 1958, 33))
         self.menuCadastro = QMenu(self.menubar)
         self.menuCadastro.setObjectName(u"menuCadastro")
         self.menuConfigura_es = QMenu(self.menubar)
@@ -99,6 +101,7 @@ class Ui_MainWindow(object):
         self.menuCadastro.addAction(self.actionConsultar_laudo_2)
         self.menuConfigura_es.addAction(self.actionFatores_vari_veis)
         self.menuConfigura_es.addAction(self.actionSobre)
+        self.menuConfigura_es.addAction(self.actionLogo)
 
         self.retranslateUi(MainWindow)
 
@@ -118,6 +121,7 @@ class Ui_MainWindow(object):
         self.actionSolicitantes.setText(QCoreApplication.translate("MainWindow", u"Solicitantes", None))
         self.actionSobre.setText(QCoreApplication.translate("MainWindow", u"Sobre", None))
         self.actionConsultar_laudo_2.setText(QCoreApplication.translate("MainWindow", u"Consultar laudo", None))
+        self.actionLogo.setText(QCoreApplication.translate("MainWindow", u"Logo", None))
         self.label.setText("")
         self.menuCadastro.setTitle(QCoreApplication.translate("MainWindow", u"Cadastro", None))
         self.menuConfigura_es.setTitle(QCoreApplication.translate("MainWindow", u"Configuracoes", None))
