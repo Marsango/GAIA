@@ -17,7 +17,6 @@ class UploadLogo(QDialog, UploadLogoDialog):
             "interface",
             "images"
         ).replace("\\", "/")
-        print(f"{self.__image_location}/logo_lab.png")
         self.image_label.setPixmap(QPixmap(f"{self.__image_location}/logo_lab.png"))
 
     def upload(self) -> None:

@@ -15,7 +15,6 @@ class RequesterWindow(QDialog, RequesterDialog):
         super(RequesterWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Solicitantes registrados')
-        self.current_table = 'person'
         self.requester_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.add.clicked.connect(self.register_person)
         self.edit.clicked.connect(self.edit_requester)
@@ -24,17 +23,32 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.requester_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.requester_type.currentTextChanged.connect(self.type_change)
         self.refresh_table()
-        self.register_property.clicked.connect(self.register_property_action)
+        self.search_bar.textEdited.connect(self.search)
+        self.view_properties.clicked.connect(self.register_property_action)
+
+    def search(self) -> None:
+        db: Database = Database()
+        if self.search_parameter.currentText() == 'CPF/CNPJ' and self.current_table_type == 'person':
+            query_result: list[sqlite3.Row] = db.get_persons(cpf=self.search_bar.text())
+        elif self.search_parameter.currentText() == 'Nome' and self.current_table_type == 'person':
+            query_result: list[sqlite3.Row] = db.get_persons(name=self.search_bar.text())
+        elif self.search_parameter.currentText() == 'CPF/CNPJ' and self.current_table_type == 'company':
+            query_result: list[sqlite3.Row] = db.get_companies(cnpj=self.search_bar.text())
+        elif self.search_parameter.currentText() == 'Nome' and self.current_table_type == 'company':
+            query_result: list[sqlite3.Row] = db.get_companies(company_name=self.search_bar.text())
+        print(query_result)
+        self.refresh_table(query_result=query_result)
+        db.close_connection()
 
     def register_property_action(self) -> None:
         selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
         if len(selected_items) == 0:
-            widget: AlertWindow = AlertWindow("Você deve selecionar um solicitante para cadastrar uma propriedade.")
+            widget: AlertWindow = AlertWindow("Você deve selecionar um solicitante para visualizar as propriedades.")
             widget.exec()
             return
         for data in selected_items:
             if data.row() != selected_items[0].row():
-                widget: AlertWindow = AlertWindow("Você só pode adicionar propriedades a um solicitante por vez.")
+                widget: AlertWindow = AlertWindow("Você só pode visualizar as propriedades de um solicitante por vez.")
                 widget.exec()
                 return
         row: int = selected_items[0].row()
@@ -111,7 +125,7 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.refresh_table()
 
     def create_person_table(self) -> None:
-        if self.current_table == 'company':
+        if self.current_table_type == 'company':
             self.requester_table.setRowCount(0)
             self.requester_table.setColumnCount(7)
             self.requester_table.setHorizontalHeaderItem(2, QTableWidgetItem("Nascimento"))
@@ -119,25 +133,29 @@ class RequesterWindow(QDialog, RequesterDialog):
             self.requester_table.setHorizontalHeaderItem(4, QTableWidgetItem("Telefone"))
             self.requester_table.setHorizontalHeaderItem(5, QTableWidgetItem("E-mail"))
             self.requester_table.setHorizontalHeaderItem(6, QTableWidgetItem("Endereço"))
-            self.current_table = 'person'
+            self.current_table_type = 'person'
             self.refresh_table()
 
     def create_company_table(self) -> None:
-        if self.current_table == 'person':
+        if self.current_table_type == 'person':
             self.requester_table.setRowCount(0)
             self.requester_table.setColumnCount(6)
             self.requester_table.setHorizontalHeaderItem(2, QTableWidgetItem("CNPJ"))
             self.requester_table.setHorizontalHeaderItem(3, QTableWidgetItem("Telefone"))
             self.requester_table.setHorizontalHeaderItem(4, QTableWidgetItem("E-mail"))
             self.requester_table.setHorizontalHeaderItem(5, QTableWidgetItem("Endereço"))
-            self.current_table = 'company'
+            self.current_table_type = 'company'
             self.refresh_table()
 
-    def refresh_table(self) -> None:
+    def refresh_table(self, **kwargs) -> None:
         db: Database = Database()
-        if self.current_table == 'person':
-            persons: list[sqlite3.Row] = db.get_persons()
+        if self.current_table_type == 'person':
+            if kwargs.get('query_result') is None:
+                persons: list[sqlite3.Row] = db.get_persons()
+            else:
+                persons: list[sqlite3.Row] = kwargs.get('query_result')
             self.requester_table.setRowCount(0)
+            print(self.requester_table.rowCount())
             for person in persons:
                 row_position: int = self.requester_table.rowCount()
                 self.requester_table.insertRow(row_position)
@@ -148,8 +166,11 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.setItem(row_position, 4, QTableWidgetItem(person['phone_number']))
                 self.requester_table.setItem(row_position, 5, QTableWidgetItem(person['email']))
                 self.requester_table.setItem(row_position, 6, QTableWidgetItem(f"{person['street']}, {person['address_number']} - {person['cep']}, {person['city']}, {person['state']}, {person['country']}"))
-        elif self.current_table == 'company':
-            companies: list[sqlite3.Row] = db.get_companies()
+        elif self.current_table_type == 'company':
+            if kwargs.get('query_result') is None:
+                companies: list[sqlite3.Row] = db.get_companies()
+            else:
+                companies: list[sqlite3.Row] = kwargs.get('query_result')
             self.requester_table.setRowCount(0)
             for company in companies:
                 row_position = self.requester_table.rowCount()

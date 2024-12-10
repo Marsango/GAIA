@@ -352,11 +352,22 @@ class Database:
             INNER JOIN 
             state st ON a.fk_state_id = st.state_id
             INNER JOIN 
-            country co ON a.fk_country_id = co.country_id"""
-        id = kwargs.get("id")
+            country co ON a.fk_country_id = co.country_id
+            """
+        id: int = kwargs.get("id")
+        cpf: str = kwargs.get("cpf")
+        name: str = kwargs.get("name")
+        params: dict[str, Any] = {}
         if id:
-            query += f" WHERE id = :id"
-        self.__cur.execute(query, {"id": id})
+            query += " WHERE id = :id"
+            params ={"id": id}
+        elif cpf:
+            query += " WHERE cpf LIKE :cpf"
+            params ={"cpf": f"{cpf}%"}
+        elif name:
+            query += " WHERE name LIKE :name"
+            params = {"name": f"%{name}%"}
+        self.__cur.execute(query + " ORDER BY name", params)
         return self.__cur.fetchall()
 
     def get_companies(self, **kwargs) -> list[sqlite3.Row]:
@@ -388,11 +399,22 @@ class Database:
             state st ON a.fk_state_id = st.state_id
             INNER JOIN 
             country co ON a.fk_country_id = co.country_id"""
-        id = kwargs.get("id")
+        id: int = kwargs.get("id")
+        cnpj: str = kwargs.get("cnpj")
+        company_name: str = kwargs.get("company_name")
+        params: dict[str, Any] = {}
         if id:
-            query += f" WHERE id = :id"
-        self.__cur.execute(query, {"id": id})
+            query += " WHERE id = :id"
+            params ={"id": id}
+        elif cnpj:
+            query += " WHERE cnpj LIKE :cnpj"
+            params ={"cnpj": f"{cnpj}%"}
+        elif company_name:
+            query += " WHERE company_name LIKE :company_name"
+            params = {"company_name": f"%{company_name}%"}
+        self.__cur.execute(query + " ORDER BY company_name", params)
         return self.__cur.fetchall()
+
 
     def get_requesters(self, **kwargs) -> list[sqlite3.Row] | None:
         self.__cur.execute("""SELECT
