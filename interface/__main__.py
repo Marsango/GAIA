@@ -8,6 +8,7 @@ from interface.base_windows.main_window import Ui_MainWindow
 from interface.RequesterWindow import RequesterWindow
 from interface.ConfigurationWindow import ConfigurationWindow
 from interface.UploadLogo import UploadLogo
+from interface.BackupWindow import BackupWindow
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -25,6 +26,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionSobre.triggered.connect(self.open_info_window)
         self.actionConsultar_laudo_2.triggered.connect(self.open_get_report_window)
         self.actionLogo.triggered.connect(self.open_upload_logo_window)
+        self.actionBackup.triggered.connect(self.open_backup_window)
 
     def open_requester_window(self) -> None:
         dialog: RequesterWindow = RequesterWindow()
@@ -46,6 +48,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def open_upload_logo_window(self) -> None:
         dialog: UploadLogo = UploadLogo()
         dialog.exec()
+
+    def open_backup_window(self) -> None:
+        dialog: BackupWindow = BackupWindow()
+        dialog.exec()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

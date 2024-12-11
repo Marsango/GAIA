@@ -119,6 +119,7 @@
     <addaction name="actionFatores_vari_veis"/>
     <addaction name="actionSobre"/>
     <addaction name="actionLogo"/>
+    <addaction name="actionBackup"/>
    </widget>
    <addaction name="menuCadastro"/>
    <addaction name="menuConfigura_es"/>
@@ -181,6 +182,11 @@
   <action name="actionLogo">
    <property name="text">
     <string>Logo</string>
+   </property>
+  </action>
+  <action name="actionBackup">
+   <property name="text">
+    <string>Backup</string>
    </property>
   </action>
  </widget>

@@ -23,7 +23,6 @@ class UploadLogo(QDialog, UploadLogoDialog):
         filename: QFileDialog.getOpenFileName = QFileDialog.getOpenFileName()[0]
         self.file_path.setText(filename)
         self.image_label.setPixmap(QPixmap(filename))
-        print(filename)
         self.label_2.setText("Preview")
 
     def save(self) -> None:

@@ -11,11 +11,11 @@ from backend.classes.Sample import Sample
 
 class Database:
     def __init__(self) -> None:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        db_path = os.path.join(base_dir, 'soil_analysis.db')
-        self.__con = sqlite3.connect(db_path)
+        base_dir: str = os.path.dirname(os.path.abspath(__file__))
+        db_path: str = os.path.join(base_dir, 'soil_analysis.db')
+        self.__con: sqlite3.Connection = sqlite3.connect(db_path)
         self.__con.row_factory = sqlite3.Row
-        self.__cur = self.__con.cursor()
+        self.__cur: sqlite3.Cursor = self.__con.cursor()
         self.__cur.execute("""PRAGMA foreign_keys = ON;""")
         self.__con.commit()
         self.create_database()
@@ -129,17 +129,18 @@ class Database:
         self.__con.commit()
 
     def delete_person(self, id: int) -> None:
-        person_records = self.get_persons(id=id)
+        person_records: list[sqlite3.Row] = self.get_persons(id=id)
         if not person_records:
             raise ValueError("Solicitante não encontrado.")
-        
+
         person_dict: sqlite3.Row = person_records[0]
 
         self.__cur.execute("""DELETE FROM person WHERE id = :id""", {'id': id})
-        self.__cur.execute("""DELETE FROM requester WHERE requester_id = :requester_id""", {'requester_id': person_dict['requester_id']})
-        self.__cur.execute("""DELETE FROM address WHERE address_id = :address_id""", {'address_id': person_dict['address_id']})
+        self.__cur.execute("""DELETE FROM requester WHERE requester_id = :requester_id""",
+                           {'requester_id': person_dict['requester_id']})
+        self.__cur.execute("""DELETE FROM address WHERE address_id = :address_id""",
+                           {'address_id': person_dict['address_id']})
         self.__con.commit()
-
 
     def delete_company(self, id: int) -> None:
         company_dict: sqlite3.Row = self.get_companies(id=id)[0]
@@ -158,7 +159,8 @@ class Database:
         self.__con.commit()
 
     def edit_address(self, address: Address, id: int, requester_type: Person | Company):
-        requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else self.get_companies(id=id)[0]
+        requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else \
+        self.get_companies(id=id)[0]
         address_dict: dict[str, str] = to_dict(address)
         is_equal: bool = True
         for key in address_dict.keys():
@@ -169,7 +171,8 @@ class Database:
         new_address_id: int = self.insert_address(address)
         self.__cur.execute("UPDATE requester "
                            "SET fk_address_id = :new_address_id "
-                           "WHERE requester_id = :requester_id", {"new_address_id": new_address_id, "requester_id": requester["requester_id"]})
+                           "WHERE requester_id = :requester_id",
+                           {"new_address_id": new_address_id, "requester_id": requester["requester_id"]})
         self.__cur.execute("DELETE from address "
                            "WHERE address_id = :id", {"id": requester["address_id"]})
         self.__con.commit()
@@ -271,7 +274,6 @@ class Database:
         list_of_report_ids: list[sqlite3.Row] = self.__cur.fetchall()
         return len(list_of_report_ids) + 1
 
-
     def get_countries(self) -> list[str]:
         self.__cur.execute("""SELECT country_name, country_id from country""")
         return [row['country_name'] for row in self.__cur.fetchall()]
@@ -324,7 +326,7 @@ class Database:
         self.__con.close()
 
     def get_persons(self, **kwargs) -> list[sqlite3.Row]:
-        query = """SELECT
+        query: str = """SELECT
             p.id AS id, 
             p.name,
             p.birth_date,
@@ -360,10 +362,10 @@ class Database:
         params: dict[str, Any] = {}
         if id:
             query += " WHERE id = :id"
-            params ={"id": id}
+            params = {"id": id}
         elif cpf:
             query += " WHERE cpf LIKE :cpf"
-            params ={"cpf": f"{cpf}%"}
+            params = {"cpf": f"{cpf}%"}
         elif name:
             query += " WHERE name LIKE :name"
             params = {"name": f"%{name}%"}
@@ -371,7 +373,7 @@ class Database:
         return self.__cur.fetchall()
 
     def get_companies(self, **kwargs) -> list[sqlite3.Row]:
-        query = """SELECT 
+        query: str = """SELECT 
             cn.id AS id,
             cn.company_name,
             cn.cnpj,
@@ -405,19 +407,18 @@ class Database:
         params: dict[str, Any] = {}
         if id:
             query += " WHERE id = :id"
-            params ={"id": id}
+            params = {"id": id}
         elif cnpj:
             query += " WHERE cnpj LIKE :cnpj"
-            params ={"cnpj": f"{cnpj}%"}
+            params = {"cnpj": f"{cnpj}%"}
         elif company_name:
             query += " WHERE company_name LIKE :company_name"
             params = {"company_name": f"%{company_name}%"}
         self.__cur.execute(query + " ORDER BY company_name", params)
         return self.__cur.fetchall()
 
-
     def get_requesters(self, **kwargs) -> list[sqlite3.Row] | None:
-        self.__cur.execute("""SELECT
+        query: str = """SELECT
             r.requester_id,
             r.phone_number,
             r.email,
@@ -444,17 +445,17 @@ class Database:
             requester r
         INNER JOIN 
             company c ON r.requester_id = c.fk_requester_id;
-        """)
+        """
         requester_id: int = kwargs.get('requester_id')
-        rows: list[sqlite3.Row] = self.__cur.fetchall()
+        params = {}
         if requester_id:
-            for row in rows:
-                if requester_id == row['requester_id']:
-                    return [row]
+            query += " WHERE requester_id = :requester_id"
+            params: dict = {"requester_id": requester_id}
+        self.__cur.execute(query, params)
         return self.__cur.fetchall()
 
     def get_properties(self, **kwargs):
-        query = """SELECT
+        query: str = """SELECT
             property.id as id,
             property.property_name as name,
             property.location,
