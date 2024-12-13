@@ -36,9 +36,8 @@ class RequesterWindow(QDialog, RequesterDialog):
             query_result: list[sqlite3.Row] = db.get_companies(cnpj=self.search_bar.text())
         elif self.search_parameter.currentText() == 'Nome' and self.current_table_type == 'company':
             query_result: list[sqlite3.Row] = db.get_companies(company_name=self.search_bar.text())
-        print(query_result)
-        self.refresh_table(query_result=query_result)
         db.close_connection()
+        self.refresh_table(query_result=query_result)
 
     def register_property_action(self) -> None:
         selected_items: list[QTableWidgetItem] = self.requester_table.selectedIndexes()
@@ -155,7 +154,6 @@ class RequesterWindow(QDialog, RequesterDialog):
             else:
                 persons: list[sqlite3.Row] = kwargs.get('query_result')
             self.requester_table.setRowCount(0)
-            print(self.requester_table.rowCount())
             for person in persons:
                 row_position: int = self.requester_table.rowCount()
                 self.requester_table.insertRow(row_position)

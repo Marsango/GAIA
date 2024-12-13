@@ -34,7 +34,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
                                        'H + Al',
                                        'Cálcio - Ca', 'Magnésio - Mg', 'Soma de Bases - SB', 'V (%)', ' Sat. Alumínio']
         for row, name in enumerate(available_graphs):
-            check_box_item = QTableWidgetItem(name)
+            check_box_item: QTableWidgetItem = QTableWidgetItem(name)
             check_box_item.setText(name)
             check_box_item.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
             check_box_item.setCheckState(QtCore.Qt.CheckState.Unchecked)
@@ -46,7 +46,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
 
     def select_all_function(self) -> None:
         for row in range(self.parameters_table.rowCount()):
-            item = self.parameters_table.item(row, 0)
+            item: QTableWidgetItem = self.parameters_table.item(row, 0)
             item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:

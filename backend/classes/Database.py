@@ -418,21 +418,29 @@ class Database:
         return self.__cur.fetchall()
 
     def get_requesters(self, **kwargs) -> list[sqlite3.Row] | None:
-        query: str = """SELECT
+        requester_id: int = kwargs.get('requester_id')
+        params: dict = {}
+
+        query: str = """
+        SELECT
             r.requester_id,
             r.phone_number,
             r.email,
             p.name AS name,
             p.id AS id,
-            p.cpf as document_number,
+            p.cpf AS document_number,
             'person' AS requester_type 
         FROM 
             requester r
         INNER JOIN 
             person p ON r.requester_id = p.fk_requester_id
-        
+        """
+        if requester_id:
+            query += " WHERE r.requester_id = :requester_id"
+            params['requester_id'] = requester_id
+
+        query += """
         UNION 
-        
         SELECT 
             r.requester_id,
             r.phone_number,
@@ -444,13 +452,11 @@ class Database:
         FROM 
             requester r
         INNER JOIN 
-            company c ON r.requester_id = c.fk_requester_id;
+            company c ON r.requester_id = c.fk_requester_id
         """
-        requester_id: int = kwargs.get('requester_id')
-        params = {}
         if requester_id:
-            query += " WHERE requester_id = :requester_id"
-            params: dict = {"requester_id": requester_id}
+            query += " WHERE r.requester_id = :requester_id"
+
         self.__cur.execute(query, params)
         return self.__cur.fetchall()
 
@@ -495,12 +501,19 @@ class Database:
         """
         property_id = kwargs.get('property_id')
         sample_id = kwargs.get('sample_id')
+        id_list = kwargs.get('id_list')
         if sample_id:
             query += "WHERE id = :sample_id"
             params = {"sample_id": sample_id}
         elif property_id:
             query += "WHERE fk_property_id = :property_id"
             params = {"property_id": property_id}
+        elif id_list:
+            query += " WHERE id = :sample_id_0"
+            params = {"sample_id_0": id_list[0]}
+            for i in range(1, len(id_list)):
+                query += f" OR id = :sample_id_{i}"
+                params[f"sample_id_{i}"] = id_list[i]
         else:
             params = {}
         self.__cur.execute(query, params)
