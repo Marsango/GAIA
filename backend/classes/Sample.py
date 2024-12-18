@@ -19,11 +19,11 @@ conversion_table = {
 
 class Sample:
     def __init__(self, description: str, total_area: float, depth: float, collection_date: str,
-                 latitude: float, longitude: float, phosphorus: float,
-                 potassium: float,
-                 organic_matter: float, ph: float, smp: float, aluminum: float, calcium: float,
-                 magnesium: float,
-                 copper: float, iron: float, manganese: float, zinc: float, silte: float, sand: float, clay: float) -> None:
+                 latitude: float, longitude: float, phosphorus: float | None,
+                 potassium: float | None,
+                 organic_matter: float | None, ph: float | None, smp: float | None, aluminum: float | None, calcium: float | None,
+                 magnesium: float | None,
+                 copper: float | None, iron: float | None, manganese: float | None, zinc: float | None, silte: float | None, sand: float | None, clay: float | None) -> None:
         verify_type(get_type_hints(Sample.__init__), locals())
         try:
             current_config: Configuration = Configuration()
@@ -41,7 +41,7 @@ class Sample:
         self.__latitude: float | None = None
         self.__phosphorus: float | None = phosphorus * current_config.get_phosphor_factor() if phosphorus is not None else None
         self.__potassium: float | None = potassium * current_config.get_phosphor_factor() if potassium is not None else None
-        self.__organic_matter: float = organic_matter * 1.724 if organic_matter is not None else None
+        self.__organic_matter: float = round(organic_matter * 1.724, 2) if organic_matter is not None else None
         self.__ph: float | None = ph
         self.__smp: float | None = smp
         self.__aluminum : float | None = aluminum
@@ -60,8 +60,8 @@ class Sample:
         self.__zinc: float | None = zinc
         self.__base_sum: float = self.__manganese + self.__calcium + self.__potassium if self.__manganese is not None and self.__calcium is not None and self.__potassium is not None else None
         self.__ctc: float = self.__base_sum + self.__h_al if self.__base_sum is not None and self.__h_al is not None else None
-        self.__v_percent: float = (100 * self.__base_sum)/self.__ctc if self.__base_sum is not None and self.__ctc is not None else None
-        self.__aluminum_saturation: float = (100 * self.__aluminum) / (self.__base_sum + self.__aluminum) if self.__aluminum is not None and self.__base_sum is not None else None
+        self.__v_percent: float = round((100 * self.__base_sum)/self.__ctc, 2) if self.__base_sum is not None and self.__ctc is not None else None
+        self.__aluminum_saturation: float = round((100 * self.__aluminum) / (self.__base_sum + self.__aluminum), 2) if self.__aluminum is not None and self.__base_sum is not None else None
         self.__effective_ctc: float = self.__ctc + self.__aluminum if self.__ctc is not None and self.__aluminum is not None else None
         self.__clay: float | None = clay
         self.__sand: float | None = sand
