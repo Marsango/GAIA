@@ -12,7 +12,7 @@ from reportlab.lib.units import inch
 import os
 
 class Report:
-    def __init__(self, file_location: str, technician: str) -> None:
+    def __init__(self, file_location: str, agreement: str) -> None:
         verify_type(get_type_hints(Report.__init__), locals())
         self.__images_location: str = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -20,7 +20,7 @@ class Report:
         "images"
         ).replace("\\", "/")
         self.__file_location: str = file_location
-        self.__technician: str = technician
+        self.__agreement: str = agreement
         self.__horizontal_size: int = 595
         self.__vertical_size: int = 842
         self.__pdf: canvas.Canvas | None = None
@@ -64,18 +64,68 @@ class Report:
         self.__pdf.line(pos_horizontal2, pos_vertical1, pos_horizontal2, pos_vertical2)
 
     def write_main_info_square(self, info: sqlite3.Row, report_id: int) -> None:
-        self.draw_square(70, 520, 720, 665)
+        x_start: int = 75
+        x_end: int = 515
+        y_start: int = 710
+        acceptable_width: int = x_end - x_start
         self.__pdf.setFont('arial', 10)
-        self.__pdf.drawString(75, 710, f"Solicitante: {info['requester_name']}")
-        self.__pdf.drawString(75, 700, f"Endereço: {info['address']}")
-        self.__pdf.drawString(75, 690, f"Propriedade: {info['property_name']}")
-        self.__pdf.drawString(75, 680, f"Talhão: {info['sample_number']}") #mudar conforme andressa pediu
-        self.__pdf.drawString(75, 670, f"Convênio: {self.__technician}")
-        self.__pdf.drawString(400, 710, f"Laudo: {report_id}") # mudar conforme andressa pediu
-        self.__pdf.drawString(400, 700, f"Descrição: {info['sample_description']}")
-        self.__pdf.drawString(400, 690, f"Data: {info['collection_date']}")
-        self.__pdf.drawString(400, 680, f"Profundidade: {info['depth']} cm")
-        self.__pdf.drawString(400, 670, f"Nº Matrícula: {info['registration_number']}")
+        current_x: float = x_start
+        current_y: int = y_start
+        document_text: str = f"CPF: {info['document_number']}" if info["document_type"] == "cpf" else f"CNPJ: {info['document_number']}"
+        texts_to_draw: list[str] = [
+        f"Solicitante: {info['requester_name']} ?{document_text}",
+        f"Propriedade: {info['property_name']} ?Município: {info['city']} ?UF: {info['state']} ?Matrícula: {info['registration_number']}",
+        f"Talhão: {info['sample_description']} ?Convênio: {self.__agreement} ?Profundidade: {info['depth']}cm ?Área: {info['total_area']}m²",
+        f"Laudo: {report_id} ?Amostra: {info['sample_number']} ?Data: {info['collection_date']}",
+        ]
+
+        def justify_text(text: str, max_width: int) -> str:
+            words = text.split("?")
+            words = [word for word in words if word != ' ' and word != '']
+            if len(words) == 1:
+                return words[0]
+            words_width = sum(pdfmetrics.stringWidth(word, 'arial', 10) for word in words)
+            space_width = pdfmetrics.stringWidth(' ', 'arial', 10)
+            available_spaces = (max_width - words_width) / space_width
+            space_step = int(available_spaces//(len(words) - 1))
+            justified_line = words[0]
+            for i in range(1, len(words)):
+                justified_line += ' ' + ' ' * space_step + words[i]
+                print(justified_line)
+            return justified_line
+
+        def break_line(text):
+            fields: list[str] = text.split("?")
+            current_text = fields[0]
+            for j in range(1, len(fields)):
+                if pdfmetrics.stringWidth(current_text + fields[j], 'arial', 10) > acceptable_width:
+                    break
+                else:
+                    current_text += fields[j]
+            return {'current_line': current_text, 'next_line': text[len(current_text):]}
+
+        def fit_text_size(text, current_y):
+            breaked_lines: dict[str, str] = break_line(text)
+            self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end-x_start))
+            current_y -= 12
+            while pdfmetrics.stringWidth(breaked_lines['next_line'], 'arial', 10) > acceptable_width:
+                breaked_lines: dict[str, str] = break_line(breaked_lines['next_line'])
+                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end-x_start))
+                current_y -= 12
+            if breaked_lines['next_line']:
+                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['next_line'], x_end-x_start))
+                current_y -= 12
+            return current_y
+
+        for line in texts_to_draw:
+            text_size: float = pdfmetrics.stringWidth(line, 'arial', 10)
+            if text_size + current_x > x_end:
+                current_y = fit_text_size(line, current_y)
+            else:
+                self.__pdf.drawString(x_start, current_y, justify_text(line, x_end-x_start))
+                current_y -= 12
+        self.draw_square(x_start - 5, x_end + 5, y_start + 10, current_y+2)
+        return current_y - 5
 
     def draw_footer(self, coord_y):
         self.draw_square(70, 520, coord_y+35, coord_y)
@@ -277,6 +327,3 @@ class Report:
         self.__pdf.save()
 
 
-if __name__ == '__main__':
-    report = Report('a', 'b')
-    report.generate_pdf('b')

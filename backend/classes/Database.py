@@ -63,7 +63,7 @@ class Database:
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
          zinc float, base_sum float, ctc float, v_percent float, aluminum_saturation float,
         effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
-        self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), technician varchar(255), fk_sample_id integer,
+        self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), agreement varchar(255), fk_sample_id integer,
         FOREIGN KEY (fk_sample_id) REFERENCES sample(id) ON DELETE CASCADE)""")
         self.__con.commit()
 
@@ -265,8 +265,8 @@ class Database:
     def insert_report(self, report: Report, sample_id: int) -> None:
         report_dict: dict[str, Any] = to_dict(report)
         report_dict['sample_id'] = sample_id
-        self.__cur.execute("""INSERT INTO report(file_location, technician, fk_sample_id) 
-        VALUES(:file_location, :technician, :sample_id)""", report_dict)
+        self.__cur.execute("""INSERT INTO report(file_location, agreement, fk_sample_id) 
+        VALUES(:file_location, :agreement, :sample_id)""", report_dict)
         self.__con.commit()
 
     def get_next_report_id(self) -> int:
@@ -522,12 +522,21 @@ class Database:
     def get_sample_info(self, sample_id: int):
         self.__cur.execute("""SELECT
             COALESCE(person.name, company.company_name) AS requester_name,
+            COALESCE(person.cpf, company.cnpj) AS document_number,
+            CASE 
+            WHEN person.cpf IS NOT NULL THEN 'cpf' 
+            WHEN company.cnpj IS NOT NULL THEN 'cnpj' 
+            ELSE NULL 
+            END AS document_type,
             CONCAT(street.street_name, ', ', address.address_number, ', ', city.city_name, ', ', state.state_name, ', ', country.country_name) AS address,
-            property.property_name,
+            property.property_name, 
+            city.city_name as city, 
+            state.state_name as state, 
             sample.description AS sample_description,
             sample.sample_number,
             sample.collection_date,
             sample.depth,
+            sample.total_area, 
             property.registration_number
             FROM
                 sample

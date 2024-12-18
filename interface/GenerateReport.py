@@ -31,6 +31,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
             "images"
         ).replace("\\", "/") + "/logo_lab.png"))
         self.sample_id = sample_id
+        self.label.setText('Convênio')
         self.parameters_table.setRowCount(16)
         self.parameters_table.verticalHeader().setVisible(False)
         self.parameters_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -99,7 +100,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
         #                     current_sample['calcium'], current_sample['h_al'])
         script_path: Path = Path(__file__).resolve()
         backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
-        report: Report = Report(file_location=str(backup_path), technician=self.technician_input.text())
+        report: Report = Report(file_location=str(backup_path), agreement=self.technician_input.text())
         report.generate_pdf(sample_info, file_path, report_id, sample_values)
         shutil.copy(file_path, backup_path)
         db.insert_report(report, self.sample_id)

@@ -22,8 +22,6 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         ).replace("\\", "/") + "/logo_lab.png"))
         self.register_button.clicked.connect(self.register_action)
         self.mode: str = 'register'
-        self.sample_number.setReadOnly(True)
-        self.sample_number.setText(str(sample_number))
 
     def edit_mode(self, sample_data) -> None:
         self.sample_number.clear()
@@ -62,7 +60,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         db: Database = Database()
 
         try:
-            if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text():
+            if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text() or not self.sample_number.text():
                 raise ValueError("Por favor, preencha todos os campos obrigatórios.")
             depth = float(self.collection_depth.text()) if self.collection_depth.text() != '' else 0.0
             total_area = float(self.area.text()) if self.area.text() != '' else 0.0
