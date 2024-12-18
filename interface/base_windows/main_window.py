@@ -57,6 +57,8 @@ class Ui_MainWindow(object):
         self.actionLogo.setObjectName(u"actionLogo")
         self.actionBackup = QAction(MainWindow)
         self.actionBackup.setObjectName(u"actionBackup")
+        self.actionSelo = QAction(MainWindow)
+        self.actionSelo.setObjectName(u"actionSelo")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_2 = QHBoxLayout(self.centralwidget)
@@ -69,7 +71,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
         self.frame.setSizePolicy(sizePolicy)
         self.frame.setStyleSheet(u"color: rgb(70, 0, 0);")
-        self.frame.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame.setFrameShape(QFrame.NoFrame)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
@@ -80,7 +82,7 @@ class Ui_MainWindow(object):
         self.label.setSizePolicy(sizePolicy)
         self.label.setPixmap(QPixmap(u"../../../../Downloads/UpscaleImage_1_20240722.jpeg"))
         self.label.setScaledContents(False)
-        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.label.setTextInteractionFlags(Qt.NoTextInteraction)
 
         self.horizontalLayout.addWidget(self.label)
 
@@ -90,7 +92,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1958, 33))
+        self.menubar.setGeometry(QRect(0, 0, 1958, 21))
         self.menuCadastro = QMenu(self.menubar)
         self.menuCadastro.setObjectName(u"menuCadastro")
         self.menuConfigura_es = QMenu(self.menubar)
@@ -105,6 +107,7 @@ class Ui_MainWindow(object):
         self.menuConfigura_es.addAction(self.actionSobre)
         self.menuConfigura_es.addAction(self.actionLogo)
         self.menuConfigura_es.addAction(self.actionBackup)
+        self.menuConfigura_es.addAction(self.actionSelo)
 
         self.retranslateUi(MainWindow)
 
@@ -126,6 +129,7 @@ class Ui_MainWindow(object):
         self.actionConsultar_laudo_2.setText(QCoreApplication.translate("MainWindow", u"Consultar laudo", None))
         self.actionLogo.setText(QCoreApplication.translate("MainWindow", u"Logo", None))
         self.actionBackup.setText(QCoreApplication.translate("MainWindow", u"Backup", None))
+        self.actionSelo.setText(QCoreApplication.translate("MainWindow", u"Selo", None))
         self.label.setText("")
         self.menuCadastro.setTitle(QCoreApplication.translate("MainWindow", u"Cadastro", None))
         self.menuConfigura_es.setTitle(QCoreApplication.translate("MainWindow", u"Configuracoes", None))

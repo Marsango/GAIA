@@ -54,7 +54,7 @@
        <string notr="true">color: rgb(70, 0, 0);</string>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Shape::NoFrame</enum>
+       <enum>QFrame::NoFrame</enum>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="spacing">
@@ -87,7 +87,7 @@
           <bool>false</bool>
          </property>
          <property name="textInteractionFlags">
-          <set>Qt::TextInteractionFlag::NoTextInteraction</set>
+          <set>Qt::NoTextInteraction</set>
          </property>
         </widget>
        </item>
@@ -102,7 +102,7 @@
      <x>0</x>
      <y>0</y>
      <width>1958</width>
-     <height>33</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCadastro">
@@ -120,6 +120,7 @@
     <addaction name="actionSobre"/>
     <addaction name="actionLogo"/>
     <addaction name="actionBackup"/>
+    <addaction name="actionSelo"/>
    </widget>
    <addaction name="menuCadastro"/>
    <addaction name="menuConfigura_es"/>
@@ -187,6 +188,11 @@
   <action name="actionBackup">
    <property name="text">
     <string>Backup</string>
+   </property>
+  </action>
+  <action name="actionSelo">
+   <property name="text">
+    <string>Selo</string>
    </property>
   </action>
  </widget>

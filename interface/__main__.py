@@ -11,6 +11,7 @@ from interface.RequesterWindow import RequesterWindow
 from interface.ConfigurationWindow import ConfigurationWindow
 from interface.UploadLogo import UploadLogo
 from interface.BackupWindow import BackupWindow
+from interface.UploadReportStamp import UploadReportStamp
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -34,6 +35,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionConsultar_laudo_2.triggered.connect(self.open_get_report_window)
         self.actionLogo.triggered.connect(self.open_upload_logo_window)
         self.actionBackup.triggered.connect(self.open_backup_window)
+        self.actionSelo.triggered.connect(self.open_upload_report_stamp_window)
 
     def open_requester_window(self) -> None:
         dialog: RequesterWindow = RequesterWindow()
@@ -54,6 +56,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def open_upload_logo_window(self) -> None:
         dialog: UploadLogo = UploadLogo()
+        dialog.exec()
+
+    def open_upload_report_stamp_window(self) -> None:
+        dialog: UploadReportStamp = UploadReportStamp()
         dialog.exec()
 
     def open_backup_window(self) -> None:
