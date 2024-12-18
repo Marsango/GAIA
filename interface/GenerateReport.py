@@ -2,14 +2,9 @@ import os
 import sqlite3
 from itertools import pairwise
 from pathlib import Path
-from typing import Any
 import matplotlib.pyplot as plt
-import numpy as np
 from PySide6 import QtCore
 from PySide6.QtGui import QPixmap
-from reportlab.pdfgen import canvas
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
 from backend.classes.GraphParameters import GraphParameters
 from backend.classes.Database import Database
 from interface.base_windows.generate_report import GenerateReportDialog
@@ -32,7 +27,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
         ).replace("\\", "/") + "/logo_lab.png"))
         self.sample_id = sample_id
         self.label.setText('Convênio')
-        self.parameters_table.setRowCount(16)
+        self.parameters_table.setRowCount(18)
         self.parameters_table.verticalHeader().setVisible(False)
         self.parameters_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.parameters_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -40,22 +35,45 @@ class GenerateReport(QDialog, GenerateReportDialog):
                                        'Ferro - Fe',
                                        'Zinco - Zn', 'Manganês - Mn', 'pH CaCl', 'Índice SMP', 'Alumínio - Al',
                                        'H + Al',
-                                       'Cálcio - Ca', 'Magnésio - Mg', 'Soma de Bases - SB', 'V (%)', ' Sat. Alumínio']
+                                       'Cálcio - Ca', 'Magnésio - Mg', 'Soma de Bases - SB', 'V (%)', 'Sat. Alumínio',
+                                       "CTC Efetiva", "CTC Potencial",
+        ]
+        self.__element_sample_mapping = {
+            'Fósforo - P': 'phosphorus',
+            'Potássio - K': 'potassium',
+            'Cobre - Cu': 'copper',
+            'Matéria Orgânica - MO': 'organic_matter',
+            'Ferro - Fe': 'iron',
+            'Zinco - Zn': 'zinc',
+            'Manganês - Mn': 'manganese',
+            'pH CaCl': 'ph',
+            'Índice SMP': 'smp',
+            'Alumínio - Al': 'aluminum',
+            'H + Al': 'h_al',
+            'Cálcio - Ca': 'calcium',
+            'Magnésio - Mg': 'magnesium',
+            'Soma de Bases - SB': 'base_sum',
+            'V (%)': 'v_percent',
+            'Sat. Alumínio': 'aluminum_saturation',
+            "CTC Efetiva": 'effective_ctc',
+            "CTC Potencial": "ctc"
+        }
+
         for row, name in enumerate(available_graphs):
             check_box_item: QTableWidgetItem = QTableWidgetItem(name)
             check_box_item.setText(name)
-            check_box_item.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
-            check_box_item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+            # check_box_item.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
+            # check_box_item.setCheckState(QtCore.Qt.CheckState.Unchecked)
             self.parameters_table.setItem(row, 0, check_box_item)
         self.get_graph_values()
-        self.select_all.clicked.connect(self.select_all_function)
+        # self.select_all.clicked.connect(self.select_all_function)
         self.parameters_table.itemChanged.connect(self.update_graph_values)
         self.generate_report.clicked.connect(self.create_report)
 
-    def select_all_function(self) -> None:
-        for row in range(self.parameters_table.rowCount()):
-            item: QTableWidgetItem = self.parameters_table.item(row, 0)
-            item.setCheckState(QtCore.Qt.CheckState.Checked)
+    # def select_all_function(self) -> None:
+    #     for row in range(self.parameters_table.rowCount()):
+    #         item: QTableWidgetItem = self.parameters_table.item(row, 0)
+    #         item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:
         if item.column() != 0:
@@ -94,14 +112,14 @@ class GenerateReport(QDialog, GenerateReportDialog):
         file_path = self.open_save_dialog()
         sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
         sample_values: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
-        # selected_parameters: dict[str, dict[str, float]] = self.get_selected_parameters()
+        reference: dict[str, dict[str, float]] = self.get_selected_parameters()
         report_id: int = db.get_next_report_id()
         # self.plot_ctc_graph(current_sample['potassium'], current_sample['magnesium'],
         #                     current_sample['calcium'], current_sample['h_al'])
         script_path: Path = Path(__file__).resolve()
         backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
         report: Report = Report(file_location=str(backup_path), agreement=self.technician_input.text())
-        report.generate_pdf(sample_info, file_path, report_id, sample_values)
+        report.generate_pdf(sample_info, file_path, report_id, sample_values, reference)
         shutil.copy(file_path, backup_path)
         db.insert_report(report, self.sample_id)
 
@@ -125,9 +143,9 @@ class GenerateReport(QDialog, GenerateReportDialog):
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:
         selected_parameters: dict[str, dict[str, float]] = {}
         for row in range(self.parameters_table.rowCount()):
-            if self.parameters_table.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked or self.parameters_table.item(row, 0).text() == ' Sat. Alumínio'\
-                    or self.parameters_table.item(row, 0).text() == 'V (%)':
-                selected_parameters[self.parameters_table.item(row, 0).text()] = {
+            # if self.parameters_table.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked or self.parameters_table.item(row, 0).text() == ' Sat. Alumínio'\
+            #         or self.parameters_table.item(row, 0).text() == 'V (%)':
+                selected_parameters[self.__element_sample_mapping[self.parameters_table.item(row, 0).text()]] = {
                     'very low': float(self.parameters_table.item(row, 1).text()),
                     'low': float(self.parameters_table.item(row, 2).text()),
                     'medium': float(self.parameters_table.item(row, 3).text()),

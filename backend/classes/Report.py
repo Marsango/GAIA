@@ -11,6 +11,7 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
 import os
 
+
 class Report:
     def __init__(self, file_location: str, agreement: str) -> None:
         verify_type(get_type_hints(Report.__init__), locals())
@@ -26,6 +27,28 @@ class Report:
         self.__pdf: canvas.Canvas | None = None
         self.__standard_paragraph_style = ParagraphStyle(name='Normal', fontName='arial', fontSize=8, alignment=TA_CENTER)
         self.__standard_paragraph_style_bold = ParagraphStyle(name='Normal', fontName='arialbd', fontSize=8, alignment=TA_CENTER)
+        self.__left_col_width : list[float] = [49, 28.448, 25.2, 25.2, 25.2, 25.2, 25.2]
+        self.__right_col_width: list[float] = [85.78125, 30.672, 25.2, 25.2, 25.2, 25.2, 25.2]
+        self.__sample_info_map = {
+            "Ca2+ cmolcdm-3": "calcium",
+            "Mg² cmolcdm-3": "magnesium",
+            "K cmolcdm-3": "potassium",
+            "MO gdm-3": "organic_matter",
+            "P mgdm-3": "phosphorus",
+            "pH-CaCl2": "ph",
+            "Al3+ cmolcdm-3": "aluminum",
+            "H+Al cmolcdm-3": "h_al",
+            "Índice SMP": "smp",
+            "Cu mgdm-3": "copper",
+            "Zn mgdm-3": "zinc",
+            "Mn mgdm-3": "manganese",
+            "Fe mgdm-3": "iron",
+            "Soma de Bases cmolcdm-3": "base_sum",
+            "CTC efetiva (t) cmolcdm-3": "effective_ctc",
+            "CTC Potencial (T) cmolcdm-3": "ctc",
+            "Saturação por bases (V)%": "v_percent",
+            "Saturação por alumínio (m)%": "aluminum_saturation",
+        }
 
     def add_fonts(self) -> None:
         pdfmetrics.registerFont(TTFont('arial', 'fonts/arial.ttf'))
@@ -86,12 +109,11 @@ class Report:
                 return words[0]
             words_width = sum(pdfmetrics.stringWidth(word, 'arial', 10) for word in words)
             space_width = pdfmetrics.stringWidth(' ', 'arial', 10)
-            available_spaces = (max_width - words_width) / space_width
+            available_spaces = ((max_width - words_width) / space_width) - 2
             space_step = int(available_spaces//(len(words) - 1))
             justified_line = words[0]
             for i in range(1, len(words)):
                 justified_line += ' ' + ' ' * space_step + words[i]
-                print(justified_line)
             return justified_line
 
         def break_line(text):
@@ -137,6 +159,19 @@ class Report:
         self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y + 5,
                               f"Telefone/WhatsApp: (46) 3220-2539, E-mail: labsolos-pb@utfpr.edu.br")
 
+    def find_line(self, element, value, reference):
+        reference = reference[self.__sample_info_map[element]]
+        if value < reference["very low"]:
+            return 1
+        elif value < reference["low"]:
+            return 2
+        elif value < reference["medium"]:
+            return 3
+        elif value < reference["high"]:
+            return 4
+        else:
+            return 5
+
     def draw_ruler(self):
         self.__pdf.drawString(100, 810, 'x100')
         self.__pdf.drawString(200, 810, 'x200')
@@ -152,7 +187,7 @@ class Report:
         self.__pdf.drawString(10, 700, 'y700')
         self.__pdf.drawString(10, 800, 'y800')
 
-    def draw_table(self, data, coord_x, coord_y, colwidths) -> None:
+    def draw_table(self, data, coord_x, coord_y, colwidths, reference) -> None:
         style = TableStyle([
             ('BACKGROUND', (0, 0), (6, 0), colors.lightgrey),
             ('SPAN', (0, 0), (1, 0)),
@@ -171,9 +206,20 @@ class Report:
                           , standard_size * inch, standard_size * inch])
         table.wrapOn(self.__pdf, 0, 0)
         table.drawOn(self.__pdf, coord_x, coord_y)
-        w, h = table.wrap(0, 0)
-        print(f'col: {w}, row:{h}')
-
+        current_y = coord_y
+        start_x = coord_x + table._colWidths[0] + table._colWidths[1]
+        self.__pdf.setLineWidth(3)
+        self.__pdf.setStrokeColor(colors.gray)
+        for j in range(len(data) - 1, 0 - 1, -1):
+            if isinstance(data[j][0], str) or data[j][0].getPlainText() not in self.__sample_info_map.keys():
+                continue
+            current_y = current_y + table._rowHeights[j]/2
+            print(data[j][0].getPlainText())
+            self.__pdf.line(start_x, current_y, start_x + 25.2*self.find_line(data[j][0].getPlainText(), float(data[j][1]), reference), current_y)
+            current_y = current_y + table._rowHeights[j]/2
+        self.__pdf.setLineWidth(1)
+        self.__pdf.setStrokeColor(colors.black)
+        
     def draw_pie_graph_table(self, coord_x, coord_y) -> None:
         data = [['Índice de Saturação'],
                 ['']]
@@ -237,22 +283,22 @@ class Report:
         print(f'col: {w}, row:{h}')
 
 
-    def draw_tables(self, sample_values: sqlite3.Row):
+    def draw_tables(self, sample_values: sqlite3.Row, reference):
         data_table_one = [['BÁSICA', '', 'Classe de Interpretação*'],
                           ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
                           [Paragraph('Ca<sup>2+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["calcium"]}'],
                           [Paragraph('Mg² cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["magnesium"]}'],
-                          [Paragraph('K cmolcdm<sup>-3</sup>³', style=self.__standard_paragraph_style), f'{sample_values["potassium"]}'],
+                          [Paragraph('K cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["potassium"]}'],
                           [Paragraph('MO gdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["organic_matter"]}'],
                           [Paragraph('P mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["phosphorus"]}']]
-        self.draw_table(data_table_one, 70, 480, [49, 28.448, 25.2, 25.2, 25.2, 25.2, 25.2])
+        self.draw_table(data_table_one, 70, 480, self.__left_col_width, reference)
         data_table_two = [['REAÇÃO DO SOLO', '', 'Classe de Interpretação*'],
                           ['Parâmetro', 'Valor', 'MB', 'B', 'M', 'A', 'MA'],
                           [Paragraph('pH-CaCl2', style=self.__standard_paragraph_style), f'{sample_values["ph"]}'],
                           [Paragraph('Al<sup>3+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["aluminum"]}'],
                           [Paragraph('H+Al cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["h_al"]}'],
                           [Paragraph('Índice SMP', style=self.__standard_paragraph_style), f'{sample_values["smp"]}'], ]
-        self.draw_table(data_table_two, 278, 534, None)
+        self.draw_table(data_table_two, 278, 534, self.__right_col_width, reference)
         data_table_three = [['MICRONUTRIENTES', '', 'Classe de Interpretação*'],
                             ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
                             [Paragraph('Cu mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["copper"]}'],
@@ -260,7 +306,7 @@ class Report:
                             [Paragraph('Mn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["manganese"]}'],
                             [Paragraph('Fe mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["iron"]}'],
                             ]
-        self.draw_table(data_table_three, 278, 426, [85.78125, 30.672, 25.2, 25.2, 25.2, 25.2, 25.2])
+        self.draw_table(data_table_three, 278, 426, self.__right_col_width, reference)
         data_table_four = [
             [Paragraph('PARÂMETROS CALCULADOS', style=self.__standard_paragraph_style_bold), '', 'Classe de Interpretação*'],
             ['Parâmetro', 'Valor', 'MB', 'B', 'M', 'A', 'MA'],
@@ -270,7 +316,7 @@ class Report:
             [Paragraph('Saturação por bases (V)%', style=self.__standard_paragraph_style), f'{round(sample_values["v_percent"], 2)}'],
             [Paragraph('Saturação por alumínio (m)%', style=self.__standard_paragraph_style), f'{round(sample_values["aluminum_saturation"], 2)}']
         ]
-        self.draw_table(data_table_four, 70, 186, [49, 28.448, 25.2, 25.2, 25.2, 25.2, 25.2])
+        self.draw_table(data_table_four, 70, 186, self.__left_col_width, reference)
         self.draw_pie_graph_table(278, 300)
         self.draw_granulometric_table(278, 246, sample_values)
         self.draw_extractor_graph(278, 156)
@@ -288,12 +334,12 @@ class Report:
         self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y - 10, '** De acordo com o Zoneamento Agrícola de Risco Climático'
                                      ' (ZARC), IN SPA/MAPA nº 01 de 21 de junho de 2022, do MAPA')
 
-    def generate_pdf(self, report_data: sqlite3.Row, path_to_save: str, report_id: int, sample_values: sqlite3.Row) -> None:
+    def generate_pdf(self, report_data: sqlite3.Row, path_to_save: str, report_id: int, sample_values: sqlite3.Row, reference: dict[str, dict[str, float]]) -> None:
         self.__pdf = self.setup_pdf(report_id, path_to_save)
         self.draw_header()
         self.write_main_info_square(report_data, report_id)
         self.draw_footer(40)
-        self.draw_tables(sample_values)
+        self.draw_tables(sample_values, reference)
         self.draw_signature_space(70, 156, 203.44799999999998)
         self.write_explanation(90)
         self.__pdf.save()

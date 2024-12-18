@@ -46,7 +46,7 @@ class Sample:
         self.__smp: float | None = smp
         self.__aluminum : float | None = aluminum
         if self.__organic_matter > 50:
-            self.__h_al: float = math.pow(2.7182, (6.9056 - (0.08824 * self.__smp))) if smp is not None else None
+            self.__h_al: float = round(math.pow(2.7182, (6.9056 - (0.08824 * self.__smp))), 1) if smp is not None else None
         else:
             try:
                 self.__h_al: float = conversion_table[round(self.__smp, 1)] if smp is not None else None
