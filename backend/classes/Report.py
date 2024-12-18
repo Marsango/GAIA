@@ -194,10 +194,10 @@ class Report:
         print(table._rowHeights)
         print(table._colWidths)
 
-    def draw_granulometric_table(self, coord_x, coord_y) -> None:
+    def draw_granulometric_table(self, coord_x, coord_y, sample_values) -> None:
         data = [['ANÁLISE GRANULOMÉTRICA(g kg^-1)**'],
-                ['Areia', 'Slite', 'Argila', 'Classe AD'],
-                ['41', '130', '829', 'AD3']]
+                ['Areia', 'Silte', 'Argila', 'Classe AD'],
+                [f'{sample_values['sand']}', f'{sample_values['silte']}', f'{sample_values['clay']}', f'{sample_values['classification']}']]
         style = TableStyle([
             ('BACKGROUND', (0, 0), (3, 0), colors.lightgrey),
             ('SPAN', (0, 0), (3, 0)),
@@ -236,34 +236,6 @@ class Report:
         w, h = table.wrap(0, 0)
         print(f'col: {w}, row:{h}')
 
-    def draw_explanation_table(self, coord_x, coord_y) -> None:
-        standard_paragraph_style = ParagraphStyle(
-            name='Normal',
-            fontName='arial',
-            fontSize=6,
-            alignment=TA_CENTER
-        )
-        data = [['EMBASAMENTO'],
-                [Paragraph('* Baseado no Manual de Adubação e calagem para o estado do Paraná (NEPAR-BCS, 2019)',
-                           style=standard_paragraph_style),
-                 Paragraph('** De acordo com o Programa Nacional de Zoneamento Agrícola de Risco Climático (ZARC), '
-                           'regido pela Instrução Normativa – IN SPA/MAPA nº 01, de 21 de junho  de 2022, da Secretaria '
-                           'de Política Agrícola do MAPA.', style=standard_paragraph_style)]]
-        style = TableStyle([
-            ('BACKGROUND', (0, 0), (1, 0), colors.lightgrey),
-            ('SPAN', (0, 0), (1, 0)),
-            ('FONTNAME', (0, 0), (1, 0), 'arialbd'),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 3),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.black),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 8)
-        ])
-        table = Table(data, style=style, colWidths=203.44799999999998 / 2)
-        table.wrapOn(self.__pdf, 0, 0)
-        table.drawOn(self.__pdf, coord_x, coord_y)
-        w, h = table.wrap(0, 0)
-        print(f'col: {w}, row:{h}')
 
     def draw_tables(self, sample_values: sqlite3.Row):
         data_table_one = [['BÁSICA', '', 'Classe de Interpretação*'],
@@ -300,7 +272,7 @@ class Report:
         ]
         self.draw_table(data_table_four, 70, 186, [49, 28.448, 25.2, 25.2, 25.2, 25.2, 25.2])
         self.draw_pie_graph_table(278, 300)
-        self.draw_granulometric_table(278, 246)
+        self.draw_granulometric_table(278, 246, sample_values)
         self.draw_extractor_graph(278, 156)
         self.__pdf.drawImage(f'{self.__images_location}/ctc_and_values.png', 278 + 65, 305, 108, 108, preserveAspectRatio=True, mask='auto')
 

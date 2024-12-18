@@ -106,7 +106,6 @@ class SampleWindow(QDialog, SampleDialog):
 
     def report_window(self):
         selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
-        print(selected_items)
         if len(selected_items) == 0:
             widget: AlertWindow = AlertWindow("Você deve selecionar uma amostra para gerar um laudo.")
             widget.exec()
