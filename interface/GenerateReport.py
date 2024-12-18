@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from itertools import pairwise
 from pathlib import Path
@@ -5,6 +6,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 from PySide6 import QtCore
+from PySide6.QtGui import QPixmap
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
@@ -23,6 +25,11 @@ class GenerateReport(QDialog, GenerateReportDialog):
         super(GenerateReport, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Gerar Relatório')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.sample_id = sample_id
         self.parameters_table.setRowCount(16)
         self.parameters_table.verticalHeader().setVisible(False)

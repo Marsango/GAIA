@@ -9,6 +9,12 @@ class UploadLogo(QDialog, UploadLogoDialog):
     def __init__(self) -> None:
         super(UploadLogo, self).__init__()
         self.setupUi(self)
+        self.setWindowTitle("Atualizar logo")
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.file_path.setReadOnly(True)
         self.upload_button.clicked.connect(self.upload)
         self.save_button.clicked.connect(self.save)

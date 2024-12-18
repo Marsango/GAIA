@@ -1,3 +1,7 @@
+import os
+
+from PySide6.QtGui import QPixmap
+
 from interface.base_windows.configuration_window import ConfigurationDialog
 from backend.classes.Configuration import Configuration
 from PySide6.QtWidgets import (QDialog)
@@ -9,6 +13,11 @@ class ConfigurationWindow(QDialog, ConfigurationDialog):
         super(ConfigurationWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Fatores Variáveis')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.save_config.clicked.connect(self.save)
 
     def save(self) -> None:

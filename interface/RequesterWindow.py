@@ -1,3 +1,6 @@
+import os
+
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.requester_window import RequesterDialog
 from interface.DeleteConfirmation import DeleteConfirmation
@@ -15,6 +18,11 @@ class RequesterWindow(QDialog, RequesterDialog):
         super(RequesterWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Solicitantes registrados')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.requester_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.add.clicked.connect(self.register_person)
         self.edit.clicked.connect(self.edit_requester)

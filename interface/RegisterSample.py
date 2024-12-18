@@ -1,3 +1,6 @@
+import os
+
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog)
 from interface.base_windows.register_sample import RegisterSampleDialog
 from backend.classes.Database import Database
@@ -12,6 +15,11 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.current_sample_id: int | None = None
         self.setupUi(self)
         self.setWindowTitle('Registro de amostra')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.register_button.clicked.connect(self.register_action)
         self.mode: str = 'register'
         self.sample_number.setReadOnly(True)

@@ -1,7 +1,11 @@
+import os
 import sqlite3
 
 from PySide6 import QtCore, QtGui
 import csv
+
+from PySide6.QtGui import QPixmap
+
 from interface.base_windows.generate_csv import GenerateCSVDialog
 from interface.AlertWindow import AlertWindow
 from backend.classes.Database import Database
@@ -13,6 +17,12 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
     def __init__(self, selected_ids: list[int]) -> None:
         super(GenerateCSV, self).__init__()
         self.setupUi(self)
+        self.setWindowTitle("Exportar para CSV")
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.selected_ids = selected_ids
         self.file_path.setReadOnly(True)
         self.path_button.clicked.connect(self.open_dialog)

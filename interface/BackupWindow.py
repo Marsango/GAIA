@@ -1,3 +1,5 @@
+from PIL.ImageQt import QPixmap
+
 from interface.base_windows.backup_window import BackupDialog
 from interface.AlertWindow import AlertWindow
 from backend.classes.Database import Database
@@ -19,6 +21,12 @@ class BackupWindow(QDialog, BackupDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "reports"
         ).replace("\\", "/")
+        self.setWindowTitle('Opções de backup')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         db: Database = Database()
         self.requester_count.setText(str(len(db.get_requesters())))
         self.property_count.setText(str(len(db.get_properties())))
