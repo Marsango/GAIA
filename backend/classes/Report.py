@@ -188,6 +188,10 @@ class Report:
         self.__pdf.drawString(10, 800, 'y800')
 
     def draw_table(self, data, coord_x, coord_y, colwidths, reference) -> None:
+        for row in data:
+            if row[1] == 'None':
+                data.remove(row)
+
         style = TableStyle([
             ('BACKGROUND', (0, 0), (6, 0), colors.lightgrey),
             ('SPAN', (0, 0), (1, 0)),
@@ -199,7 +203,7 @@ class Report:
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTSIZE', (0, 0), (-1, -1), 8)
         ])
-        standard_size = 0.35
+        standard_size = 0.3
         table = Table(data, style=style,
                       colWidths=colwidths if colwidths is not None else [None, None, standard_size * inch,
                                                                          standard_size * inch, standard_size * inch
@@ -214,12 +218,11 @@ class Report:
             if isinstance(data[j][0], str) or data[j][0].getPlainText() not in self.__sample_info_map.keys():
                 continue
             current_y = current_y + table._rowHeights[j]/2
-            print(data[j][0].getPlainText())
             self.__pdf.line(start_x, current_y, start_x + 25.2*self.find_line(data[j][0].getPlainText(), float(data[j][1]), reference), current_y)
             current_y = current_y + table._rowHeights[j]/2
         self.__pdf.setLineWidth(1)
         self.__pdf.setStrokeColor(colors.black)
-        
+
     def draw_pie_graph_table(self, coord_x, coord_y) -> None:
         data = [['Índice de Saturação'],
                 ['']]
@@ -235,10 +238,7 @@ class Report:
         table = Table(data, style=style, colWidths=[242.45324999999994], rowHeights=[None, 1.5 * inch])
         table.wrapOn(self.__pdf, 0, 0)
         table.drawOn(self.__pdf, coord_x, coord_y)
-        w, h = table.wrap(0, 0)
-        print(f'col: {w}, row:{h}')
-        print(table._rowHeights)
-        print(table._colWidths)
+
 
     def draw_granulometric_table(self, coord_x, coord_y, sample_values) -> None:
         data = [['ANÁLISE GRANULOMÉTRICA(g kg^-1)**'],
@@ -257,8 +257,7 @@ class Report:
         table = Table(data, style=style, colWidths=242.45324999999994 / 4)
         table.wrapOn(self.__pdf, 0, 0)
         table.drawOn(self.__pdf, coord_x, coord_y)
-        w, h = table.wrap(0, 0)
-        print(f'col: {w}, row:{h}')
+
 
     def draw_extractor_graph(self, coord_x, coord_y) -> None:
         data = [['EXTRATORES'],
@@ -279,8 +278,8 @@ class Report:
         table = Table(data, style=style, colWidths=242.45324999999994 / 2)
         table.wrapOn(self.__pdf, 0, 0)
         table.drawOn(self.__pdf, coord_x, coord_y)
-        w, h = table.wrap(0, 0)
-        print(f'col: {w}, row:{h}')
+
+
 
 
     def draw_tables(self, sample_values: sqlite3.Row, reference):
@@ -297,14 +296,14 @@ class Report:
                           [Paragraph('pH-CaCl2', style=self.__standard_paragraph_style), f'{sample_values["ph"]}'],
                           [Paragraph('Al<sup>3+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["aluminum"]}'],
                           [Paragraph('H+Al cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["h_al"]}'],
-                          [Paragraph('Índice SMP', style=self.__standard_paragraph_style), f'{sample_values["smp"]}'], ]
+                          [Paragraph('Índice SMP', style=self.__standard_paragraph_style), f'{sample_values["smp"]}']]
         self.draw_table(data_table_two, 278, 534, self.__right_col_width, reference)
         data_table_three = [['MICRONUTRIENTES', '', 'Classe de Interpretação*'],
                             ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
                             [Paragraph('Cu mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["copper"]}'],
                             [Paragraph('Zn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["zinc"]}'],
                             [Paragraph('Mn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["manganese"]}'],
-                            [Paragraph('Fe mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["iron"]}'],
+                            [Paragraph('Fe mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["iron"]}']
                             ]
         self.draw_table(data_table_three, 278, 426, self.__right_col_width, reference)
         data_table_four = [
@@ -313,8 +312,8 @@ class Report:
             [Paragraph('Soma de Bases cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["base_sum"]}'],
             [Paragraph('CTC efetiva (t) cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["effective_ctc"]}'],
             [Paragraph('CTC Potencial (T) cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["ctc"]}'],
-            [Paragraph('Saturação por bases (V)%', style=self.__standard_paragraph_style), f'{round(sample_values["v_percent"], 2)}'],
-            [Paragraph('Saturação por alumínio (m)%', style=self.__standard_paragraph_style), f'{round(sample_values["aluminum_saturation"], 2)}']
+            [Paragraph('Saturação por bases (V)%', style=self.__standard_paragraph_style), f'{sample_values["v_percent"]}'],
+            [Paragraph('Saturação por alumínio (m)%', style=self.__standard_paragraph_style), f'{sample_values["aluminum_saturation"]}']
         ]
         self.draw_table(data_table_four, 70, 186, self.__left_col_width, reference)
         self.draw_pie_graph_table(278, 300)
