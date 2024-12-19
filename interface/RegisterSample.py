@@ -65,32 +65,35 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         try:
             if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text() or not self.sample_number.text():
                 raise ValueError("Por favor, preencha todos os campos obrigatórios.")
-            depth: float = float(self.collection_depth.text())
-            total_area: float = float(self.area.text())
-            latitude: float = float(self.latitude.text())
-            longitude: float = float(self.longitude.text())
-            sand: float | None = float(self.sand_input.text()) if self.sand_input.text() != '' else None
-            silte: float | None = float(self.silte_input.text()) if self.silte_input.text() != '' else None
-            clay: float | None = float(self.clay_input.text()) if self.clay_input.text() != '' else None
-            phosphorus: float | None = float(self.phosphorus.text()) if self.phosphorus.text() != '' else None
-            potassium: float | None = float(self.potassium.text()) if self.potassium.text() != '' else None
-            organic_matter: float | None = float(self.organic_matter.text()) if self.organic_matter.text() != '' else None
-            ph: float | None = float(self.ph.text()) if self.ph.text() != '' else None
-            smp: float | None = float(self.SMP.text()) if self.SMP.text() != '' else None
-            aluminum: float | None = float(self.read_aluminum.text()) if self.read_aluminum.text() != '' else None
-            blank_aluminum: float | None = float(self.blank_test_aluminum.text()) if self.blank_test_aluminum.text() != '' else None
-            calcium: float | None = float(self.read_calcium.text()) if self.read_calcium.text() != '' else None
-            blank_calcium: float | None = float(self.blank_test_calcium.text()) if self.blank_test_calcium.text() != '' else None
-            magnesium: float | None = float(self.read_magnesium.text()) if self.read_magnesium.text() != '' else None
-            blank_magnesium: float | None = float(self.blank_test_magnesium.text()) if self.blank_test_magnesium.text() != '' else None
-            copper: float | None = float(self.read_copper.text()) if self.read_copper.text() != '' else None
-            blank_copper: float | None = float(self.blank_test_copper.text()) if self.blank_test_copper.text() != '' else None
-            iron: float | None = float(self.read_iron.text()) if self.read_iron.text() != '' else None
-            blank_iron: float | None = float(self.blank_test_iron.text()) if self.blank_test_iron.text() != '' else None
-            manganese: float | None = float(self.read_manganese.text()) if self.read_manganese.text() != '' else None
-            blank_manganese: float | None = float(self.blank_test_manganese.text()) if self.blank_test_manganese.text() != '' else None
-            zinc: float | None = float(self.read_zinc.text()) if self.read_zinc.text() != '' else None
-            blank_zinc: float | None = float(self.blank_test_zinc.text()) if self.blank_test_zinc.text() != '' else None
+            
+            # Conversões com substituição para 0 caso o campo esteja vazio
+            depth: float = float(self.collection_depth.text() or 0)
+            total_area: float = float(self.area.text() or 0)
+            latitude: float = float(self.latitude.text() or 0)
+            longitude: float = float(self.longitude.text() or 0)
+            sand: float | None = float(self.sand_input.text() or 0)  # Substituir valor nulo por 0
+            silte: float | None = float(self.silte_input.text() or 0)  # Substituir valor nulo por 0
+            clay: float | None = float(self.clay_input.text() or 0)  # Substituir valor nulo por 0
+            phosphorus: float | None = float(self.phosphorus.text() or 0)  # Substituir valor nulo por 0
+            potassium: float | None = float(self.potassium.text() or 0)  # Substituir valor nulo por 0
+            organic_matter: float | None = float(self.organic_matter.text() or 0)  # Substituir valor nulo por 0
+            ph: float | None = float(self.ph.text() or 0)  # Substituir valor nulo por 0
+            smp: float | None = float(self.SMP.text() or 0)  # Substituir valor nulo por 0
+            aluminum: float | None = float(self.read_aluminum.text() or 0)  # Substituir valor nulo por 0
+            blank_aluminum: float | None = float(self.blank_test_aluminum.text() or 0)  # Substituir valor nulo por 0
+            calcium: float | None = float(self.read_calcium.text() or 0)  # Substituir valor nulo por 0
+            blank_calcium: float | None = float(self.blank_test_calcium.text() or 0)  # Substituir valor nulo por 0
+            magnesium: float | None = float(self.read_magnesium.text() or 0)  # Substituir valor nulo por 0
+            blank_magnesium: float | None = float(self.blank_test_magnesium.text() or 0)  # Substituir valor nulo por 0
+            copper: float | None = float(self.read_copper.text() or 0)  # Substituir valor nulo por 0
+            blank_copper: float | None = float(self.blank_test_copper.text() or 0)  # Substituir valor nulo por 0
+            iron: float | None = float(self.read_iron.text() or 0)  # Substituir valor nulo por 0
+            blank_iron: float | None = float(self.blank_test_iron.text() or 0)  # Substituir valor nulo por 0
+            manganese: float | None = float(self.read_manganese.text() or 0)  # Substituir valor nulo por 0
+            blank_manganese: float | None = float(self.blank_test_manganese.text() or 0)  # Substituir valor nulo por 0
+            zinc: float | None = float(self.read_zinc.text() or 0)  # Substituir valor nulo por 0
+            blank_zinc: float | None = float(self.blank_test_zinc.text() or 0)  # Substituir valor nulo por 0
+
             sample: Sample = Sample(depth=depth, collection_date=self.date.text(),
                                     description=self.description.text(), total_area=total_area,
                                     latitude=latitude, longitude=longitude,
@@ -103,6 +106,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
                                     iron=iron - blank_iron,
                                     manganese=manganese - blank_manganese,
                                     zinc=zinc - blank_zinc, clay=clay, sand=sand, silte=silte)
+            
             if self.mode == 'register':
                 db.insert_sample(sample, self.current_property_id, int(self.sample_number.text()))
                 success: str = "Amostra registrada com sucesso!"
@@ -115,11 +119,13 @@ class RegisterSample(QDialog, RegisterSampleDialog):
 
             if self.mode == 'register':
                 self.clean_input()
+
         except ValueError as e:
             widget: AlertWindow = AlertWindow(f"Erro: {str(e)}")
             widget.exec()
 
         db.close_connection()
+
 
 
     def clean_input(self):
