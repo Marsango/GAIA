@@ -1,3 +1,6 @@
+import os
+
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog)
 from interface.base_windows.register_sample import RegisterSampleDialog
 from backend.classes.Database import Database
@@ -12,10 +15,13 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.current_sample_id: int | None = None
         self.setupUi(self)
         self.setWindowTitle('Registro de amostra')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.register_button.clicked.connect(self.register_action)
         self.mode: str = 'register'
-        self.sample_number.setReadOnly(True)
-        self.sample_number.setText(str(sample_number))
 
     def edit_mode(self, sample_data) -> None:
         self.sample_number.clear()
@@ -29,6 +35,9 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.phosphorus.insert(str(sample_data["phosphorus"]))
         self.potassium.insert(str(sample_data["potassium"]))
         self.organic_matter.insert(str(sample_data["organic_matter"]))
+        self.clay_input.insert(str(sample_data["clay"]))
+        self.silte_input.insert(str(sample_data["silte"]))
+        self.sand_input.insert(str(sample_data["sand"]))
         self.ph.insert(str(sample_data["ph"]))
         self.SMP.insert(str(sample_data["smp"]))
         self.read_aluminum.insert(str(sample_data["aluminum"]))
@@ -54,31 +63,34 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         db: Database = Database()
 
         try:
-            if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text():
+            if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text() or not self.sample_number.text():
                 raise ValueError("Por favor, preencha todos os campos obrigatórios.")
-            depth = float(self.collection_depth.text()) if self.collection_depth.text() != '' else 0.0
-            total_area = float(self.area.text()) if self.area.text() != '' else 0.0
-            latitude = float(self.latitude.text()) if self.latitude.text() != '' else 0.0
-            longitude = float(self.longitude.text()) if self.longitude.text() != '' else 0.0
-            phosphorus = float(self.phosphorus.text()) if self.phosphorus.text() != '' else 0.0
-            potassium = float(self.potassium.text()) if self.potassium.text() != '' else 0.0
-            organic_matter = float(self.organic_matter.text()) if self.organic_matter.text() != '' else 0.0
-            ph = float(self.ph.text()) if self.ph.text() != '' else 0.0
-            smp = float(self.SMP.text()) if self.SMP.text() != '' else 0.0
-            aluminum = float(self.read_aluminum.text()) if self.read_aluminum.text() != '' else 0.0
-            blank_aluminum = float(self.blank_test_aluminum.text()) if self.blank_test_aluminum.text() != '' else 0.0
-            calcium = float(self.read_calcium.text()) if self.read_calcium.text() != '' else 0.0
-            blank_calcium = float(self.blank_test_calcium.text()) if self.blank_test_calcium.text() != '' else 0.0
-            magnesium = float(self.read_magnesium.text()) if self.read_magnesium.text() != '' else 0.0
-            blank_magnesium = float(self.blank_test_magnesium.text()) if self.blank_test_magnesium.text() != '' else 0.0
-            copper = float(self.read_copper.text()) if self.read_copper.text() != '' else 0.0
-            blank_copper = float(self.blank_test_copper.text()) if self.blank_test_copper.text() != '' else 0.0
-            iron = float(self.read_iron.text()) if self.read_iron.text() != '' else 0.0
-            blank_iron = float(self.blank_test_iron.text()) if self.blank_test_iron.text() != '' else 0.0
-            manganese = float(self.read_manganese.text()) if self.read_manganese.text() != '' else 0.0
-            blank_manganese = float(self.blank_test_manganese.text()) if self.blank_test_manganese.text() != '' else 0.0
-            zinc = float(self.read_zinc.text()) if self.read_zinc.text() != '' else 0.0
-            blank_zinc = float(self.blank_test_zinc.text()) if self.blank_test_zinc.text() != '' else 0.0
+            depth: float = float(self.collection_depth.text())
+            total_area: float = float(self.area.text())
+            latitude: float = float(self.latitude.text())
+            longitude: float = float(self.longitude.text())
+            sand: float | None = float(self.sand_input.text()) if self.sand_input.text() != '' else None
+            silte: float | None = float(self.silte_input.text()) if self.silte_input.text() != '' else None
+            clay: float | None = float(self.clay_input.text()) if self.clay_input.text() != '' else None
+            phosphorus: float | None = float(self.phosphorus.text()) if self.phosphorus.text() != '' else None
+            potassium: float | None = float(self.potassium.text()) if self.potassium.text() != '' else None
+            organic_matter: float | None = float(self.organic_matter.text()) if self.organic_matter.text() != '' else None
+            ph: float | None = float(self.ph.text()) if self.ph.text() != '' else None
+            smp: float | None = float(self.SMP.text()) if self.SMP.text() != '' else None
+            aluminum: float | None = float(self.read_aluminum.text()) if self.read_aluminum.text() != '' else None
+            blank_aluminum: float | None = float(self.blank_test_aluminum.text()) if self.blank_test_aluminum.text() != '' else None
+            calcium: float | None = float(self.read_calcium.text()) if self.read_calcium.text() != '' else None
+            blank_calcium: float | None = float(self.blank_test_calcium.text()) if self.blank_test_calcium.text() != '' else None
+            magnesium: float | None = float(self.read_magnesium.text()) if self.read_magnesium.text() != '' else None
+            blank_magnesium: float | None = float(self.blank_test_magnesium.text()) if self.blank_test_magnesium.text() != '' else None
+            copper: float | None = float(self.read_copper.text()) if self.read_copper.text() != '' else None
+            blank_copper: float | None = float(self.blank_test_copper.text()) if self.blank_test_copper.text() != '' else None
+            iron: float | None = float(self.read_iron.text()) if self.read_iron.text() != '' else None
+            blank_iron: float | None = float(self.blank_test_iron.text()) if self.blank_test_iron.text() != '' else None
+            manganese: float | None = float(self.read_manganese.text()) if self.read_manganese.text() != '' else None
+            blank_manganese: float | None = float(self.blank_test_manganese.text()) if self.blank_test_manganese.text() != '' else None
+            zinc: float | None = float(self.read_zinc.text()) if self.read_zinc.text() != '' else None
+            blank_zinc: float | None = float(self.blank_test_zinc.text()) if self.blank_test_zinc.text() != '' else None
             sample: Sample = Sample(depth=depth, collection_date=self.date.text(),
                                     description=self.description.text(), total_area=total_area,
                                     latitude=latitude, longitude=longitude,
@@ -90,7 +102,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
                                     copper=copper - blank_copper,
                                     iron=iron - blank_iron,
                                     manganese=manganese - blank_manganese,
-                                    zinc=zinc - blank_zinc)
+                                    zinc=zinc - blank_zinc, clay=clay, sand=sand, silte=silte)
             if self.mode == 'register':
                 db.insert_sample(sample, self.current_property_id, int(self.sample_number.text()))
                 success: str = "Amostra registrada com sucesso!"
@@ -98,7 +110,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
                 db.edit_sample(sample, self.current_sample_id)
                 success: str = "Alterações salvas com sucesso!"
 
-            widget: AlertWindow = AlertWindow(success)
+            widget: AlertWindow = AlertWindow(message=success)
             widget.exec()
 
             if self.mode == 'register':
@@ -136,4 +148,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.blank_test_manganese.clear()
         self.read_zinc.clear()
         self.blank_test_zinc.clear()
+        self.silte_input.clear()
+        self.sand_input.clear()
+        self.clay_input.clear()
 

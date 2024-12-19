@@ -11,11 +11,11 @@ from backend.classes.Sample import Sample
 
 class Database:
     def __init__(self) -> None:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        db_path = os.path.join(base_dir, 'soil_analysis.db')
-        self.__con = sqlite3.connect(db_path)
+        base_dir: str = os.path.dirname(os.path.abspath(__file__))
+        db_path: str = os.path.join(base_dir, 'soil_analysis.db')
+        self.__con: sqlite3.Connection = sqlite3.connect(db_path)
         self.__con.row_factory = sqlite3.Row
-        self.__cur = self.__con.cursor()
+        self.__cur: sqlite3.Cursor = self.__con.cursor()
         self.__cur.execute("""PRAGMA foreign_keys = ON;""")
         self.__con.commit()
         self.create_database()
@@ -62,9 +62,9 @@ class Database:
         id INTEGER PRIMARY KEY, description varchar(255), sample_number integer, collection_date varchar(20), total_area float,
         latitude float, smp float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
-         zinc float, base_sum float, ctc float, v_percent float, aluminum_saturation float,
+         zinc float, base_sum float, clay float, silte float, classification string, sand float, ctc float, v_percent float, aluminum_saturation float,
         effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
-        self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), technician varchar(255), fk_sample_id integer,
+        self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), agreement varchar(255), fk_sample_id integer,
         FOREIGN KEY (fk_sample_id) REFERENCES sample(id) ON DELETE CASCADE)""")
         self.__con.commit()
 
@@ -115,7 +115,8 @@ class Database:
                 phosphorus = :phosphorus, potassium = :potassium, organic_matter = :organic_matter, ph = :ph,
                 aluminum = :aluminum, h_al = :h_al, calcium = :calcium, magnesium = :magnesium, copper = :copper,
                 iron = :iron, manganese = :manganese, zinc = :zinc, base_sum = :base_sum, ctc = :ctc, v_percent = :v_percent,
-                aluminum_saturation = :aluminum_saturation, effective_ctc = :effective_ctc, smp = :smp 
+                aluminum_saturation = :aluminum_saturation, effective_ctc = :effective_ctc, smp = :smp, silte = :silte,
+                 sand = :sand, clay =:clay, classification = :classification 
             WHERE id = :id
         """, sample_dict)
         self.__con.commit()
@@ -132,17 +133,18 @@ class Database:
         self.__con.commit()
 
     def delete_person(self, id: int) -> None:
-        person_records = self.get_persons(id=id)
+        person_records: list[sqlite3.Row] = self.get_persons(id=id)
         if not person_records:
             raise ValueError("Solicitante não encontrado.")
-        
+
         person_dict: sqlite3.Row = person_records[0]
 
         self.__cur.execute("""DELETE FROM person WHERE id = :id""", {'id': id})
-        self.__cur.execute("""DELETE FROM requester WHERE requester_id = :requester_id""", {'requester_id': person_dict['requester_id']})
-        self.__cur.execute("""DELETE FROM address WHERE address_id = :address_id""", {'address_id': person_dict['address_id']})
+        self.__cur.execute("""DELETE FROM requester WHERE requester_id = :requester_id""",
+                           {'requester_id': person_dict['requester_id']})
+        self.__cur.execute("""DELETE FROM address WHERE address_id = :address_id""",
+                           {'address_id': person_dict['address_id']})
         self.__con.commit()
-
 
     def delete_company(self, id: int) -> None:
         company_dict: sqlite3.Row = self.get_companies(id=id)[0]
@@ -179,7 +181,8 @@ class Database:
         verify_valid_digit(second_digit_verification, cpf[:10])
 
     def edit_address(self, address: Address, id: int, requester_type: Person | Company):
-        requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else self.get_companies(id=id)[0]
+        requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else \
+        self.get_companies(id=id)[0]
         address_dict: dict[str, str] = to_dict(address)
         is_equal: bool = True
         for key in address_dict.keys():
@@ -190,7 +193,8 @@ class Database:
         new_address_id: int = self.insert_address(address)
         self.__cur.execute("UPDATE requester "
                            "SET fk_address_id = :new_address_id "
-                           "WHERE requester_id = :requester_id", {"new_address_id": new_address_id, "requester_id": requester["requester_id"]})
+                           "WHERE requester_id = :requester_id",
+                           {"new_address_id": new_address_id, "requester_id": requester["requester_id"]})
         self.__cur.execute("DELETE from address "
                            "WHERE address_id = :id", {"id": requester["address_id"]})
         self.__con.commit()
@@ -277,21 +281,20 @@ class Database:
         effective_ctc, fk_property_id, smp) 
         VALUES(:description, :sample_number, :collection_date, :total_area, :latitude, :longitude, :depth, :phosphorus,
         :potassium, :organic_matter, :ph, :aluminum, :h_al, :calcium, :magnesium, :copper, :iron, :manganese,
-        :zinc, :base_sum, :ctc, :v_percent, :aluminum_saturation, :effective_ctc, :property_id, :smp)""", sample_dict)
+        :zinc, :base_sum, :ctc, :v_percent, :aluminum_saturation, :effective_ctc, :property_id, :smp, :silte, :sand, :clay, :classification)""", sample_dict)
         self.__con.commit()
 
     def insert_report(self, report: Report, sample_id: int) -> None:
         report_dict: dict[str, Any] = to_dict(report)
         report_dict['sample_id'] = sample_id
-        self.__cur.execute("""INSERT INTO report(file_location, technician, fk_sample_id) 
-        VALUES(:file_location, :technician, :sample_id)""", report_dict)
+        self.__cur.execute("""INSERT INTO report(file_location, agreement, fk_sample_id) 
+        VALUES(:file_location, :agreement, :sample_id)""", report_dict)
         self.__con.commit()
 
     def get_next_report_id(self) -> int:
         self.__cur.execute("""SELECT id from report""")
         list_of_report_ids: list[sqlite3.Row] = self.__cur.fetchall()
         return len(list_of_report_ids) + 1
-
 
     def get_countries(self) -> list[str]:
         self.__cur.execute("""SELECT country_name, country_id from country""")
@@ -345,7 +348,7 @@ class Database:
         self.__con.close()
 
     def get_persons(self, **kwargs) -> list[sqlite3.Row]:
-        query = """SELECT
+        query: str = """SELECT
             p.id AS id, 
             p.name,
             p.birth_date,
@@ -373,15 +376,26 @@ class Database:
             INNER JOIN 
             state st ON a.fk_state_id = st.state_id
             INNER JOIN 
-            country co ON a.fk_country_id = co.country_id"""
-        id = kwargs.get("id")
+            country co ON a.fk_country_id = co.country_id
+            """
+        id: int = kwargs.get("id")
+        cpf: str = kwargs.get("cpf")
+        name: str = kwargs.get("name")
+        params: dict[str, Any] = {}
         if id:
-            query += f" WHERE id = :id"
-        self.__cur.execute(query, {"id": id})
+            query += " WHERE id = :id"
+            params = {"id": id}
+        elif cpf:
+            query += " WHERE cpf LIKE :cpf"
+            params = {"cpf": f"{cpf}%"}
+        elif name:
+            query += " WHERE name LIKE :name"
+            params = {"name": f"%{name}%"}
+        self.__cur.execute(query + " ORDER BY name", params)
         return self.__cur.fetchall()
 
     def get_companies(self, **kwargs) -> list[sqlite3.Row]:
-        query = """SELECT 
+        query: str = """SELECT 
             cn.id AS id,
             cn.company_name,
             cn.cnpj,
@@ -409,28 +423,46 @@ class Database:
             state st ON a.fk_state_id = st.state_id
             INNER JOIN 
             country co ON a.fk_country_id = co.country_id"""
-        id = kwargs.get("id")
+        id: int = kwargs.get("id")
+        cnpj: str = kwargs.get("cnpj")
+        company_name: str = kwargs.get("company_name")
+        params: dict[str, Any] = {}
         if id:
-            query += f" WHERE id = :id"
-        self.__cur.execute(query, {"id": id})
+            query += " WHERE id = :id"
+            params = {"id": id}
+        elif cnpj:
+            query += " WHERE cnpj LIKE :cnpj"
+            params = {"cnpj": f"{cnpj}%"}
+        elif company_name:
+            query += " WHERE company_name LIKE :company_name"
+            params = {"company_name": f"%{company_name}%"}
+        self.__cur.execute(query + " ORDER BY company_name", params)
         return self.__cur.fetchall()
 
     def get_requesters(self, **kwargs) -> list[sqlite3.Row] | None:
-        self.__cur.execute("""SELECT
+        requester_id: int = kwargs.get('requester_id')
+        params: dict = {}
+
+        query: str = """
+        SELECT
             r.requester_id,
             r.phone_number,
             r.email,
             p.name AS name,
             p.id AS id,
-            p.cpf as document_number,
+            p.cpf AS document_number,
             'person' AS requester_type 
         FROM 
             requester r
         INNER JOIN 
             person p ON r.requester_id = p.fk_requester_id
-        
+        """
+        if requester_id:
+            query += " WHERE r.requester_id = :requester_id"
+            params['requester_id'] = requester_id
+
+        query += """
         UNION 
-        
         SELECT 
             r.requester_id,
             r.phone_number,
@@ -442,18 +474,16 @@ class Database:
         FROM 
             requester r
         INNER JOIN 
-            company c ON r.requester_id = c.fk_requester_id;
-        """)
-        requester_id: int = kwargs.get('requester_id')
-        rows: list[sqlite3.Row] = self.__cur.fetchall()
+            company c ON r.requester_id = c.fk_requester_id
+        """
         if requester_id:
-            for row in rows:
-                if requester_id == row['requester_id']:
-                    return [row]
+            query += " WHERE r.requester_id = :requester_id"
+
+        self.__cur.execute(query, params)
         return self.__cur.fetchall()
 
     def get_properties(self, **kwargs):
-        query = """SELECT
+        query: str = """SELECT
             property.id as id,
             property.property_name as name,
             property.location,
@@ -493,12 +523,19 @@ class Database:
         """
         property_id = kwargs.get('property_id')
         sample_id = kwargs.get('sample_id')
+        id_list = kwargs.get('id_list')
         if sample_id:
             query += "WHERE id = :sample_id"
             params = {"sample_id": sample_id}
         elif property_id:
             query += "WHERE fk_property_id = :property_id"
             params = {"property_id": property_id}
+        elif id_list:
+            query += " WHERE id = :sample_id_0"
+            params = {"sample_id_0": id_list[0]}
+            for i in range(1, len(id_list)):
+                query += f" OR id = :sample_id_{i}"
+                params[f"sample_id_{i}"] = id_list[i]
         else:
             params = {}
         self.__cur.execute(query, params)
@@ -507,12 +544,21 @@ class Database:
     def get_sample_info(self, sample_id: int):
         self.__cur.execute("""SELECT
             COALESCE(person.name, company.company_name) AS requester_name,
+            COALESCE(person.cpf, company.cnpj) AS document_number,
+            CASE 
+            WHEN person.cpf IS NOT NULL THEN 'cpf' 
+            WHEN company.cnpj IS NOT NULL THEN 'cnpj' 
+            ELSE NULL 
+            END AS document_type,
             CONCAT(street.street_name, ', ', address.address_number, ', ', city.city_name, ', ', state.state_name, ', ', country.country_name) AS address,
-            property.property_name,
-            sample.description AS sample_name,
+            property.property_name, 
+            city.city_name as city, 
+            state.state_name as state, 
+            sample.description AS sample_description,
             sample.sample_number,
             sample.collection_date,
             sample.depth,
+            sample.total_area, 
             property.registration_number
             FROM
                 sample

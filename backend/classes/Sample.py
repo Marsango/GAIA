@@ -5,7 +5,6 @@ from backend.classes.utils import verify_type
 from interface.AlertWindow import AlertWindow
 from interface.ConfigurationWindow import ConfigurationWindow
 from datetime import datetime
-from datetime import date
 conversion_table = {
     3.5: 31.92, 3.6: 29.63, 3.7: 27.5, 3.8: 25.53, 3.9: 23.7, 4.0: 22.0,
     4.1: 20.42, 4.2: 18.96, 4.3: 17.6, 4.4: 16.33, 4.5: 15.16, 4.6: 14.08,
@@ -24,12 +23,12 @@ class Sample:
                  potassium: float,
                  organic_matter: float, ph: float, smp: float, aluminum: float, calcium: float,
                  magnesium: float,
-                 copper: float, iron: float, manganese: float, zinc: float) -> None:
+                 copper: float, iron: float, manganese: float, zinc: float, silte: float, sand: float, clay: float) -> None:
         verify_type(get_type_hints(Sample.__init__), locals())
         try:
             current_config: Configuration = Configuration()
         except:
-            dialog_message: AlertWindow = AlertWindow(sucess_message="Os fatores variáveis precisam ser configurados.")
+            dialog_message: AlertWindow = AlertWindow("Os fatores variáveis precisam ser configurados.")
             dialog_message.exec()
             dialog_config: ConfigurationWindow = ConfigurationWindow()
             dialog_config.exec()
@@ -40,30 +39,43 @@ class Sample:
         self.__collection_date: str | None = None
         self.__longitude: float | None = None
         self.__latitude: float | None = None
-        self.__phosphorus: float = phosphorus * current_config.get_phosphor_factor()
-        self.__potassium: float = potassium * current_config.get_phosphor_factor()
-        self.__organic_matter: float = organic_matter * 1.724
-        self.__ph: float = ph
-        self.__smp: float = smp
-        self.__aluminum: float = aluminum
+        self.__phosphorus: float | None = phosphorus * current_config.get_phosphor_factor() if phosphorus is not None else None
+        self.__potassium: float | None = potassium * current_config.get_phosphor_factor() if potassium is not None else None
+        self.__organic_matter: float = organic_matter * 1.724 if organic_matter is not None else None
+        self.__ph: float | None = ph
+        self.__smp: float | None = smp
+        self.__aluminum : float | None = aluminum
         if self.__organic_matter > 50:
-            self.__h_al: float = math.pow(2.7182, (6.9056 - (0.08824 * self.__smp)))
+            self.__h_al: float = round(math.pow(2.7182, (6.9056 - (0.08824 * self.__smp))), 1) if smp is not None else None
         else:
             try:
-                self.__h_al: float = conversion_table[round(self.__smp, 1)]
+                self.__h_al: float = conversion_table[round(self.__smp, 1)] if smp is not None else None
             except KeyError:
-                raise ValueError(f"Error with values of 'SMP'. No conversion found for {round(self.__smp, 1)}.") #raise ValueError("Error with values of 'SMP'")
-        self.__calcium: float = calcium
-        self.__magnesium: float = magnesium
-        self.__copper: float = copper
-        self.__iron: float = iron
-        self.__manganese: float = manganese
-        self.__zinc: float = zinc
-        self.__base_sum: float = self.__manganese + self.__calcium + self.__potassium
-        self.__ctc: float = self.__base_sum + self.__h_al
-        self.__v_percent: float = (100 * self.__base_sum)/self.__ctc
-        self.__aluminum_saturation: float = (100 * self.__aluminum) / (self.__base_sum + self.__aluminum)
-        self.__effective_ctc: float = self.__ctc + self.__aluminum
+                raise ValueError(f"Error with values of 'SMP'. No conversion found for {round(self.__smp, 1)}.")
+        self.__calcium: float | None = calcium
+        self.__magnesium: float | None = magnesium
+        self.__copper: float | None = copper
+        self.__iron: float | None = iron
+        self.__manganese: float | None = manganese
+        self.__zinc: float | None = zinc
+        self.__base_sum: float = self.__manganese + self.__calcium + self.__potassium if self.__manganese is not None and self.__calcium is not None and self.__potassium is not None else None
+        self.__ctc: float = self.__base_sum + self.__h_al if self.__base_sum is not None and self.__h_al is not None else None
+        self.__v_percent: float = (100 * self.__base_sum)/self.__ctc if self.__base_sum is not None and self.__ctc is not None else None
+        self.__aluminum_saturation: float = (100 * self.__aluminum) / (self.__base_sum + self.__aluminum) if self.__aluminum is not None and self.__base_sum is not None else None
+        self.__effective_ctc: float = self.__ctc + self.__aluminum if self.__ctc is not None and self.__aluminum is not None else None
+        self.__clay: float | None = clay
+        self.__sand: float | None = sand
+        self.__silte: float | None = silte
+        self.__classification =  self.find_classification(round((              1 + 0.3591 * (
+                    (-0.02128887 * self.__sand) +
+                    (-0.01005814 * self.__silte) +
+                    (-0.01901894 * self.__clay) +
+                    (0.0001171219 * self.__sand * self.__silte) +
+                    (0.0002073924 * self.__sand * self.__clay) +
+                    (0.00006118707 * self.__silte * self.__clay) -
+                    (0.000006373789 * self.__sand * self.__silte * self.__clay)
+                )
+            ) ** 2.78474 * 10, 2)) if self.__clay is not None and self.__sand is not None and self.__silte is not None else None
         self.verify_valid_date(collection_date)
         self.verify_valid_latitude(latitude)
         self.verify_valid_longitude(longitude)
@@ -87,3 +99,18 @@ class Sample:
         else:
             raise ValueError("Error with values of 'longitude'")
 
+    def find_classification(self, value):
+        if value < 0.33:
+            return 'AD0'
+        elif value < 0.46:
+            return 'AD1'
+        elif value < 0.61:
+            return 'AD2'
+        elif value < 0.8:
+            return 'AD3'
+        elif value < 1.06:
+            return 'AD4'
+        elif value < 1.4:
+            return 'AD5'
+        else:
+            return 'AD6'

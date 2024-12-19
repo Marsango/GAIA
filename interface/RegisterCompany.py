@@ -1,3 +1,7 @@
+import os
+
+from PySide6.QtGui import QPixmap
+
 from interface.base_windows.register_company import RegisterCompanyDialog
 from backend.classes.Company import Company
 from backend.classes.Address import Address
@@ -13,6 +17,11 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         super(RegisterCompany, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Registro de Pessoa Jurídica')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.register_button.clicked.connect(self.register_action)
         self.create_country_completer()
         self.country_input.editingFinished.connect(self.country_changed)

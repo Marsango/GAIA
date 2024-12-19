@@ -118,6 +118,9 @@
     </property>
     <addaction name="actionFatores_vari_veis"/>
     <addaction name="actionSobre"/>
+    <addaction name="actionLogo"/>
+    <addaction name="actionBackup"/>
+    <addaction name="actionSelo"/>
    </widget>
    <addaction name="menuCadastro"/>
    <addaction name="menuConfigura_es"/>
@@ -175,6 +178,21 @@
   <action name="actionConsultar_laudo_2">
    <property name="text">
     <string>Consultar laudo</string>
+   </property>
+  </action>
+  <action name="actionLogo">
+   <property name="text">
+    <string>Logo</string>
+   </property>
+  </action>
+  <action name="actionBackup">
+   <property name="text">
+    <string>Backup</string>
+   </property>
+  </action>
+  <action name="actionSelo">
+   <property name="text">
+    <string>Selo</string>
    </property>
   </action>
  </widget>

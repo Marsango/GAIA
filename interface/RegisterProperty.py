@@ -1,3 +1,6 @@
+import os
+
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from interface.base_windows.register_property import RegisterPropertyDialog
 from PySide6.QtCore import Qt
@@ -13,6 +16,11 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
         self.current_property_id: int | None = None
         self.setupUi(self)
         self.setWindowTitle('Registro de propriedade')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.register_button.clicked.connect(self.register_action)
         self.create_country_completer()
         self.country_input.editingFinished.connect(self.country_changed)

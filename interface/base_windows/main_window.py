@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindow.ui'
+## Form generated from reading UI file 'main_window.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.3
 ##
@@ -53,6 +53,12 @@ class Ui_MainWindow(object):
         self.actionSobre.setObjectName(u"actionSobre")
         self.actionConsultar_laudo_2 = QAction(MainWindow)
         self.actionConsultar_laudo_2.setObjectName(u"actionConsultar_laudo_2")
+        self.actionLogo = QAction(MainWindow)
+        self.actionLogo.setObjectName(u"actionLogo")
+        self.actionBackup = QAction(MainWindow)
+        self.actionBackup.setObjectName(u"actionBackup")
+        self.actionSelo = QAction(MainWindow)
+        self.actionSelo.setObjectName(u"actionSelo")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_2 = QHBoxLayout(self.centralwidget)
@@ -99,6 +105,9 @@ class Ui_MainWindow(object):
         self.menuCadastro.addAction(self.actionConsultar_laudo_2)
         self.menuConfigura_es.addAction(self.actionFatores_vari_veis)
         self.menuConfigura_es.addAction(self.actionSobre)
+        self.menuConfigura_es.addAction(self.actionLogo)
+        self.menuConfigura_es.addAction(self.actionBackup)
+        self.menuConfigura_es.addAction(self.actionSelo)
 
         self.retranslateUi(MainWindow)
 
@@ -118,6 +127,9 @@ class Ui_MainWindow(object):
         self.actionSolicitantes.setText(QCoreApplication.translate("MainWindow", u"Solicitantes", None))
         self.actionSobre.setText(QCoreApplication.translate("MainWindow", u"Sobre", None))
         self.actionConsultar_laudo_2.setText(QCoreApplication.translate("MainWindow", u"Consultar laudo", None))
+        self.actionLogo.setText(QCoreApplication.translate("MainWindow", u"Logo", None))
+        self.actionBackup.setText(QCoreApplication.translate("MainWindow", u"Backup", None))
+        self.actionSelo.setText(QCoreApplication.translate("MainWindow", u"Selo", None))
         self.label.setText("")
         self.menuCadastro.setTitle(QCoreApplication.translate("MainWindow", u"Cadastro", None))
         self.menuConfigura_es.setTitle(QCoreApplication.translate("MainWindow", u"Configuracoes", None))

@@ -1,4 +1,9 @@
+import os
+
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
+
+from interface.GenerateCSV import GenerateCSV
 from interface.base_windows.sample_window import SampleDialog
 from interface.DeleteConfirmation import DeleteConfirmation
 from interface.AlertWindow import AlertWindow
@@ -14,12 +19,17 @@ class SampleWindow(QDialog, SampleDialog):
         super(SampleWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Amostras cadastradas')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/logo_lab.png"))
         owner: str = kwargs.get('owner') if kwargs.get('owner') else ''
         _property: str = kwargs.get('property') if kwargs.get('property') else ''
         self.owner.setText(owner)
         self.owner.setReadOnly(True)
-        self._property.setText(_property)
-        self._property.setReadOnly(True)
+        self.property.setText(_property)
+        self.property.setReadOnly(True)
         self.sample_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.sample_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.sample_table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -29,6 +39,7 @@ class SampleWindow(QDialog, SampleDialog):
         self.add.clicked.connect(self.register_sample)
         self.edit.clicked.connect(self.edit_sample)
         self.delete_2.clicked.connect(self.delete_sample)
+        self.csv_button.clicked.connect(self.open_csv_window)
         self.refresh_table()
         self.generate_report.clicked.connect(self.report_window)
 
@@ -107,4 +118,15 @@ class SampleWindow(QDialog, SampleDialog):
         row: int = selected_items[0].row()
         sample_id: int = int(self.sample_table.item(row, 0).text())
         dialog: GenerateReport = GenerateReport(sample_id)
+        dialog.exec()
+
+    def open_csv_window(self):
+        selected_items: list[QTableWidgetItem] = self.sample_table.selectedIndexes()
+        if len(selected_items) == 0:
+            widget: AlertWindow = AlertWindow("Você deve selecionar uma amostra para exportar para csv.")
+            widget.exec()
+            return
+        selected_rows: set[int] = {item.row() for item in selected_items}
+        selected_samples: list[int] = [int(self.sample_table.item(row, 0).text()) for row in selected_rows]
+        dialog: GenerateCSV = GenerateCSV(selected_samples)
         dialog.exec()
