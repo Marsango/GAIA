@@ -115,13 +115,11 @@ class RegisterSample(QDialog, RegisterSampleDialog):
 
             if self.mode == 'register':
                 self.clean_input()
-
         except ValueError as e:
             widget: AlertWindow = AlertWindow(f"Erro: {str(e)}")
             widget.exec()
 
         db.close_connection()
-
 
 
     def clean_input(self):
@@ -153,4 +151,3 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.silte_input.clear()
         self.sand_input.clear()
         self.clay_input.clear()
-

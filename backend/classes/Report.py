@@ -243,7 +243,7 @@ class Report:
     def draw_granulometric_table(self, coord_x, coord_y, sample_values) -> None:
         data = [['ANÁLISE GRANULOMÉTRICA(g kg^-1)**'],
                 ['Areia', 'Silte', 'Argila', 'Classe AD'],
-                [f'{sample_values['sand']}', f'{sample_values['silte']}', f'{sample_values['clay']}', f'{sample_values['classification']}']]
+                [f"{sample_values['sand']}", f"{sample_values['silte']}", f"{sample_values['clay']}", f"{sample_values['classification']}"]]
         style = TableStyle([
             ('BACKGROUND', (0, 0), (3, 0), colors.lightgrey),
             ('SPAN', (0, 0), (3, 0)),

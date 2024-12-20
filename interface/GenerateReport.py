@@ -134,25 +134,47 @@ class GenerateReport(QDialog, GenerateReportDialog):
         filename: QFileDialog.getSaveFileName = QFileDialog.getSaveFileName(filter="*.pdf")
         return filename[0]
 
-    def verify_consistency(self, selected_parameters: dict[str, dict[str, float]]) -> None:
-        for parameter, values in selected_parameters.items():
-            for (key_a, val_a), (key_b, val_b) in pairwise(values.items()):
-                if val_a >= val_b:
-                    raise ValueError(f"Error with values of '{parameter}'")
+    def verify_consistency(self, parameters: dict[str, dict[str, float]]):
+        for element, values in parameters.items():
+            for range_name, value in values.items():
+                if value == 0.0:
+                    print(f"Warning: {element} has a '0.0' value for {range_name}.")
+                    # Lógica para tratar valores inválidos, ou lançar um erro específico se necessário.
+                    raise ValueError(f"Error with values of '{element}' or the comparison parameter.")
+
 
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:
         selected_parameters: dict[str, dict[str, float]] = {}
+        
         for row in range(self.parameters_table.rowCount()):
-            # if self.parameters_table.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked or self.parameters_table.item(row, 0).text() == ' Sat. Alumínio'\
-            #         or self.parameters_table.item(row, 0).text() == 'V (%)':
-                selected_parameters[self.__element_sample_mapping[self.parameters_table.item(row, 0).text()]] = {
-                    'very low': float(self.parameters_table.item(row, 1).text()),
-                    'low': float(self.parameters_table.item(row, 2).text()),
-                    'medium': float(self.parameters_table.item(row, 3).text()),
-                    'high': float(self.parameters_table.item(row, 4).text()),
-                    'very high': float(self.parameters_table.item(row, 5).text())}
+            element_name = self.parameters_table.item(row, 0).text()
+            very_low = float(self.parameters_table.item(row, 1).text() or 0.0)
+            low = float(self.parameters_table.item(row, 2).text() or 0.0)
+            medium = float(self.parameters_table.item(row, 3).text() or 0.0)
+            high = float(self.parameters_table.item(row, 4).text() or 0.0)
+            very_high = float(self.parameters_table.item(row, 5).text() or 0.0)
+            
+            # Armazenando os valores no dicionário
+            selected_parameters[self.__element_sample_mapping[element_name]] = {
+                'very low': very_low,
+                'low': low,
+                'medium': medium,
+                'high': high,
+                'very high': very_high
+            }
+
+            # Imprimindo os valores
+            print(f"Element: {element_name}")
+            print(f"Very Low: {very_low}")
+            print(f"Low: {low}")
+            print(f"Medium: {medium}")
+            print(f"High: {high}")
+            print(f"Very High: {very_high}")
+            print("-" * 30)
+
         self.verify_consistency(selected_parameters)
         return selected_parameters
+
 
     def plot_ctc_graph(self, potassium: float, magnesium: float, calcium: float, h_plus_al: float) -> None:
         labels: list[str] = ['Potássio - K', 'Magnésio - Mg', 'Cálcio - Ca', 'H + Al']
