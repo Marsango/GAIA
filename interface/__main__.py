@@ -1,6 +1,7 @@
 import sys
 import os
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap
 from PySide6.QtSvgWidgets import *
 from PySide6.QtWidgets import (QApplication, QMainWindow)
@@ -20,15 +21,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle('GAIA SOFTWARE')
         self.showMaximized()
+
         base_dir = os.path.dirname(os.path.abspath(__file__))
         bg_dir = os.path.join(base_dir, 'images/background.svg')
         self.setWindowIcon(QPixmap(os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/logo_lab2.png"))
         self.svg_widget = QSvgWidget(bg_dir)
         self.horizontalLayout.addWidget(self.svg_widget)
+
+        # Lista para rastrear janelas abertas
+        self.open_windows = []
+
+        # Conectar ações a métodos
         self.actionSolicitantes.triggered.connect(self.open_requester_window)
         self.actionFatores_vari_veis.triggered.connect(self.open_config_window)
         self.actionSobre.triggered.connect(self.open_info_window)
@@ -37,34 +44,49 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionBackup.triggered.connect(self.open_backup_window)
         self.actionSelo.triggered.connect(self.open_upload_report_stamp_window)
 
+    def closeEvent(self, event):
+        """Fechar todas as janelas abertas antes de encerrar a principal."""
+        for window in self.open_windows:
+            window.close()  # Fecha cada janela aberta
+        self.open_windows.clear()
+        event.accept()  # Permitir o fechamento da janela principal
+
     def open_requester_window(self) -> None:
-        dialog: RequesterWindow = RequesterWindow()
-        dialog.exec()
+        dialog = RequesterWindow()
+        self.add_window(dialog)
 
     def open_config_window(self) -> None:
-        dialog: ConfigurationWindow = ConfigurationWindow()
+        dialog = ConfigurationWindow()
         dialog.load()
-        dialog.exec()
+        self.add_window(dialog)
 
     def open_info_window(self) -> None:
-        dialog: InfoWindow = InfoWindow()
-        dialog.exec()
+        dialog = InfoWindow()
+        self.add_window(dialog)
 
     def open_get_report_window(self) -> None:
-        dialog: GetReport = GetReport()
-        dialog.exec()
+        dialog = GetReport()
+        self.add_window(dialog)
 
     def open_upload_logo_window(self) -> None:
-        dialog: UploadLogo = UploadLogo()
-        dialog.exec()
+        dialog = UploadLogo()
+        self.add_window(dialog)
 
     def open_upload_report_stamp_window(self) -> None:
-        dialog: UploadReportStamp = UploadReportStamp()
-        dialog.exec()
+        dialog = UploadReportStamp()
+        self.add_window(dialog)
 
     def open_backup_window(self) -> None:
-        dialog: BackupWindow = BackupWindow()
-        dialog.exec()
+        dialog = BackupWindow()
+        self.add_window(dialog)
+
+    def add_window(self, dialog):
+        """Adicionar uma janela à lista e exibi-la."""
+        self.open_windows.append(dialog)
+        dialog.setAttribute(Qt.WA_DeleteOnClose)  # Remove referência ao fechar
+        dialog.destroyed.connect(lambda: self.open_windows.remove(dialog))
+        dialog.show()  # Exibe a janela de forma não modal
+
 
 
 if __name__ == '__main__':

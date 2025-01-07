@@ -595,3 +595,18 @@ class Database:
 
         # Se o resultado não for None, significa que o CPF já está em uso por outra pessoa
         return result is not None
+    
+    def get_report_info(self) -> list[sqlite3.Row]:
+        self.__cur.execute("""SELECT 
+                report.id AS id, 
+                COALESCE(person.name, company.company_name) AS requester_name,
+                sample.collection_date AS date,
+                property.property_name AS property 
+                FROM  
+                report 
+                JOIN sample ON report.fk_sample_id = sample.id 
+                JOIN property ON sample.fk_property_id = property.id 
+                JOIN requester ON property.fk_requester_id = requester.requester_id 
+                LEFT JOIN person ON requester.requester_id = person.fk_requester_id 
+                LEFT JOIN company ON requester.requester_id = company.fk_requester_id;""")
+        return self.__cur.fetchall()

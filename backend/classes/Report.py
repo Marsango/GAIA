@@ -1,15 +1,21 @@
 import sqlite3
+from reportlab.platypus import Image
+from reportlab.lib.pagesizes import inch
 from typing import get_type_hints
 from backend.classes.utils import verify_type
 from reportlab.pdfgen import canvas
+from io import BytesIO
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+import matplotlib.pyplot as plt
 from reportlab.platypus import Table, TableStyle, Paragraph
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
 import os
+import math
+from reportlab.lib.colors import HexColor
 
 
 class Report:
@@ -51,11 +57,12 @@ class Report:
         }
 
     def add_fonts(self) -> None:
-        pdfmetrics.registerFont(TTFont('arial', 'fonts/arial.ttf'))
-        pdfmetrics.registerFont(TTFont('arialbd', 'fonts/arialbd.ttf'))
-        pdfmetrics.registerFont(TTFont('arialbi', 'fonts/arialbi.ttf'))
-        pdfmetrics.registerFont(TTFont('ariali', 'fonts/ariali.ttf'))
-        pdfmetrics.registerFont(TTFont('arilbk', 'fonts/ariblk.ttf'))
+        font_dir = r"C:\Users\brun0\OneDrive\Documentos\LabSolos\GAIA\backend\classes\fonts"
+        pdfmetrics.registerFont(TTFont('arial', f"{font_dir}\\arial.ttf"))
+        pdfmetrics.registerFont(TTFont('arialbd', f"{font_dir}\\arialbd.ttf"))
+        pdfmetrics.registerFont(TTFont('arialbi', f"{font_dir}\\arialbi.ttf"))
+        pdfmetrics.registerFont(TTFont('ariali', f"{font_dir}\\ariali.ttf"))
+        pdfmetrics.registerFont(TTFont('arilbk', f"{font_dir}\\ariblk.ttf"))
 
     def setup_pdf(self, number: int, path: str) -> canvas.Canvas:
         self.add_fonts()
@@ -214,8 +221,12 @@ class Report:
         start_x = coord_x + table._colWidths[0] + table._colWidths[1]
         self.__pdf.setLineWidth(3)
         self.__pdf.setStrokeColor(colors.gray)
-        for j in range(len(data) - 1, 0 - 1, -1):
+        for j in range(len(data) - 1, -1, -1):
             if isinstance(data[j][0], str) or data[j][0].getPlainText() not in self.__sample_info_map.keys():
+                continue
+            try:
+                value = float(data[j][1])
+            except ValueError:
                 continue
             current_y = current_y + table._rowHeights[j]/2
             self.__pdf.line(start_x, current_y, start_x + 25.2*self.find_line(data[j][0].getPlainText(), float(data[j][1]), reference), current_y)
@@ -223,7 +234,9 @@ class Report:
         self.__pdf.setLineWidth(1)
         self.__pdf.setStrokeColor(colors.black)
 
-    def draw_pie_graph_table(self, coord_x, coord_y) -> None:
+
+    def draw_pie_graph_table(self, coord_x, coord_y, values) -> None:
+
         data = [['Índice de Saturação'],
                 ['']]
         style = TableStyle([
@@ -239,6 +252,63 @@ class Report:
         table.wrapOn(self.__pdf, 0, 0)
         table.drawOn(self.__pdf, coord_x, coord_y)
 
+        # Definir os rótulos e as cores do gráfico de pizza
+        colors_pie = ['#00FF00', '#0000FF', '#FFFF00', '#FF0000']
+        
+        # Verificar e substituir os valores NaN por 0
+        values = [0 if math.isnan(value) else value for value in values]
+        total = sum(values)
+        percentages = [(value / total) * 100 if total > 0 else 0 for value in values]
+
+        labels = [
+            'K: ',
+            'Mg²: ',
+            'Ca: ',
+            'H+Al: '
+        ]
+
+        # Criar o gráfico de pizza
+        plt.figure(figsize=(3, 3))
+        plt.pie(values, colors=colors_pie, startangle=140)
+        plt.axis('equal')  # Garante que o gráfico seja circular
+
+        # Salvar o gráfico em um buffer de memória
+        buffer = BytesIO()
+        plt.savefig(buffer, format='PNG', bbox_inches='tight')
+        buffer.seek(0)
+        plt.close()  # Fecha o gráfico para liberar recursos
+
+        # Adicionar a imagem do gráfico ao PDF
+        graph = Image(buffer, width=1.8 * inch, height=1.2 * inch)
+        graph.wrapOn(self.__pdf, 0, 0)
+        graph.drawOn(self.__pdf, coord_x + 1.5 * inch, coord_y + 0.25 * inch)  # Ajustar a posição do gráfico
+
+        legend_data = [
+            [f'    ', labels[i], f'{percentages[i]:.2f}%' if total > 0 else '0.0%']
+            for i in range(len(labels))
+        ]
+
+        # Estilo da tabela da legenda
+        legend_style = TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (1, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (1, 0), (-1, -1), 7),
+            ('TOPPADDING', (0, 0), (-1, -1), 0.6),  # Diminuir o padding superior
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0.6),  # Diminuir o padding inferior
+        ])
+
+        # Adicionar cor na legenda
+        for i in range(len(colors_pie)):
+            legend_style.add('BACKGROUND', (0, i), (0, i), HexColor(colors_pie[i]))
+
+        # Criar a tabela da legenda
+        legend_table = Table(legend_data, colWidths=[0.3 * inch, 0.4 * inch, 0.5 * inch])
+        legend_table.setStyle(legend_style)
+
+        # Posicionar a legenda ao lado do gráfico
+        legend_table.wrapOn(self.__pdf, 0, 0)
+        legend_table.drawOn(self.__pdf, coord_x + 0.1 * inch, coord_y + 0.5 * inch) # Ajustar a posição da legenda
 
     def draw_granulometric_table(self, coord_x, coord_y, sample_values) -> None:
         data = [['ANÁLISE GRANULOMÉTRICA(g kg^-1)**'],
@@ -284,26 +354,26 @@ class Report:
 
     def draw_tables(self, sample_values: sqlite3.Row, reference):
         data_table_one = [['BÁSICA', '', 'Classe de Interpretação*'],
-                          ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
-                          [Paragraph('Ca<sup>2+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["calcium"]}'],
-                          [Paragraph('Mg² cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["magnesium"]}'],
-                          [Paragraph('K cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["potassium"]}'],
-                          [Paragraph('MO gdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["organic_matter"]}'],
-                          [Paragraph('P mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["phosphorus"]}']]
+                        ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
+                        [Paragraph('Ca<sup>2+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["calcium"], 2) if sample_values["calcium"] is not None else "N/A"}'],
+                        [Paragraph('Mg² cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["magnesium"], 2) if sample_values["magnesium"] is not None else "N/A"}'],
+                        [Paragraph('K cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["potassium"], 2) if sample_values["potassium"] is not None else "N/A"}'],
+                        [Paragraph('MO gdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["organic_matter"], 2) if sample_values["organic_matter"] is not None else "N/A"}'],
+                        [Paragraph('P mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["phosphorus"], 2) if sample_values["phosphorus"] is not None else "N/A"}']]
         self.draw_table(data_table_one, 70, 480, self.__left_col_width, reference)
         data_table_two = [['REAÇÃO DO SOLO', '', 'Classe de Interpretação*'],
-                          ['Parâmetro', 'Valor', 'MB', 'B', 'M', 'A', 'MA'],
-                          [Paragraph('pH-CaCl2', style=self.__standard_paragraph_style), f'{sample_values["ph"]}'],
-                          [Paragraph('Al<sup>3+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["aluminum"]}'],
-                          [Paragraph('H+Al cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["h_al"]}'],
-                          [Paragraph('Índice SMP', style=self.__standard_paragraph_style), f'{sample_values["smp"]}']]
+                        ['Parâmetro', 'Valor', 'MB', 'B', 'M', 'A', 'MA'],
+                        [Paragraph('pH-CaCl2', style=self.__standard_paragraph_style), f'{round(sample_values["ph"], 2) if sample_values["ph"] is not None else "N/A"}'],
+                        [Paragraph('Al<sup>3+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["aluminum"], 2) if sample_values["aluminum"] is not None else "N/A"}'],
+                        [Paragraph('H+Al cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["h_al"], 2) if sample_values["h_al"] is not None else "N/A"}'],
+                        [Paragraph('Índice SMP', style=self.__standard_paragraph_style), f'{round(sample_values["smp"], 2) if sample_values["smp"] is not None else "N/A"}']]
         self.draw_table(data_table_two, 278, 534, self.__right_col_width, reference)
         data_table_three = [['MICRONUTRIENTES', '', 'Classe de Interpretação*'],
                             ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
-                            [Paragraph('Cu mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["copper"]}'],
-                            [Paragraph('Zn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["zinc"]}'],
-                            [Paragraph('Mn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["manganese"]}'],
-                            [Paragraph('Fe mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["iron"]}']
+                            [Paragraph('Cu mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["copper"], 2) if sample_values["copper"] is not None else "N/A"}'],
+                            [Paragraph('Zn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["zinc"], 2) if sample_values["zinc"] is not None else "N/A"}'],
+                            [Paragraph('Mn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["manganese"], 2) if sample_values["manganese"] is not None else "N/A"}'],
+                            [Paragraph('Fe mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["iron"], 2) if sample_values["iron"] is not None else "N/A"}']
                             ]
         self.draw_table(data_table_three, 278, 426, self.__right_col_width, reference)
         data_table_four = [
@@ -315,11 +385,35 @@ class Report:
             [Paragraph('Saturação por bases (V)%', style=self.__standard_paragraph_style), f'{sample_values["v_percent"]}'],
             [Paragraph('Saturação por alumínio (m)%', style=self.__standard_paragraph_style), f'{sample_values["aluminum_saturation"]}']
         ]
+
+        values_for_pie_chart = [
+            sample_values["potassium"], 
+            sample_values["magnesium"], 
+            sample_values["calcium"],  
+            sample_values["h_al"]        
+        ]
+
+        # Calcular o total
+        total = sum(values_for_pie_chart)
+
+        # Garantir que o total não seja zero para evitar divisão por zero
+        if total == 0:
+            percentages = [0] * len(values_for_pie_chart)  # Todos os valores serão 0%
+        else:
+            # Converter cada valor para porcentagem
+            percentages = [(value / total) * 100 for value in values_for_pie_chart]
+        
+        print(percentages)
+        print(values_for_pie_chart)
+        print(sample_values["smp"])
+
+        
+
         self.draw_table(data_table_four, 70, 186, self.__left_col_width, reference)
-        self.draw_pie_graph_table(278, 300)
+        self.draw_pie_graph_table(278, 300, percentages)
         self.draw_granulometric_table(278, 246, sample_values)
         self.draw_extractor_graph(278, 156)
-        self.__pdf.drawImage(f'{self.__images_location}/ctc_and_values.png', 278 + 65, 305, 108, 108, preserveAspectRatio=True, mask='auto')
+        #self.__pdf.drawImage(f'{self.__images_location}/ctc_and_values.png', 278 + 65, 305, 108, 108, preserveAspectRatio=True, mask='auto')
 
     def draw_signature_space(self, coord_x, coord_y, table_size):
         self.__pdf.setFont('arialbd', 10)
@@ -342,5 +436,3 @@ class Report:
         self.draw_signature_space(70, 156, 203.44799999999998)
         self.write_explanation(90)
         self.__pdf.save()
-
-

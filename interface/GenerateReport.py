@@ -1,8 +1,13 @@
 import os
+import matplotlib.pyplot as plt
 import sqlite3
+import backend.classes.Report as Report
+from reportlab.platypus import Image
+import shutil
+from reportlab.lib.units import inch
+from io import BytesIO
 from itertools import pairwise
 from pathlib import Path
-import matplotlib.pyplot as plt
 from PySide6 import QtCore
 from PySide6.QtGui import QPixmap
 from backend.classes.GraphParameters import GraphParameters
@@ -12,7 +17,6 @@ from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from backend.classes.Report import Report
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QHeaderView, QFileDialog)
-import shutil
 
 
 class GenerateReport(QDialog, GenerateReportDialog):
@@ -62,27 +66,27 @@ class GenerateReport(QDialog, GenerateReportDialog):
         for row, name in enumerate(available_graphs):
             check_box_item: QTableWidgetItem = QTableWidgetItem(name)
             check_box_item.setText(name)
-            # check_box_item.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
-            # check_box_item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+            #check_box_item.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
+            #check_box_item.setCheckState(QtCore.Qt.CheckState.Unchecked)
             self.parameters_table.setItem(row, 0, check_box_item)
         self.get_graph_values()
-        # self.select_all.clicked.connect(self.select_all_function)
+        self.select_all.clicked.connect(self.select_all_function)
         self.parameters_table.itemChanged.connect(self.update_graph_values)
         self.generate_report.clicked.connect(self.create_report)
 
-    # def select_all_function(self) -> None:
-    #     for row in range(self.parameters_table.rowCount()):
-    #         item: QTableWidgetItem = self.parameters_table.item(row, 0)
-    #         item.setCheckState(QtCore.Qt.CheckState.Checked)
+    def select_all_function(self) -> None:
+       for row in range(self.parameters_table.rowCount()):
+            item: QTableWidgetItem = self.parameters_table.item(row, 0)
+            item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:
         if item.column() != 0:
             try:
-                new_values: dict[str, float] = {'very low': float(self.parameters_table.item(item.row(), 1).text()),
-                                                'low': float(self.parameters_table.item(item.row(), 2).text()),
-                                                'medium': float(self.parameters_table.item(item.row(), 3).text()),
-                                                'high': float(self.parameters_table.item(item.row(), 4).text()),
-                                                'very high': float(self.parameters_table.item(item.row(), 5).text())}
+                new_values: dict[str, float] = {'very low': round(float(self.parameters_table.item(item.row(), 1).text()), 2),
+                                                'low': round(float(self.parameters_table.item(item.row(), 2).text()), 2),
+                                                'medium': round(float(self.parameters_table.item(item.row(), 3).text()), 2),
+                                                'high': round(float(self.parameters_table.item(item.row(), 4).text()), 2),
+                                                'very high': round(float(self.parameters_table.item(item.row(), 5).text()), 2)}
                 graph_parameters: GraphParameters = GraphParameters()
                 graph_name: str = self.parameters_table.item(item.row(), 0).text()
                 graph_parameters.set_graph_parameters(graph_name, new_values)
@@ -108,8 +112,13 @@ class GenerateReport(QDialog, GenerateReportDialog):
     def create_report(self):
         db: Database = Database()
         if self.technician_input.text() == '':
-            raise ValueError("Error with values of 'técnico'")
+            error_message = "Erro: O campo de convênio está vazio. Por favor, insira um convênio."
+            widget: AlertWindow = AlertWindow(error_message)
+            widget.exec()
+            return
+
         file_path = self.open_save_dialog()
+
         sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
         sample_values: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
         reference: dict[str, dict[str, float]] = self.get_selected_parameters()
@@ -134,53 +143,70 @@ class GenerateReport(QDialog, GenerateReportDialog):
         filename: QFileDialog.getSaveFileName = QFileDialog.getSaveFileName(filter="*.pdf")
         return filename[0]
 
-    def verify_consistency(self, parameters: dict[str, dict[str, float]]):
-        for element, values in parameters.items():
-            for range_name, value in values.items():
-                if value == 0.0:
-                    print(f"Warning: {element} has a '0.0' value for {range_name}.")
-                    # Lógica para tratar valores inválidos, ou lançar um erro específico se necessário.
-                    raise ValueError(f"Error with values of '{element}' or the comparison parameter.")
+    def verify_consistency(self, selected_parameters: dict[str, dict[str, float]]) -> None:
+        for parameter, values in selected_parameters.items():
+            for (key_a, val_a), (key_b, val_b) in pairwise(values.items()):
+                if val_a >= val_b:
+                    error_message = f"Erro: o valor {key_a} não pode ser maior que o {key_b} em {parameter}."
+                    widget: AlertWindow = AlertWindow(error_message)
+                    widget.exec()
+                    return
 
 
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:
         selected_parameters: dict[str, dict[str, float]] = {}
-        
         for row in range(self.parameters_table.rowCount()):
-            element_name = self.parameters_table.item(row, 0).text()
-            very_low = float(self.parameters_table.item(row, 1).text() or 0.0)
-            low = float(self.parameters_table.item(row, 2).text() or 0.0)
-            medium = float(self.parameters_table.item(row, 3).text() or 0.0)
-            high = float(self.parameters_table.item(row, 4).text() or 0.0)
-            very_high = float(self.parameters_table.item(row, 5).text() or 0.0)
-            
-            # Armazenando os valores no dicionário
-            selected_parameters[self.__element_sample_mapping[element_name]] = {
-                'very low': very_low,
-                'low': low,
-                'medium': medium,
-                'high': high,
-                'very high': very_high
-            }
-
-            # Imprimindo os valores
-            print(f"Element: {element_name}")
-            print(f"Very Low: {very_low}")
-            print(f"Low: {low}")
-            print(f"Medium: {medium}")
-            print(f"High: {high}")
-            print(f"Very High: {very_high}")
-            print("-" * 30)
-
+            # if self.parameters_table.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked or self.parameters_table.item(row, 0).text() == ' Sat. Alumínio'\
+            #         or self.parameters_table.item(row, 0).text() == 'V (%)':
+                selected_parameters[self.__element_sample_mapping[self.parameters_table.item(row, 0).text()]] = {
+                    'very low': float(self.parameters_table.item(row, 1).text()),
+                    'low': float(self.parameters_table.item(row, 2).text()),
+                    'medium': float(self.parameters_table.item(row, 3).text()),
+                    'high': float(self.parameters_table.item(row, 4).text()),
+                    'very high': float(self.parameters_table.item(row, 5).text())}
         self.verify_consistency(selected_parameters)
         return selected_parameters
 
+    def update_pie_chart_values(self, item: QTableWidgetItem) -> None:  
+        if item.column() != 0:  # Ignora alterações na coluna de nomes dos gráficos
+            try:
+                # Obter os novos valores da linha editada
+                new_values: dict[str, float] = {
+                    'K': float(self.pie_chart_table.item(item.row(), 1).text()),
+                    'Mg': float(self.pie_chart_table.item(item.row(), 2).text()),
+                    'Ca': float(self.pie_chart_table.item(item.row(), 3).text()),
+                    'H+Al': float(self.pie_chart_table.item(item.row(), 4).text())
+                }
 
-    def plot_ctc_graph(self, potassium: float, magnesium: float, calcium: float, h_plus_al: float) -> None:
-        labels: list[str] = ['Potássio - K', 'Magnésio - Mg', 'Cálcio - Ca', 'H + Al']
-        sizes: list[float] = [potassium, magnesium, calcium, h_plus_al]
-        fig, ax = plt.subplots()
-        ax.pie(sizes, autopct='%1.1f%%', startangle=90)
-        ax.axis('equal')
-        ax.legend(labels, loc='upper left')
-        plt.savefig('images/ctc_and_values.png', bbox_inches='tight')
+                # Validar se os valores são não negativos
+                if any(value < 0 for value in new_values.values()):
+                    raise ValueError("Os valores não podem ser negativos.")
+
+                # Atualizar os valores no objeto ou classe responsável pelo gráfico
+                pie_chart_parameters: PieChartParameters = PieChartParameters()
+                pie_chart_parameters.set_chart_values(new_values)
+
+                # Atualizar o gráfico de pizza
+                self.refresh_pie_chart(new_values)
+
+            except ValueError as ve:
+                # Tratar valores inválidos na tabela (não convertíveis para float ou negativos)
+                widget: AlertWindow = AlertWindow(str(ve))
+                widget.exec()
+
+                # Restaura os valores originais da tabela
+                self.pie_chart_table.blockSignals(True)
+                self.load_pie_chart_values()
+                self.pie_chart_table.blockSignals(False)
+
+            except Exception as e:
+                # Tratar outras exceções
+                error = handle_exception(e)
+                widget: AlertWindow = AlertWindow(error)
+                widget.exec()
+
+                # Restaura os valores originais da tabela
+                self.pie_chart_table.blockSignals(True)
+                self.load_pie_chart_values()
+                self.pie_chart_table.blockSignals(False)
+
