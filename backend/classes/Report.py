@@ -75,8 +75,10 @@ class Report:
         self.__pdf.line(30, 745, 560, 745)
         self.__pdf.setStrokeColor('black')
         self.__pdf.line(30, 750, 560, 750)
+
         self.__pdf.setFont('arialbd', 14)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 725, 'Laudo de Análise de Solo')
+
         self.__pdf.drawImage(f'{self.__images_location}/UTFPR_logo.svg.png', 65, 725, 100, 100, preserveAspectRatio=True, mask='auto')
         self.__pdf.setFont('arialbd', 10)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 785, 'LABSOLOS - Laboratório de Solos da UTFPR')
@@ -94,19 +96,31 @@ class Report:
         self.__pdf.line(pos_horizontal2, pos_vertical1, pos_horizontal2, pos_vertical2)
 
     def write_main_info_square(self, info: sqlite3.Row, report_id: int) -> None:
-        x_start: int = 75
-        x_end: int = 515
+        x_start_left: int = 75
+        x_end_left: int = 275
+        x_start_right: int = 315
+        x_end_right: int = 515
         y_start: int = 710
-        acceptable_width: int = x_end - x_start
+        acceptable_width_left: int = x_end_left - x_start_left
+        acceptable_width_right: int = x_end_right - x_start_right
         self.__pdf.setFont('arial', 10)
-        current_x: float = x_start
         current_y: int = y_start
-        document_text: str = f"CPF: {info['document_number']}" if info["document_type"] == "cpf" else f"CNPJ: {info['document_number']}"
-        texts_to_draw: list[str] = [
-        f"Solicitante: {info['requester_name']} ?{document_text}",
-        f"Propriedade: {info['property_name']} ?Município: {info['city']} ?UF: {info['state']} ?Matrícula: {info['registration_number']}",
-        f"Talhão: {info['sample_description']} ?Convênio: {self.__agreement} ?Profundidade: {info['depth']}cm ?Área: {info['total_area']}m²",
-        f"Laudo: {report_id} ?Amostra: {info['sample_number']} ?Data: {info['collection_date']}",
+
+        # Texts for left and right columns
+        left_texts: list[str] = [
+            f"Solicitante: {info['requester_name']}",
+            f"Propriedade: {info['property_name']}",
+            f"Talhão: {info['sample_description']}",
+            f"Laudo: {report_id}  Amostra: {info['sample_number']}",            
+            f"Convênio: {self.__agreement}"
+            
+        ]
+        right_texts: list[str] = [
+            f"Documento: {'CPF' if info['document_type'] == 'cpf' else 'CNPJ'} {info['document_number']}",
+            f"Município: {info['city']}  UF: {info['state']}",
+            f"Matrícula: {info['registration_number']}",
+            f"Área: {info['total_area']}m²  Profundidade: {info['depth']}cm",
+            f"Data: {info['collection_date']}"       
         ]
 
         def justify_text(text: str, max_width: int) -> str:
@@ -146,15 +160,16 @@ class Report:
                 current_y -= 12
             return current_y
 
-        for line in texts_to_draw:
-            text_size: float = pdfmetrics.stringWidth(line, 'arial', 10)
-            if text_size + current_x > x_end:
-                current_y = fit_text_size(line, current_y)
-            else:
-                self.__pdf.drawString(x_start, current_y, justify_text(line, x_end-x_start))
-                current_y -= 12
-        self.draw_square(x_start - 5, x_end + 5, y_start + 10, current_y+2)
-        return current_y - 5
+        for text in left_texts:
+            self.__pdf.drawString(x_start_left, current_y, justify_text(text, acceptable_width_left))
+            current_y -= 12
+
+        current_y = y_start
+        for text in right_texts:
+            self.__pdf.drawString(x_start_right, current_y, justify_text(text, acceptable_width_right))
+            current_y -= 12
+
+        self.draw_square(x_start_left - 5, x_end_right + 5, y_start + 10, current_y + 3)
 
     def draw_footer(self, coord_y):
         self.draw_square(70, 520, coord_y+35, coord_y)
