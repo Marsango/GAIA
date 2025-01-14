@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'generate_report.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.3
+## Created by: Qt User Interface Compiler version 6.7.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -71,12 +71,6 @@ class GenerateReportDialog(object):
         self.frame.setFrameShadow(QFrame.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.select_all = QPushButton(self.frame)
-        self.select_all.setObjectName(u"select_all")
-        self.select_all.setMaximumSize(QSize(100, 300))
-
-        self.horizontalLayout.addWidget(self.select_all)
-
         self.generate_report = QPushButton(self.frame)
         self.generate_report.setObjectName(u"generate_report")
         self.generate_report.setMaximumSize(QSize(100, 300))
@@ -107,7 +101,6 @@ class GenerateReportDialog(object):
         ___qtablewidgetitem5 = self.parameters_table.horizontalHeaderItem(5)
         ___qtablewidgetitem5.setText(QCoreApplication.translate("Dialog", u"Muito Alto", None));
         self.label.setText(QCoreApplication.translate("Dialog", u"T\u00e9cnico:", None))
-        self.select_all.setText(QCoreApplication.translate("Dialog", u"Selecionar Todos", None))
         self.generate_report.setText(QCoreApplication.translate("Dialog", u"Gerar Laudo", None))
     # retranslateUi
 

@@ -133,7 +133,7 @@ class RequesterWindow(QDialog, RequesterDialog):
         # Verifica se há um resultado no banco de dados
         requesters = db.get_persons(id=id) if self.current_table_type == 'person' else db.get_companies(id=id)
         if not requesters:
-            widget: ErrorWindow = ErrorWindow("Solicitante não encontrado.")
+            widget: AlertWindow = AlertWindow("Solicitante não encontrado.")
             widget.exec()
             db.close_connection()  # Certifique-se de fechar a conexão
             return
@@ -145,7 +145,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             try:
                 db.verify_valid_cpf(requester['cpf'])  # Verifica se o CPF é válido
             except ValueError as e:
-                widget: ErrorWindow = ErrorWindow(str(e))  # Exibe a mensagem de erro se o CPF for inválido
+                widget: AlertWindow = AlertWindow(str(e))  # Exibe a mensagem de erro se o CPF for inválido
                 widget.exec()
                 db.close_connection()
                 return

@@ -73,7 +73,7 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
             if self.mode == 'register':
                 db.insert_property(property, self.requester_id)
                 success: str = "Propriedade registrada com sucesso!"
-            elif self.mode == 'edit':
+            else:
                 db.edit_property(property, self.current_property_id)
                 success: str = "Alterações salvas com sucesso!"
             widget: AlertWindow = AlertWindow(success)

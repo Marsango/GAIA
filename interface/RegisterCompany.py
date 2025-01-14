@@ -73,7 +73,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
             if self.mode == 'register':
                 db.insert_company(company, address)
                 success_text: str = "Solicitante registrado com sucesso!"
-            elif self.mode == 'edit':
+            else:
                 db.edit_company(company, address, self.current_company_id)
                 success_text: str = "Alterações salvas com sucesso!"
             widget: AlertWindow = AlertWindow(success_text)
