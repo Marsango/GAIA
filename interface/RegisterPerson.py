@@ -29,17 +29,17 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         self.mode = 'register'
 
     def edit_mode(self, person_data) -> None:
-        self.country_input.insert(person_data['country'])
-        self.state_input.insert(person_data['state'])
-        self.city_input.insert(person_data['city'])
-        self.street_input.insert(person_data['street'])
-        self.address_number_input.insert(str(person_data['address_number']))
-        self.cep_input.insert(person_data['cep'])
-        self.name_input.insert(person_data['name'])
-        self.email_input.insert(person_data['email'])
-        self.cpf_input.insert(person_data['cpf'])
-        self.birth_date_input.insert(person_data['birth_date'])
-        self.phone_number_input.insert(person_data['phone_number'])
+        self.country_input.setText(person_data['country'])
+        self.state_input.setText(person_data['state'])
+        self.city_input.setText(person_data['city'])
+        self.street_input.setText(person_data['street'])
+        self.address_number_input.setText(str(person_data['address_number']))
+        self.cep_input.setText(person_data['cep'])
+        self.name_input.setText(person_data['name'])
+        self.email_input.setText(person_data['email'])
+        self.cpf_input.setText(person_data['cpf'])
+        self.birth_date_input.setText(person_data['birth_date'])
+        self.phone_number_input.setText(person_data['phone_number'])
 
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de Pessoa Física')

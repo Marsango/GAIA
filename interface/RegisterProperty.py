@@ -29,12 +29,12 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
         self.mode: str = 'register'
 
     def edit_mode(self, property_data) -> None:
-        self.country_input.insert(property_data['country'])
-        self.state_input.insert(property_data['state'])
-        self.city_input.insert(property_data['city'])
-        self.name_input.insert(property_data['name'])
-        self.registration_number_input.insert(str(property_data['registration_number']))
-        self.location_input.insert(property_data['location'])
+        self.country_input.setText(property_data['country'])
+        self.state_input.setText(property_data['state'])
+        self.city_input.setText(property_data['city'])
+        self.name_input.setText(property_data['name'])
+        self.registration_number_input.setText(str(property_data['registration_number']))
+        self.location_input.setText(property_data['location'])
 
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de propriedade')

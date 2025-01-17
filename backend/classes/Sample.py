@@ -1,3 +1,4 @@
+import json
 import math
 from typing import get_type_hints
 from backend.classes.Configuration import Configuration
@@ -24,8 +25,14 @@ class Sample:
                  organic_matter: float | None, ph: float | None, smp: float | None, aluminum: float | None, calcium: float | None,
                  magnesium: float | None,
                  copper: float | None, iron: float | None, manganese: float | None, zinc: float | None, silte: float | None, sand: float | None, clay: float | None, is_editing: bool,
-                 sample_id: int) -> None:
+                 sample_id: int | None) -> None:
         verify_type(get_type_hints(Sample.__init__), locals())
+        self.__description: str = description
+        self.__total_area: float = total_area
+        self.__depth: float = depth
+        self.__collection_date: str | None = None
+        self.__longitude: float | None = None
+        self.__latitude: float | None = None
         try:
             current_config: Configuration = Configuration()
         except:
@@ -34,34 +41,68 @@ class Sample:
             dialog_config: ConfigurationWindow = ConfigurationWindow()
             dialog_config.exec()
             current_config: Configuration = Configuration()
-        self.__description: str = description
-        self.__total_area: float = total_area
-        self.__depth: float = depth
-        self.__collection_date: str | None = None
-        self.__longitude: float | None = None
-        self.__latitude: float | None = None
+        self.__used_config: dict[str, dict[str, str | float | None | dict]] | str = current_config.get_current_config()
         if is_editing is False:
-            self.__phosphorus: float | None = round(phosphorus * current_config.get_phosphor_factor(), 2) if phosphorus is not None else None
-            self.__potassium: float | None = round(potassium * current_config.get_phosphor_factor(), 2) if potassium is not None else None
-            self.__organic_matter: float = round(organic_matter * 1.724, 2) if organic_matter is not None else None
+            if phosphorus is None:
+                self.__phosphorus: float | None = None
+            else:
+                self.__phosphorus: float | None = round(phosphorus * self.__used_config['phosphorus']['value'], 2)\
+                    if self.__used_config['phosphorus']['selected'] == 'factors' else (
+                    round((phosphorus - self.__used_config['phosphorus']['value']['b'])/self.__used_config['phosphorus']['value']['a'], 2))
+
+            if potassium is None:
+                self.__potassium: float | None = None
+            else:
+                self.__potassium: float | None = round(potassium * self.__used_config['potassium']['value'], 2)\
+                    if self.__used_config['potassium']['selected'] == 'factors' else (
+                    round((phosphorus - self.__used_config['potassium']['value']['b'])/self.__used_config['potassium']['value']['a'], 2))
+
+            if organic_matter is None:
+                self.__organic_matter: float | None = None
+            else:
+                self.__organic_matter: float | None = round(organic_matter * self.__used_config['organic_matter']['value'], 2)\
+                    if self.__used_config['organic_matter']['selected'] == 'factors' else (
+                    round((organic_matter - self.__used_config['organic_matter']['value']['b'])/self.__used_config['organic_matter']['value']['a'], 2))
+
         else:
             from backend.classes.Database import Database
             db: Database = Database()
             sample_data = db.get_samples(sample_id=sample_id)[0]
+
             if phosphorus == sample_data['phosphorus']:
                 self.__phosphorus: float | None = phosphorus if phosphorus is not None else None
             else:
-                self.__phosphorus: float | None = round(phosphorus * current_config.get_phosphor_factor(),
-                                                        2) if phosphorus is not None else None
+                if phosphorus is None:
+                    self.__phosphorus: float | None = None
+                else:
+                    self.__phosphorus: float | None = round(phosphorus * self.__used_config['phosphorus']['value'], 2) \
+                        if self.__used_config['phosphorus']['selected'] == 'factors' else (
+                        round((phosphorus - self.__used_config['phosphorus']['value']['b']) /
+                              self.__used_config['phosphorus']['value']['a'], 2))
+
             if potassium == sample_data['potassium']:
                 self.__potassium: float | None = potassium if potassium is not None else None
             else:
-                self.__potassium: float | None = round(potassium * current_config.get_phosphor_factor(),
-                                                       2) if potassium is not None else None
+                if potassium is None:
+                    self.__potassium: float | None = None
+                else:
+                    self.__potassium: float | None = round(potassium * self.__used_config['potassium']['value'], 2) \
+                        if self.__used_config['potassium']['selected'] == 'factors' else (
+                        round((phosphorus - self.__used_config['potassium']['value']['b']) /
+                              self.__used_config['potassium']['value']['a'], 2))
+
             if organic_matter == sample_data['organic_matter']:
                 self.__organic_matter: float = organic_matter if organic_matter is not None else None
             else:
-                self.__organic_matter: float = round(organic_matter * 1.724, 2) if organic_matter is not None else None
+                if organic_matter is None:
+                    self.__organic_matter: float | None = None
+                else:
+                    self.__organic_matter: float | None = round(
+                        organic_matter * self.__used_config['organic_matter']['value'], 2) \
+                        if self.__used_config['organic_matter']['selected'] == 'factors' else (
+                        round((organic_matter - self.__used_config['organic_matter']['value']['b']) /
+                              self.__used_config['organic_matter']['value']['a'], 2))
+        self.__used_config: dict[str, dict[str, str | float | None | dict]] | str = json.dumps(self.__used_config)
         self.__ph: float | None = ph
         self.__smp: float | None = smp
         self.__aluminum : float | None = aluminum
