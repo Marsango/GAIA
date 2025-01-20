@@ -2,6 +2,8 @@ import os
 
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog)
+
+from backend.classes.Configuration import Configuration
 from interface.base_windows.register_sample import RegisterSampleDialog
 from backend.classes.Database import Database
 from backend.classes.Sample import Sample
@@ -9,7 +11,7 @@ from interface.AlertWindow import AlertWindow
 
 
 class RegisterSample(QDialog, RegisterSampleDialog):
-    def __init__(self, property_id: int, sample_number: int) -> None:
+    def __init__(self, property_id: int) -> None:
         super(RegisterSample, self).__init__()
         self.current_property_id: int = property_id
         self.current_sample_id: int | None = None
@@ -24,6 +26,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.mode: str = 'register'
 
     def edit_mode(self, sample_data) -> None:
+        current_config: Configuration = Configuration()
         self.sample_number.clear()
         self.sample_number.insert(str(sample_data["sample_number"]))
         self.collection_depth.insert(str(sample_data["depth"]))
@@ -32,9 +35,9 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.area.insert(str(sample_data["total_area"]))
         self.latitude.insert(str(sample_data["latitude"]))
         self.longitude.insert(str(sample_data["longitude"]))
-        self.phosphorus.insert(str(sample_data["phosphorus"]) if sample_data["phosphorus"] is not None else '')
-        self.potassium.insert(str(sample_data["potassium"]) if sample_data["potassium"] is not None else '')
-        self.organic_matter.insert(str(sample_data["organic_matter"]) if sample_data["organic_matter"] is not None else '')
+        self.phosphorus.insert(str(round(sample_data["phosphorus"]/current_config.get_phosphor_factor(), 2)) if sample_data["phosphorus"] is not None else '')
+        self.potassium.insert(str(round(sample_data["potassium"]/current_config.get_potassium_factor(), 2)) if sample_data["potassium"] is not None else '')
+        self.organic_matter.insert(str(round(sample_data["organic_matter"]/1.724, 2)) if sample_data["organic_matter"] is not None else '')
         self.clay_input.insert(str(sample_data["clay"]) if sample_data["clay"] is not None else '')
         self.silte_input.insert(str(sample_data["silte"]) if sample_data["silte"] is not None else '')
         self.sand_input.insert(str(sample_data["sand"]) if sample_data["sand"] is not None else '')
@@ -91,6 +94,13 @@ class RegisterSample(QDialog, RegisterSampleDialog):
             manganese: float | None = (float(self.read_manganese.text()) - blank_manganese) if self.read_manganese.text() != '' else None
             blank_zinc: float = float(self.blank_test_zinc.text()) if self.blank_test_zinc.text() != '' else 0.0
             zinc: float | None = (float(self.read_zinc.text()) - blank_zinc) if self.read_zinc.text() != '' else None
+            if sand is not None or silte is not None or clay is not None:
+                if float(silte) + float(clay) + float(sand) != 100:
+                    raise ValueError("A soma dos valores granulométricos deve ser igual a 100%.")
+            if self.mode == 'register':
+                is_editing = False
+            else:
+                is_editing = True
             sample: Sample = Sample(depth=depth, collection_date=self.date.text(),
                                     description=self.description.text(), total_area=total_area,
                                     latitude=latitude, longitude=longitude,
@@ -102,11 +112,11 @@ class RegisterSample(QDialog, RegisterSampleDialog):
                                     copper=copper,
                                     iron=iron,
                                     manganese=manganese,
-                                    zinc=zinc, clay=clay, sand=sand, silte=silte)
+                                    zinc=zinc, clay=clay, sand=sand, silte=silte, is_editing=is_editing, sample_id = self.current_sample_id)
             if self.mode == 'register':
                 db.insert_sample(sample, self.current_property_id, int(self.sample_number.text()))
                 success: str = "Amostra registrada com sucesso!"
-            elif self.mode == 'edit':
+            else:
                 db.edit_sample(sample, self.current_sample_id)
                 success: str = "Alterações salvas com sucesso!"
 
@@ -118,7 +128,9 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         except ValueError as e:
             widget: AlertWindow = AlertWindow(f"Erro: {str(e)}")
             widget.exec()
-
+        except TypeError as e:
+            widget: AlertWindow = AlertWindow(f"Erro: você deve preencher o restante dos valores granulométricos.")
+            widget.exec()
         db.close_connection()
 
 

@@ -1,12 +1,12 @@
 import sqlite3
 import os
+from backend.classes.Sample import Sample
 from backend.classes.Report import Report
 from backend.classes.Person import Person
 from backend.classes.Address import Address
 from backend.classes.Company import Company
 from backend.classes.utils import *
 from backend.classes.Property import Property
-from backend.classes.Sample import Sample
 
 
 class Database:
@@ -20,7 +20,7 @@ class Database:
         self.__con.commit()
         self.create_database()
 
-    def create_database(self):
+    def create_database(self) -> None:
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS requester(
         requester_id integer primary key, phone_number varchar(15), email varchar(255), fk_address_id integer,
         FOREIGN KEY(fk_address_id) REFERENCES address(address_id) ON DELETE CASCADE)""")
@@ -175,12 +175,12 @@ class Database:
             digit_sum: int = sum([int(x)*(len(cpf_fraction) + 1 - i) for i, x in enumerate(cpf_fraction)])
             calculated_digit: int = (digit_sum * 10 % 11) % 10
             if int(expected_digit) != calculated_digit:
-                raise ValueError(f"CPF inválido: erro no dígito verificador {verifier_digit}.")
+                raise ValueError(f"CPF inválido: erro no dígito verificador {expected_digit}.")
 
         verify_valid_digit(first_digit_verification, cpf[:9])
         verify_valid_digit(second_digit_verification, cpf[:10])
 
-    def edit_address(self, address: Address, id: int, requester_type: Person | Company):
+    def edit_address(self, address: Address, id: int, requester_type: Person | Company) -> None:
         requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else \
         self.get_companies(id=id)[0]
         address_dict: dict[str, str] = to_dict(address)
@@ -491,7 +491,7 @@ class Database:
         self.__cur.execute(query, params)
         return self.__cur.fetchall()
 
-    def get_properties(self, **kwargs):
+    def get_properties(self, **kwargs) -> list[sqlite3.Row]:
         query: str = """SELECT
             property.id as id,
             property.property_name as name,
@@ -526,7 +526,7 @@ class Database:
         self.__cur.execute(query, params)
         return self.__cur.fetchall()
 
-    def get_samples(self, **kwargs):
+    def get_samples(self, **kwargs) -> list[sqlite3.Row]:
         query = """SELECT
             * from sample  
         """

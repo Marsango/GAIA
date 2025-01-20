@@ -57,7 +57,7 @@ class SampleWindow(QDialog, SampleDialog):
             self.sample_table.setItem(row_position, 4, QTableWidgetItem(str(sample['collection_date'])))
 
     def register_sample(self) -> None:
-        dialog: RegisterSample = RegisterSample(self.current_property_id, self.sample_table.rowCount() + 1)
+        dialog: RegisterSample = RegisterSample(self.current_property_id)
         dialog.exec()
         self.refresh_table()
 
@@ -77,7 +77,7 @@ class SampleWindow(QDialog, SampleDialog):
         db: Database = Database()
         sample: sqlite3.Row = db.get_samples(sample_id=id)[0]
         db.close_connection()
-        dialog: RegisterSample = RegisterSample(self.current_property_id, self.sample_table.rowCount() + 1)
+        dialog: RegisterSample = RegisterSample(self.current_property_id)
         dialog.edit_mode(sample)
         dialog.exec()
         self.refresh_table()

@@ -1,14 +1,9 @@
 import os
-import matplotlib.pyplot as plt
 import sqlite3
 import backend.classes.Report as Report
-from reportlab.platypus import Image
 import shutil
-from reportlab.lib.units import inch
-from io import BytesIO
 from itertools import pairwise
 from pathlib import Path
-from PySide6 import QtCore
 from PySide6.QtGui import QPixmap
 from backend.classes.GraphParameters import GraphParameters
 from backend.classes.Database import Database
@@ -66,18 +61,11 @@ class GenerateReport(QDialog, GenerateReportDialog):
         for row, name in enumerate(available_graphs):
             check_box_item: QTableWidgetItem = QTableWidgetItem(name)
             check_box_item.setText(name)
-            #check_box_item.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
-            #check_box_item.setCheckState(QtCore.Qt.CheckState.Unchecked)
             self.parameters_table.setItem(row, 0, check_box_item)
         self.get_graph_values()
-        self.select_all.clicked.connect(self.select_all_function)
         self.parameters_table.itemChanged.connect(self.update_graph_values)
         self.generate_report.clicked.connect(self.create_report)
 
-    def select_all_function(self) -> None:
-       for row in range(self.parameters_table.rowCount()):
-            item: QTableWidgetItem = self.parameters_table.item(row, 0)
-            item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:
         if item.column() != 0:
@@ -116,27 +104,17 @@ class GenerateReport(QDialog, GenerateReportDialog):
             widget: AlertWindow = AlertWindow(error_message)
             widget.exec()
             return
-
         file_path = self.open_save_dialog()
-
         sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
         sample_values: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
         reference: dict[str, dict[str, float]] = self.get_selected_parameters()
         report_id: int = db.get_next_report_id()
-        # self.plot_ctc_graph(current_sample['potassium'], current_sample['magnesium'],
-        #                     current_sample['calcium'], current_sample['h_al'])
         script_path: Path = Path(__file__).resolve()
         backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
         report: Report = Report(file_location=str(backup_path), agreement=self.technician_input.text())
         report.generate_pdf(sample_info, file_path, report_id, sample_values, reference)
         shutil.copy(file_path, backup_path)
         db.insert_report(report, self.sample_id)
-
-        # except Exception as e:
-        #     error = handle_exception(e)
-        #     widget: AlertWindow = AlertWindow(error)
-        #     widget.exec()
-        # finally:
         db.close_connection()
 
     def open_save_dialog(self) -> str:
@@ -154,10 +132,11 @@ class GenerateReport(QDialog, GenerateReportDialog):
 
 
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:
+        db: Database = Database()
+        sample_info: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
         selected_parameters: dict[str, dict[str, float]] = {}
         for row in range(self.parameters_table.rowCount()):
-            # if self.parameters_table.item(row, 0).checkState() == QtCore.Qt.CheckState.Checked or self.parameters_table.item(row, 0).text() == ' Sat. Alumínio'\
-            #         or self.parameters_table.item(row, 0).text() == 'V (%)':
+            if sample_info[self.__element_sample_mapping[self.parameters_table.item(row, 0).text()]] is not None:
                 selected_parameters[self.__element_sample_mapping[self.parameters_table.item(row, 0).text()]] = {
                     'very low': float(self.parameters_table.item(row, 1).text()),
                     'low': float(self.parameters_table.item(row, 2).text()),
@@ -167,46 +146,5 @@ class GenerateReport(QDialog, GenerateReportDialog):
         self.verify_consistency(selected_parameters)
         return selected_parameters
 
-    def update_pie_chart_values(self, item: QTableWidgetItem) -> None:  
-        if item.column() != 0:  # Ignora alterações na coluna de nomes dos gráficos
-            try:
-                # Obter os novos valores da linha editada
-                new_values: dict[str, float] = {
-                    'K': float(self.pie_chart_table.item(item.row(), 1).text()),
-                    'Mg': float(self.pie_chart_table.item(item.row(), 2).text()),
-                    'Ca': float(self.pie_chart_table.item(item.row(), 3).text()),
-                    'H+Al': float(self.pie_chart_table.item(item.row(), 4).text())
-                }
 
-                # Validar se os valores são não negativos
-                if any(value < 0 for value in new_values.values()):
-                    raise ValueError("Os valores não podem ser negativos.")
-
-                # Atualizar os valores no objeto ou classe responsável pelo gráfico
-                pie_chart_parameters: PieChartParameters = PieChartParameters()
-                pie_chart_parameters.set_chart_values(new_values)
-
-                # Atualizar o gráfico de pizza
-                self.refresh_pie_chart(new_values)
-
-            except ValueError as ve:
-                # Tratar valores inválidos na tabela (não convertíveis para float ou negativos)
-                widget: AlertWindow = AlertWindow(str(ve))
-                widget.exec()
-
-                # Restaura os valores originais da tabela
-                self.pie_chart_table.blockSignals(True)
-                self.load_pie_chart_values()
-                self.pie_chart_table.blockSignals(False)
-
-            except Exception as e:
-                # Tratar outras exceções
-                error = handle_exception(e)
-                widget: AlertWindow = AlertWindow(error)
-                widget.exec()
-
-                # Restaura os valores originais da tabela
-                self.pie_chart_table.blockSignals(True)
-                self.load_pie_chart_values()
-                self.pie_chart_table.blockSignals(False)
 

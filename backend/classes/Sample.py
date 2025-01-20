@@ -23,7 +23,8 @@ class Sample:
                  potassium: float | None,
                  organic_matter: float | None, ph: float | None, smp: float | None, aluminum: float | None, calcium: float | None,
                  magnesium: float | None,
-                 copper: float | None, iron: float | None, manganese: float | None, zinc: float | None, silte: float | None, sand: float | None, clay: float | None) -> None:
+                 copper: float | None, iron: float | None, manganese: float | None, zinc: float | None, silte: float | None, sand: float | None, clay: float | None, is_editing: bool,
+                 sample_id: int) -> None:
         verify_type(get_type_hints(Sample.__init__), locals())
         try:
             current_config: Configuration = Configuration()
@@ -39,9 +40,28 @@ class Sample:
         self.__collection_date: str | None = None
         self.__longitude: float | None = None
         self.__latitude: float | None = None
-        self.__phosphorus: float | None = phosphorus * current_config.get_phosphor_factor() if phosphorus is not None else None
-        self.__potassium: float | None = potassium * current_config.get_phosphor_factor() if potassium is not None else None
-        self.__organic_matter: float = round(organic_matter * 1.724, 2) if organic_matter is not None else None
+        if is_editing is False:
+            self.__phosphorus: float | None = round(phosphorus * current_config.get_phosphor_factor(), 2) if phosphorus is not None else None
+            self.__potassium: float | None = round(potassium * current_config.get_phosphor_factor(), 2) if potassium is not None else None
+            self.__organic_matter: float = round(organic_matter * 1.724, 2) if organic_matter is not None else None
+        else:
+            from backend.classes.Database import Database
+            db: Database = Database()
+            sample_data = db.get_samples(sample_id=sample_id)[0]
+            if phosphorus == sample_data['phosphorus']:
+                self.__phosphorus: float | None = phosphorus if phosphorus is not None else None
+            else:
+                self.__phosphorus: float | None = round(phosphorus * current_config.get_phosphor_factor(),
+                                                        2) if phosphorus is not None else None
+            if potassium == sample_data['potassium']:
+                self.__potassium: float | None = potassium if potassium is not None else None
+            else:
+                self.__potassium: float | None = round(potassium * current_config.get_phosphor_factor(),
+                                                       2) if potassium is not None else None
+            if organic_matter == sample_data['organic_matter']:
+                self.__organic_matter: float = organic_matter if organic_matter is not None else None
+            else:
+                self.__organic_matter: float = round(organic_matter * 1.724, 2) if organic_matter is not None else None
         self.__ph: float | None = ph
         self.__smp: float | None = smp
         self.__aluminum : float | None = aluminum
