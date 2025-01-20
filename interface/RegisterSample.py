@@ -92,8 +92,8 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.current_sample_id = int(sample_data['id'])
 
     def register_action(self) -> None:
-            db: Database = Database()
-
+        db: Database = Database()
+        try:
             if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text() or not self.sample_number.text():
                 raise ValueError("Por favor, preencha todos os campos obrigatórios.")
             depth: float = float(self.collection_depth.text())
@@ -153,13 +153,13 @@ class RegisterSample(QDialog, RegisterSampleDialog):
 
             if self.mode == 'register':
                 self.clean_input()
-        # except ValueError as e:
-        #     widget: AlertWindow = AlertWindow(f"Erro: {str(e)}")
-        #     widget.exec()
-        # except TypeError as e:
-        #     widget: AlertWindow = AlertWindow(f"Erro: você deve preencher o restante dos valores granulométricos.")
-        #     widget.exec()
-        # db.close_connection()
+        except ValueError as e:
+            widget: AlertWindow = AlertWindow(f"Erro: {str(e)}")
+            widget.exec()
+        except TypeError as e:
+            widget: AlertWindow = AlertWindow(f"Erro: você deve preencher o restante dos valores granulométricos.")
+            widget.exec()
+        db.close_connection()
 
 
     def clean_input(self):

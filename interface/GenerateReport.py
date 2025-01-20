@@ -1,10 +1,13 @@
 import os
 import sqlite3
+
+from PySide6 import QtCore, QtGui
+
 import backend.classes.Report as Report
 import shutil
 from itertools import pairwise
 from pathlib import Path
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QColor
 from backend.classes.GraphParameters import GraphParameters
 from backend.classes.Database import Database
 from interface.base_windows.generate_report import GenerateReportDialog
@@ -25,18 +28,16 @@ class GenerateReport(QDialog, GenerateReportDialog):
             "images"
         ).replace("\\", "/") + "/logo_lab.png"))
         self.sample_id = sample_id
-        self.label.setText('Convênio')
-        self.parameters_table.setRowCount(18)
+        self.label.setText('Convênio: ')
         self.parameters_table.verticalHeader().setVisible(False)
         self.parameters_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.parameters_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         available_graphs: list[str] = ['Fósforo - P', 'Potássio - K', 'Cobre - Cu', 'Matéria Orgânica - MO',
-                                       'Ferro - Fe',
                                        'Zinco - Zn', 'Manganês - Mn', 'pH CaCl', 'Índice SMP', 'Alumínio - Al',
-                                       'H + Al',
                                        'Cálcio - Ca', 'Magnésio - Mg', 'Soma de Bases - SB', 'V (%)', 'Sat. Alumínio',
                                        "CTC Efetiva", "CTC Potencial",
         ]
+        self.parameters_table.setRowCount(len(available_graphs))
         self.__element_sample_mapping = {
             'Fósforo - P': 'phosphorus',
             'Potássio - K': 'potassium',
@@ -61,6 +62,9 @@ class GenerateReport(QDialog, GenerateReportDialog):
         for row, name in enumerate(available_graphs):
             check_box_item: QTableWidgetItem = QTableWidgetItem(name)
             check_box_item.setText(name)
+            check_box_item.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled)
+            check_box_item.setTextAlignment(QtCore.Qt.AlignCenter)
+            check_box_item.setBackground(QtGui.QColor(125, 125, 125))
             self.parameters_table.setItem(row, 0, check_box_item)
         self.get_graph_values()
         self.parameters_table.itemChanged.connect(self.update_graph_values)

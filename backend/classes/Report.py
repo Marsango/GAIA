@@ -16,25 +16,29 @@ import os
 import math
 from reportlab.lib.colors import HexColor
 
+from interface.AlertWindow import AlertWindow
+
 
 class Report:
     def __init__(self, file_location: str, agreement: str) -> None:
         verify_type(get_type_hints(Report.__init__), locals())
         self.__images_location: str = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "interface",
-        "images"
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "interface",
+            "images"
         ).replace("\\", "/")
         self.__file_location: str = file_location
         self.__agreement: str = agreement
         self.__horizontal_size: int = 595
         self.__vertical_size: int = 842
         self.__pdf: canvas.Canvas | None = None
-        self.__standard_paragraph_style = ParagraphStyle(name='Normal', fontName='arial', fontSize=8, alignment=TA_CENTER)
-        self.__standard_paragraph_style_bold = ParagraphStyle(name='Normal', fontName='arialbd', fontSize=8, alignment=TA_CENTER)
-        self.__left_col_width : list[float] = [49, 28.448, 25.2, 25.2, 25.2, 25.2, 25.2]
+        self.__standard_paragraph_style: ParagraphStyle = ParagraphStyle(name='Normal', fontName='arial', fontSize=8,
+                                                         alignment=TA_CENTER)
+        self.__standard_paragraph_style_bold: ParagraphStyle = ParagraphStyle(name='Normal', fontName='arialbd', fontSize=8,
+                                                              alignment=TA_CENTER)
+        self.__left_col_width: list[float] = [49, 28.448, 25.2, 25.2, 25.2, 25.2, 25.2]
         self.__right_col_width: list[float] = [85.78125, 30.672, 25.2, 25.2, 25.2, 25.2, 25.2]
-        self.__sample_info_map = {
+        self.__sample_info_map: dict[str, str] = {
             "Ca2+ cmolcdm-3": "calcium",
             "Mg² cmolcdm-3": "magnesium",
             "K cmolcdm-3": "potassium",
@@ -42,25 +46,27 @@ class Report:
             "P mgdm-3": "phosphorus",
             "pH-CaCl2": "ph",
             "Al3+ cmolcdm-3": "aluminum",
-            "H+Al cmolcdm-3": "h_al",
-            "Índice SMP": "smp",
             "Cu mgdm-3": "copper",
             "Zn mgdm-3": "zinc",
             "Mn mgdm-3": "manganese",
-            "Fe mgdm-3": "iron",
             "Soma de Bases cmolcdm-3": "base_sum",
             "CTC efetiva (t) cmolcdm-3": "effective_ctc",
             "CTC Potencial (T) cmolcdm-3": "ctc",
             "Saturação por bases (V)%": "v_percent",
             "Saturação por alumínio (m)%": "aluminum_saturation",
         }
+        self.__fonts_path: str = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "backend",
+            "classes", "fonts"
+        ).replace("\\", "/")
 
     def add_fonts(self) -> None:
-        pdfmetrics.registerFont(TTFont('arial', "fonts/arial.ttf"))
-        pdfmetrics.registerFont(TTFont('arialbd', "fonts/arialbd.ttf"))
-        pdfmetrics.registerFont(TTFont('arialbi', "fonts/arialbi.ttf"))
-        pdfmetrics.registerFont(TTFont('ariali', "fonts/ariali.ttf"))
-        pdfmetrics.registerFont(TTFont('arilbk', "fonts/ariblk.ttf"))
+        pdfmetrics.registerFont(TTFont('arial', f"{self.__fonts_path}/arial.ttf"))
+        pdfmetrics.registerFont(TTFont('arialbd', f"{self.__fonts_path}/arialbd.ttf"))
+        pdfmetrics.registerFont(TTFont('arialbi', f"{self.__fonts_path}/arialbi.ttf"))
+        pdfmetrics.registerFont(TTFont('ariali', f"{self.__fonts_path}/ariali.ttf"))
+        pdfmetrics.registerFont(TTFont('arilbk', f"{self.__fonts_path}/ariblk.ttf"))
 
     def setup_pdf(self, number: int, path: str) -> canvas.Canvas:
         self.add_fonts()
@@ -75,13 +81,15 @@ class Report:
         self.__pdf.line(30, 750, 560, 750)
         self.__pdf.setFont('arialbd', 14)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 725, 'Laudo de Análise de Solo')
-        self.__pdf.drawImage(f'{self.__images_location}/UTFPR_logo.svg.png', 65, 725, 100, 100, preserveAspectRatio=True, mask='auto')
+        self.__pdf.drawImage(f'{self.__images_location}/UTFPR_logo.svg.png', 65, 725, 100, 100,
+                             preserveAspectRatio=True, mask='auto')
         self.__pdf.setFont('arialbd', 10)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 785, 'LABSOLOS - Laboratório de Solos da UTFPR')
         self.__pdf.setFont('arial', 10)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 772, 'Universidade Tecnólogica Federal do Paraná')
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 759, 'Campus Pato Branco')
-        self.__pdf.drawImage(f'{self.__images_location}/logo_lab.png', 410, 730, 125, 125, preserveAspectRatio=True, mask='auto')
+        self.__pdf.drawImage(f'{self.__images_location}/logo_lab.png', 410, 730, 125, 125, preserveAspectRatio=True,
+                             mask='auto')
         self.__pdf.setFont('arial', 8)
 
     def draw_square(self, pos_horizontal1: int, pos_horizontal2: int, pos_vertical1: int,
@@ -99,31 +107,32 @@ class Report:
         self.__pdf.setFont('arial', 10)
         current_x: float = x_start
         current_y: int = y_start
-        document_text: str = f"CPF: {info['document_number']}" if info["document_type"] == "cpf" else f"CNPJ: {info['document_number']}"
+        document_text: str = f"CPF: {info['document_number']}" if info[
+                                                                      "document_type"] == "cpf" else f"CNPJ: {info['document_number']}"
         texts_to_draw: list[str] = [
-        f"Solicitante: {info['requester_name']} ?{document_text}",
-        f"Propriedade: {info['property_name']} ?Município: {info['city']} ?UF: {info['state']} ?Matrícula: {info['registration_number']}",
-        f"Talhão: {info['sample_description']} ?Convênio: {self.__agreement} ?Profundidade: {info['depth']}cm ?Área: {info['total_area']}m²",
-        f"Laudo: {report_id} ?Amostra: {info['sample_number']} ?Data: {info['collection_date']}",
+            f"Solicitante: {info['requester_name']} ?{document_text}",
+            f"Propriedade: {info['property_name']} ?Município: {info['city']} ?UF: {info['state']} ?Matrícula: {info['registration_number']}",
+            f"Talhão: {info['sample_description']} ?Convênio: {self.__agreement} ?Profundidade: {info['depth']}cm ?Área: {info['total_area']}m²",
+            f"Laudo: {report_id} ?Amostra: {info['sample_number']} ?Data: {info['collection_date']}",
         ]
 
         def justify_text(text: str, max_width: int) -> str:
-            words = text.split("?")
-            words = [word for word in words if word != ' ' and word != '']
+            words: list[str] = text.split("?")
+            words: list[str] = [word for word in words if word != ' ' and word != '']
             if len(words) == 1:
                 return words[0]
-            words_width = sum(pdfmetrics.stringWidth(word, 'arial', 10) for word in words)
-            space_width = pdfmetrics.stringWidth(' ', 'arial', 10)
-            available_spaces = ((max_width - words_width) / space_width) - 2
-            space_step = int(available_spaces//(len(words) - 1))
-            justified_line = words[0]
+            words_width: float = sum(pdfmetrics.stringWidth(word, 'arial', 10) for word in words)
+            space_width: float = pdfmetrics.stringWidth(' ', 'arial', 10)
+            available_spaces: float = ((max_width - words_width) / space_width) - 2
+            space_step: int = int(available_spaces // (len(words) - 1))
+            justified_line: str = words[0]
             for i in range(1, len(words)):
                 justified_line += ' ' + ' ' * space_step + words[i]
             return justified_line
 
-        def break_line(text):
+        def break_line(text: str) -> dict[str, str]:
             fields: list[str] = text.split("?")
-            current_text = fields[0]
+            current_text: str = fields[0]
             for j in range(1, len(fields)):
                 if pdfmetrics.stringWidth(current_text + fields[j], 'arial', 10) > acceptable_width:
                     break
@@ -131,16 +140,16 @@ class Report:
                     current_text += fields[j]
             return {'current_line': current_text, 'next_line': text[len(current_text):]}
 
-        def fit_text_size(text, current_y):
+        def fit_text_size(text: str, current_y: int):
             breaked_lines: dict[str, str] = break_line(text)
-            self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end-x_start))
+            self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end - x_start))
             current_y -= 12
             while pdfmetrics.stringWidth(breaked_lines['next_line'], 'arial', 10) > acceptable_width:
                 breaked_lines: dict[str, str] = break_line(breaked_lines['next_line'])
-                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end-x_start))
+                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end - x_start))
                 current_y -= 12
             if breaked_lines['next_line']:
-                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['next_line'], x_end-x_start))
+                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['next_line'], x_end - x_start))
                 current_y -= 12
             return current_y
 
@@ -149,23 +158,23 @@ class Report:
             if text_size + current_x > x_end:
                 current_y = fit_text_size(line, current_y)
             else:
-                self.__pdf.drawString(x_start, current_y, justify_text(line, x_end-x_start))
+                self.__pdf.drawString(x_start, current_y, justify_text(line, x_end - x_start))
                 current_y -= 12
-        self.draw_square(x_start - 5, x_end + 5, y_start + 10, current_y+2)
+        self.draw_square(x_start - 5, x_end + 5, y_start + 10, current_y + 2)
         return current_y - 5
 
-    def draw_footer(self, coord_y):
-        self.draw_square(70, 520, coord_y+35, coord_y)
+    def draw_footer(self, coord_y: int):
+        self.draw_square(70, 520, coord_y + 35, coord_y)
         self.__pdf.setFont('arial', 8)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y + 25,
-                              f"Laboratório de Análise de Solo  - UTFPR")
+                                     f"Laboratório de Análise de Solo  - UTFPR")
         self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y + 15,
-                              f"Via do conhecimento, KM 01, caixa postal 57, CEP 85503-390, Pato Branco - PR")
+                                     f"Via do conhecimento, KM 01, caixa postal 57, CEP 85503-390, Pato Branco - PR")
         self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y + 5,
-                              f"Telefone/WhatsApp: (46) 3220-2539, E-mail: labsolos-pb@utfpr.edu.br")
+                                     f"Telefone/WhatsApp: (46) 3220-2539, E-mail: labsolos-pb@utfpr.edu.br")
 
-    def find_line(self, element, value, reference):
-        reference = reference[self.__sample_info_map[element]]
+    def find_line(self, element: str, value: float, reference: dict[str, dict[str, float]]):
+        reference: dict[str, float] = reference[self.__sample_info_map[element]]
         if value < reference["very low"]:
             return 1
         elif value < reference["low"]:
@@ -192,11 +201,22 @@ class Report:
         self.__pdf.drawString(10, 700, 'y700')
         self.__pdf.drawString(10, 800, 'y800')
 
-    def draw_table(self, data, coord_x, coord_y, colwidths, reference) -> None:
+    def sort_table(self, table_data: list[list[Paragraph, int]]):
+        sorted_values: list[list[Paragraph | str | None]] = [table_data[0], table_data[1]]
+        none_values: list[list[Paragraph | str | None]] = []
+        for data in table_data[2:]:
+            if data[1] is None or data[1] == 'N/A':
+                none_values.append(data)
+            else:
+                sorted_values.append(data)
+        sorted_values.extend(none_values)
+        return sorted_values
+
+    def draw_table(self, data: list[list[Paragraph | str]], coord_x: float, coord_y: float, colwidths: list[float], reference: dict[str, dict[str, float]]) -> None:
         for j, row in enumerate(data):
             if row[1] == 'None':
                 data[j][1] = 'N/A'
-
+        data = self.sort_table(data)
         style = TableStyle([
             ('BACKGROUND', (0, 0), (6, 0), colors.lightgrey),
             ('SPAN', (0, 0), (1, 0)),
@@ -215,26 +235,32 @@ class Report:
                           , standard_size * inch, standard_size * inch])
         table.wrapOn(self.__pdf, 0, 0)
         table.drawOn(self.__pdf, coord_x, coord_y)
-        current_y = coord_y
-        start_x = coord_x + table._colWidths[0] + table._colWidths[1]
+        current_y: float = coord_y
+        start_x: float = coord_x + table._colWidths[0] + table._colWidths[1]
         self.__pdf.setLineWidth(3)
         self.__pdf.setStrokeColor(colors.gray)
         for j in range(len(data) - 1, -1, -1):
-            if isinstance(data[j][0], str) or data[j][0].getPlainText() not in self.__sample_info_map.keys():
+            if isinstance(data[j][0], str):
+                continue
+            if data[j][0].getPlainText() not in self.__sample_info_map.keys():
+                current_y = current_y + table._rowHeights[j]
                 continue
             try:
-                value = float(data[j][1])
+                float(data[j][1])
             except ValueError:
+                current_y = current_y + table._rowHeights[j]
                 continue
-            current_y = current_y + table._rowHeights[j]/2
-            self.__pdf.line(start_x, current_y, start_x + 25.2*self.find_line(data[j][0].getPlainText(), float(data[j][1]), reference), current_y)
-            current_y = current_y + table._rowHeights[j]/2
+
+            current_y = current_y + table._rowHeights[j] / 2
+            self.__pdf.line(start_x, current_y,
+                            start_x + 25.2 * self.find_line(data[j][0].getPlainText(), float(data[j][1]), reference),
+                            current_y)
+            current_y = current_y + table._rowHeights[j] / 2
+            print(f"{data[j][0].getPlainText()}: {data[j][1]}")
         self.__pdf.setLineWidth(1)
         self.__pdf.setStrokeColor(colors.black)
 
-
-    def draw_pie_graph_table(self, coord_x, coord_y, values) -> None:
-
+    def draw_pie_graph_table(self, coord_x: float, coord_y: float, values: list[float]) -> None:
         data = [['Índice de Saturação'],
                 ['']]
         style = TableStyle([
@@ -246,20 +272,17 @@ class Report:
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTSIZE', (0, 0), (-1, -1), 8)
         ])
-        table = Table(data, style=style, colWidths=[242.45324999999994], rowHeights=[None, 1.5 * inch])
-        table.wrapOn(self.__pdf, 0, 0)
-        table.drawOn(self.__pdf, coord_x, coord_y)
-
+        table: Table = Table(data, style=style, colWidths=[242.45324999999994], rowHeights=[None, 1.5 * inch])
         # Definir os rótulos e as cores do gráfico de pizza
-        colors_pie = ['#00FF00', '#0000FF', '#FFFF00', '#FF0000']
-        
+        colors_pie: list[str] = ['#00FF00', '#0000FF', '#FFFF00', '#FF0000']
+
         # Verificar e substituir os valores NaN por 0
         if values is not None:
-            values = [0 if math.isnan(value) else value for value in values]
-            total = sum(values)
-            percentages = [(value / total) * 100 if total > 0 else 0 for value in values]
+            values: list[float] = [0 if math.isnan(value) else value for value in values]
+            total: float = sum(values)
+            percentages: list[float] = [(value / total) * 100 if total > 0 else 0 for value in values]
 
-            labels = [
+            labels: list[str] = [
                 'K: ',
                 'Mg²: ',
                 'Ca: ',
@@ -272,17 +295,17 @@ class Report:
             plt.axis('equal')  # Garante que o gráfico seja circular
 
             # Salvar o gráfico em um buffer de memória
-            buffer = BytesIO()
+            buffer: BytesIO = BytesIO()
             plt.savefig(buffer, format='PNG', bbox_inches='tight')
             buffer.seek(0)
             plt.close()  # Fecha o gráfico para liberar recursos
 
             # Adicionar a imagem do gráfico ao PDF
-            graph = Image(buffer, width=1.8 * inch, height=1.2 * inch)
+            graph: Image = Image(buffer, width=1.65 * inch, height=1.65 * inch)
             graph.wrapOn(self.__pdf, 0, 0)
-            graph.drawOn(self.__pdf, coord_x + 1.5 * inch, coord_y + 0.25 * inch)  # Ajustar a posição do gráfico
+            graph.drawOn(self.__pdf, coord_x + 1.5 * inch, coord_y - 0.05 * inch)  # Ajustar a posição do gráfico
 
-            legend_data = [
+            legend_data: list[list[str]] = [
                 [f'    ', labels[i], f'{percentages[i]:.2f}%' if total > 0 else '0.0%']
                 for i in range(len(labels))
             ]
@@ -302,17 +325,20 @@ class Report:
                 legend_style.add('BACKGROUND', (0, i), (0, i), HexColor(colors_pie[i]))
 
             # Criar a tabela da legenda
-            legend_table = Table(legend_data, colWidths=[0.3 * inch, 0.4 * inch, 0.5 * inch])
+            legend_table: Table = Table(legend_data, colWidths=[0.3 * inch, 0.4 * inch, 0.5 * inch])
             legend_table.setStyle(legend_style)
 
             # Posicionar a legenda ao lado do gráfico
             legend_table.wrapOn(self.__pdf, 0, 0)
-            legend_table.drawOn(self.__pdf, coord_x + 0.1 * inch, coord_y + 0.5 * inch) # Ajustar a posição da legenda
+            legend_table.drawOn(self.__pdf, coord_x + 0.1 * inch, coord_y + 0.4 * inch)  # Ajustar a posição da legenda
         else:
             self.__pdf.setFont('arial', 16)
-            self.__pdf.drawCentredString(-5 + coord_x + 242.45324999999994/2, coord_y + table._rowHeights[1]/2, 'N/A')
+            self.__pdf.drawCentredString(-5 + coord_x + 242.45324999999994 / 2, coord_y + table._rowHeights[1] / 2,
+                                         'N/A')
+        table.wrapOn(self.__pdf, 0, 0)
+        table.drawOn(self.__pdf, coord_x, coord_y)
 
-    def draw_granulometric_table(self, coord_x, coord_y, sample_values) -> None:
+    def draw_granulometric_table(self, coord_x: float, coord_y:float, sample_values: sqlite3.Row) -> None:
         data = [['ANÁLISE GRANULOMÉTRICA(g kg^-1)**'],
                 ['Areia', 'Silte', 'Argila', 'Classe AD'],
                 [f"{sample_values['sand']}" if sample_values['sand'] is not None else 'N/A',
@@ -329,12 +355,11 @@ class Report:
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTSIZE', (0, 0), (-1, -1), 8)
         ])
-        table = Table(data, style=style, colWidths=242.45324999999994 / 4)
+        table: Table = Table(data, style=style, colWidths=242.45324999999994 / 4)
         table.wrapOn(self.__pdf, 0, 0)
         table.drawOn(self.__pdf, coord_x, coord_y)
 
-
-    def draw_extractor_graph(self, coord_x, coord_y) -> None:
+    def draw_extractor_graph(self, coord_x: float, coord_y: float) -> None:
         data = [['EXTRATORES'],
                 ['Ca, Mg e Al', 'KCl 1M'],
                 ['MO', 'Combustão úmida'],
@@ -350,56 +375,72 @@ class Report:
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTSIZE', (0, 0), (-1, -1), 8)
         ])
-        table = Table(data, style=style, colWidths=242.45324999999994 / 2)
+        table: Table = Table(data, style=style, colWidths=242.45324999999994 / 2)
         table.wrapOn(self.__pdf, 0, 0)
         table.drawOn(self.__pdf, coord_x, coord_y)
 
-
-
-
     def draw_tables(self, sample_values: sqlite3.Row, reference):
-        data_table_one = [['BÁSICA', '', 'Classe de Interpretação*'],
-                        ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
-                        [Paragraph('Ca<sup>2+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["calcium"], 2) if sample_values["calcium"] is not None else "N/A"}'],
-                        [Paragraph('Mg² cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["magnesium"], 2) if sample_values["magnesium"] is not None else "N/A"}'],
-                        [Paragraph('K cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["potassium"], 2) if sample_values["potassium"] is not None else "N/A"}'],
-                        [Paragraph('MO gdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["organic_matter"], 2) if sample_values["organic_matter"] is not None else "N/A"}'],
-                        [Paragraph('P mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["phosphorus"], 2) if sample_values["phosphorus"] is not None else "N/A"}']]
+        data_table_one: list[list[Paragraph | str]] = [['BÁSICA', '', 'Classe de Interpretação*'],
+                          ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
+                          [Paragraph('Ca<sup>2+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["calcium"], 1) if sample_values["calcium"] is not None else "N/A"}'],
+                          [Paragraph('Mg² cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["magnesium"], 1) if sample_values["magnesium"] is not None else "N/A"}'],
+                          [Paragraph('K cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["potassium"], 2) if sample_values["potassium"] is not None else "N/A"}'],
+                          [Paragraph('MO gdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["organic_matter"], 1) if sample_values["organic_matter"] is not None else "N/A"}'],
+                          [Paragraph('P mgdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["phosphorus"]) if sample_values["phosphorus"] is not None else "N/A"}']]
         self.draw_table(data_table_one, 70, 480, self.__left_col_width, reference)
-        data_table_two = [['REAÇÃO DO SOLO', '', 'Classe de Interpretação*'],
-                        ['Parâmetro', 'Valor', 'MB', 'B', 'M', 'A', 'MA'],
-                        [Paragraph('pH-CaCl2', style=self.__standard_paragraph_style), f'{round(sample_values["ph"], 2) if sample_values["ph"] is not None else "N/A"}'],
-                        [Paragraph('Al<sup>3+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["aluminum"], 2) if sample_values["aluminum"] is not None else "N/A"}'],
-                        [Paragraph('H+Al cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["h_al"], 2) if sample_values["h_al"] is not None else "N/A"}'],
-                        [Paragraph('Índice SMP', style=self.__standard_paragraph_style), f'{round(sample_values["smp"], 2) if sample_values["smp"] is not None else "N/A"}']]
+        data_table_two: list[list[Paragraph | str]] = [['REAÇÃO DO SOLO', '', 'Classe de Interpretação*'],
+                          ['Parâmetro', 'Valor', 'MB', 'B', 'M', 'A', 'MA'],
+                          [Paragraph('pH-CaCl2', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["ph"], 1) if sample_values["ph"] is not None else "N/A"}'],
+                          [Paragraph('Al<sup>3+</sup> cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["aluminum"], 2) if sample_values["aluminum"] is not None else "N/A"}'],
+                          [Paragraph('H+Al cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["h_al"], 2) if sample_values["h_al"] is not None else "N/A"}'],
+                          [Paragraph('Índice SMP', style=self.__standard_paragraph_style),
+                           f'{round(sample_values["smp"], 1) if sample_values["smp"] is not None else "N/A"}']]
         self.draw_table(data_table_two, 278, 534, self.__right_col_width, reference)
-        data_table_three = [['MICRONUTRIENTES', '', 'Classe de Interpretação*'],
+        data_table_three: list[list[Paragraph | str]] = [['MICRONUTRIENTES', '', 'Classe de Interpretação*'],
                             ['Elemento', 'Teor', 'MB', 'B', 'M', 'A', 'MA'],
-                            [Paragraph('Cu mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["copper"], 2) if sample_values["copper"] is not None else "N/A"}'],
-                            [Paragraph('Zn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["zinc"], 2) if sample_values["zinc"] is not None else "N/A"}'],
-                            [Paragraph('Mn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["manganese"], 2) if sample_values["manganese"] is not None else "N/A"}'],
-                            [Paragraph('Fe mgdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{round(sample_values["iron"], 2) if sample_values["iron"] is not None else "N/A"}']
+                            [Paragraph('Cu mgdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                             f'{round(sample_values["copper"], 1) if sample_values["copper"] is not None else "N/A"}'],
+                            [Paragraph('Zn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                             f'{round(sample_values["zinc"], 1) if sample_values["zinc"] is not None else "N/A"}'],
+                            [Paragraph('Mn mgdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                             f'{round(sample_values["manganese"]) if sample_values["manganese"] is not None else "N/A"}'],
+                            [Paragraph('Fe mgdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+                             f'{round(sample_values["iron"], 1) if sample_values["iron"] is not None else "N/A"}']
                             ]
         self.draw_table(data_table_three, 278, 426, self.__right_col_width, reference)
-        data_table_four = [
-            [Paragraph('PARÂMETROS CALCULADOS', style=self.__standard_paragraph_style_bold), '', 'Classe de Interpretação*'],
+        data_table_four: list[list[Paragraph | str]] = [
+            [Paragraph('PARÂMETROS CALCULADOS', style=self.__standard_paragraph_style_bold), '',
+             'Classe de Interpretação*'],
             ['Parâmetro', 'Valor', 'MB', 'B', 'M', 'A', 'MA'],
-            [Paragraph('Soma de Bases cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["base_sum"]}'],
-            [Paragraph('CTC efetiva (t) cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["effective_ctc"]}'],
-            [Paragraph('CTC Potencial (T) cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style), f'{sample_values["ctc"]}'],
-            [Paragraph('Saturação por bases (V)%', style=self.__standard_paragraph_style), f'{sample_values["v_percent"]}'],
-            [Paragraph('Saturação por alumínio (m)%', style=self.__standard_paragraph_style), f'{sample_values["aluminum_saturation"]}']
+            [Paragraph('Soma de Bases cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+             f'{round(sample_values["base_sum"])}' if sample_values["base_sum"] is not None else "N/A"],
+            [Paragraph('CTC efetiva (t) cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+             f'{round(sample_values["effective_ctc"])}' if sample_values["effective_ctc"] is not None else "N/A"],
+            [Paragraph('CTC Potencial (T) cmolcdm<sup>-3</sup>', style=self.__standard_paragraph_style),
+             f'{round(sample_values["ctc"])}' if sample_values["ctc"] is not None else "N/A"],
+            [Paragraph('Saturação por bases (V)%', style=self.__standard_paragraph_style),
+             f'{round(sample_values["v_percent"])}' if sample_values["v_percent"] is not None else "N/A"],
+            [Paragraph('Saturação por alumínio (m)%', style=self.__standard_paragraph_style),
+             f'{round(sample_values["aluminum_saturation"])}' if sample_values["aluminum_saturation"] is not None else "N/A"]
         ]
 
-        values_for_pie_chart = [
-            sample_values["potassium"], 
-            sample_values["magnesium"], 
-            sample_values["calcium"],  
-            sample_values["h_al"]        
+        values_for_pie_chart: list[float] = [
+            sample_values["potassium"],
+            sample_values["magnesium"],
+            sample_values["calcium"],
+            sample_values["h_al"]
         ]
-        percentages = None
+        percentages: list[float] | None = None
         if None not in values_for_pie_chart:
-            total = sum(values_for_pie_chart)
+            total: int = sum(values_for_pie_chart)
             percentages = [(value / total) * 100 for value in values_for_pie_chart]
         self.draw_pie_graph_table(278, 300, percentages)
         self.draw_table(data_table_four, 70, 186, self.__left_col_width, reference)
@@ -414,14 +455,16 @@ class Report:
     def write_explanation(self, coord_y):
         self.__pdf.setFont('arial', 7)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y + 10,
-                              'N/A - Não aplicável (não solicitado)')
+                                     'N/A - Não aplicável (não solicitado)')
         self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y,
-                              '* Baseado no Manual de Adubação e calagem para o estado do Paraná (NEPAR-BCS, 2019)')
-        self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y - 10, '** De acordo com o Zoneamento Agrícola de Risco Climático'
+                                     '* Baseado no Manual de Adubação e calagem para o estado do Paraná (NEPAR-BCS, 2019)')
+        self.__pdf.drawCentredString(self.__horizontal_size / 2, coord_y - 10,
+                                     '** De acordo com o Zoneamento Agrícola de Risco Climático'
                                      ' (ZARC), IN SPA/MAPA nº 01 de 21 de junho de 2022, do MAPA')
 
-    def generate_pdf(self, report_data: sqlite3.Row, path_to_save: str, report_id: int, sample_values: sqlite3.Row, reference: dict[str, dict[str, float]]) -> None:
-        self.__pdf = self.setup_pdf(report_id, path_to_save)
+    def generate_pdf(self, report_data: sqlite3.Row, path_to_save: str, report_id: int, sample_values: sqlite3.Row,
+                     reference: dict[str, dict[str, float]]) -> None:
+        self.__pdf: canvas.Canvas = self.setup_pdf(report_id, path_to_save)
         self.draw_header()
         self.write_main_info_square(report_data, report_id)
         self.draw_footer(40)
@@ -429,3 +472,5 @@ class Report:
         self.draw_signature_space(70, 156, 203.44799999999998)
         self.write_explanation(90)
         self.__pdf.save()
+        dialog: AlertWindow = AlertWindow("Laudo salvo com sucesso!")
+        dialog.exec()

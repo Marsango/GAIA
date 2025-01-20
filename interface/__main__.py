@@ -27,7 +27,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab2.png"))
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.svg_widget = QSvgWidget(bg_dir)
         self.horizontalLayout.addWidget(self.svg_widget)
 

@@ -15,6 +15,8 @@ from backend.classes.utils import handle_exception
 class RegisterCompany(QDialog, RegisterCompanyDialog):
     def __init__(self) -> None:
         super(RegisterCompany, self).__init__()
+        self.requester_id: int | None = None
+        self.current_company_id: int | None = None
         self.setupUi(self)
         self.setWindowTitle('Registro de Pessoa Jurídica')
         self.setWindowIcon(QPixmap(os.path.join(
@@ -74,7 +76,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
                 db.insert_company(company, address)
                 success_text: str = "Solicitante registrado com sucesso!"
             else:
-                db.edit_company(company, address, self.current_company_id)
+                db.edit_company(company, address, self.current_company_id, self.requester_id)
                 success_text: str = "Alterações salvas com sucesso!"
             widget: AlertWindow = AlertWindow(success_text)
             widget.exec()
@@ -114,6 +116,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         self.setWindowTitle('Edição de registro de Pessoa Física')
         self.mode = 'edit'
         self.current_company_id = int(company_data['id'])
+        self.requester_id = int(company_data['requester_id'])
 
     def clean_input(self):
         self.country_input.clear()
