@@ -65,7 +65,11 @@ def handle_exception(e: Exception) -> str:
             error_message = f"O campo '{translate_errors(invalid_field)}' possui valores inválidos!"
             logging.warning(error_message)
             return error_message
-    
+        elif 'CPF inválido' in str(e):
+            return str(e)
+        else:
+            return f'Erro desconhecido: {str(e)}'
+
     # Verifica se é um erro de CPF duplicado
     elif isinstance(e, CPFAlreadyExistsError):
         error_message = f"Erro de CPF: {str(e)}"

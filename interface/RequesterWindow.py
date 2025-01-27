@@ -10,7 +10,6 @@ from interface.RegisterCompany import RegisterCompany
 from interface.RegisterPerson import RegisterPerson
 from backend.classes.Database import Database
 from interface.PropertyWindow import PropertyWindow
-from backend.classes.Person import Person
 import sqlite3
 
 
@@ -129,30 +128,10 @@ class RequesterWindow(QDialog, RequesterDialog):
         row: int = selected_items[0].row()
         id: str = self.requester_table.item(row, 0).text()
         db: Database = Database()
-
-        # Verifica se há um resultado no banco de dados
         requesters = db.get_persons(id=id) if self.current_table_type == 'person' else db.get_companies(id=id)
-        if not requesters:
-            widget: AlertWindow = AlertWindow("Solicitante não encontrado.")
-            widget.exec()
-            db.close_connection()  # Certifique-se de fechar a conexão
-            return
-
         requester = requesters[0]
-
-        # Aqui você pode simplesmente verificar se o CPF é válido
-        if(self.current_table_type == 'person'):
-            try:
-                db.verify_valid_cpf(requester['cpf'])  # Verifica se o CPF é válido
-            except ValueError as e:
-                widget: AlertWindow = AlertWindow(str(e))  # Exibe a mensagem de erro se o CPF for inválido
-                widget.exec()
-                db.close_connection()
-                return
-
         db.close_connection()
 
-        # Continua com a edição após a verificação
         dialog.edit_mode(requester)
         dialog.exec()
         self.refresh_table()

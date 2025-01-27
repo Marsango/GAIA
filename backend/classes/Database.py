@@ -63,7 +63,7 @@ class Database:
         latitude float, smp float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
          zinc float, base_sum float, clay float, silte float, classification string, sand float, ctc float, v_percent float, aluminum_saturation float,
-        effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
+        effective_ctc float, used_config, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), agreement varchar(255), fk_sample_id integer,
         FOREIGN KEY (fk_sample_id) REFERENCES sample(id) ON DELETE CASCADE)""")
         self.__con.commit()
@@ -81,12 +81,11 @@ class Database:
                 raise CPFAlreadyExistsError(person_dict['cpf'])
         self.__con.commit()
 
-    def edit_person(self, person: Person, address: Address, id: int) -> None:
+    def edit_person(self, person: Person, address: Address, id: int, requester_id: int) -> None:
         person_dict: dict[str, Any] = to_dict(person)
         person_dict['id'] = id
-        person_dict['email'] = person.email
-        person_dict['phone_number'] = person.phone_number 
         self.edit_address(address, id, person)
+        self.edit_requester(person, requester_id)
         self.__cur.execute("""
             UPDATE person
             SET name = :name, birth_date = :birth_date, cpf = :cpf, email = :email, phone_number = :phone_number
@@ -116,15 +115,16 @@ class Database:
                 aluminum = :aluminum, h_al = :h_al, calcium = :calcium, magnesium = :magnesium, copper = :copper,
                 iron = :iron, manganese = :manganese, zinc = :zinc, base_sum = :base_sum, ctc = :ctc, v_percent = :v_percent,
                 aluminum_saturation = :aluminum_saturation, effective_ctc = :effective_ctc, smp = :smp, silte = :silte,
-                 sand = :sand, clay =:clay, classification = :classification 
+                 sand = :sand, clay =:clay, classification = :classification, used_config = :used_config
             WHERE id = :id
         """, sample_dict)
         self.__con.commit()
 
-    def edit_company(self, company: Company, address: Address, id: int) -> None:
+    def edit_company(self, company: Company, address: Address, id: int, requester_id: int) -> None:
         company_dict: dict[str, Any] = to_dict(company)
         company_dict['id'] = id
         self.edit_address(address, id, company)
+        self.edit_requester(company, requester_id)
         self.__cur.execute("""
             UPDATE company
             SET company_name = :company_name, cnpj = :cnpj 
@@ -162,24 +162,6 @@ class Database:
         WHERE id = :id """, {'id': id})
         self.__con.commit()
 
-    def verify_valid_cpf(self, cpf: str) -> None:
-        if len(cpf) != 11:
-            raise ValueError("Error with values of 'cpf'")
-        equal_numbers: list[str] = [x for x in cpf if x == cpf[0]]
-        if len(equal_numbers) == 11:
-            raise ValueError("Error with values of 'cpf'")
-        first_digit_verification: int = int(cpf[-2])
-        second_digit_verification: int = int(cpf[-1])
-
-        def verify_valid_digit(expected_digit, cpf_fraction) -> None:
-            digit_sum: int = sum([int(x)*(len(cpf_fraction) + 1 - i) for i, x in enumerate(cpf_fraction)])
-            calculated_digit: int = (digit_sum * 10 % 11) % 10
-            if int(expected_digit) != calculated_digit:
-                raise ValueError(f"CPF inválido: erro no dígito verificador {expected_digit}.")
-
-        verify_valid_digit(first_digit_verification, cpf[:9])
-        verify_valid_digit(second_digit_verification, cpf[:10])
-
     def edit_address(self, address: Address, id: int, requester_type: Person | Company) -> None:
         requester: sqlite3.Row = self.get_persons(id=id)[0] if isinstance(requester_type, Person) else \
         self.get_companies(id=id)[0]
@@ -215,6 +197,14 @@ class Database:
         VALUES(:phone_number, :email, :address_id)""", requester_dict)
         self.__con.commit()
         return self.__cur.lastrowid
+
+    def edit_requester(self,  requester: Person | Company, requester_id: int):
+        self.__cur.execute("""
+            UPDATE requester
+            SET phone_number = :phone_number, email = :email 
+            WHERE requester_id = :id
+        """, {'id': requester_id, 'email': requester.get_email(), 'phone_number': requester.get_phone_number()})
+        self.__con.commit()
 
     def insert_address(self, address: Address) -> int:
         address: dict = to_dict(address)
@@ -281,13 +271,13 @@ class Database:
             description, sample_number, collection_date, total_area, latitude, longitude, 
             depth, phosphorus, potassium, organic_matter, ph, aluminum, h_al, calcium, magnesium, 
             copper, iron, manganese, zinc, base_sum, ctc, v_percent, aluminum_saturation,
-            effective_ctc, fk_property_id, smp, silte, sand, clay, classification
+            effective_ctc, fk_property_id, smp, silte, sand, clay, classification, used_config
         ) 
         VALUES(
             :description, :sample_number, :collection_date, :total_area, :latitude, :longitude, 
             :depth, :phosphorus, :potassium, :organic_matter, :ph, :aluminum, :h_al, :calcium, 
             :magnesium, :copper, :iron, :manganese, :zinc, :base_sum, :ctc, :v_percent, 
-            :aluminum_saturation, :effective_ctc, :property_id, :smp, :silte, :sand, :clay, :classification
+            :aluminum_saturation, :effective_ctc, :property_id, :smp, :silte, :sand, :clay, :classification, :used_config
         )
         """, sample_dict)
         
@@ -583,18 +573,6 @@ class Database:
             WHERE sample.id = ?;
         """, (sample_id,))
         return self.__cur.fetchone()
-
-    def get_cpf_excluding_current(self, cpf: str, current_person_id: int) -> bool:
-        query = """
-            SELECT id 
-            FROM person 
-            WHERE cpf = :cpf AND id != :current_person_id
-        """
-        self.__cur.execute(query, {'cpf': cpf, 'current_person_id': current_person_id})
-        result = self.__cur.fetchone()
-
-        # Se o resultado não for None, significa que o CPF já está em uso por outra pessoa
-        return result is not None
     
     def get_report_info(self) -> list[sqlite3.Row]:
         self.__cur.execute("""SELECT 

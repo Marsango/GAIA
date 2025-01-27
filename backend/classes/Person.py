@@ -17,7 +17,6 @@ class Person(Requester):
         self.verify_valid_cpf(cpf)
         self.__name: str | None = None
         self.verify_name(name)
-        self.__email = email
         Requester.__init__(self, phone_number, email, address)
 
     def verify_valid_date(self, birth_date: str) -> None:
@@ -49,6 +48,3 @@ class Person(Requester):
         if any(char.isdigit() for char in name):
             raise ValueError("Error with values of 'name'")
         self.__name = name
-
-    def get_email(self) -> str:
-        return self.__email

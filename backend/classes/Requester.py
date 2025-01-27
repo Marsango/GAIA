@@ -24,3 +24,9 @@ class Requester:
         if not re.match(phone_regex, phone_number):
             raise ValueError("Error with values of 'phone_number'")
         self.__phone_number = phone_number
+
+    def get_phone_number(self) -> str:
+        return self.__phone_number
+
+    def get_email(self) -> str:
+        return self.__email

@@ -1,3 +1,4 @@
+import json
 import os
 
 from PySide6.QtGui import QPixmap
@@ -26,37 +27,65 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.mode: str = 'register'
 
     def edit_mode(self, sample_data) -> None:
-        current_config: Configuration = Configuration()
+
         self.sample_number.clear()
-        self.sample_number.insert(str(sample_data["sample_number"]))
-        self.collection_depth.insert(str(sample_data["depth"]))
-        self.date.insert(sample_data["collection_date"])
-        self.description.insert(sample_data["description"])
-        self.area.insert(str(sample_data["total_area"]))
-        self.latitude.insert(str(sample_data["latitude"]))
-        self.longitude.insert(str(sample_data["longitude"]))
-        self.phosphorus.insert(str(round(sample_data["phosphorus"]/current_config.get_phosphor_factor(), 2)) if sample_data["phosphorus"] is not None else '')
-        self.potassium.insert(str(round(sample_data["potassium"]/current_config.get_potassium_factor(), 2)) if sample_data["potassium"] is not None else '')
-        self.organic_matter.insert(str(round(sample_data["organic_matter"]/1.724, 2)) if sample_data["organic_matter"] is not None else '')
-        self.clay_input.insert(str(sample_data["clay"]) if sample_data["clay"] is not None else '')
-        self.silte_input.insert(str(sample_data["silte"]) if sample_data["silte"] is not None else '')
-        self.sand_input.insert(str(sample_data["sand"]) if sample_data["sand"] is not None else '')
-        self.ph.insert(str(sample_data["ph"]) if sample_data["ph"] is not None else '')
-        self.SMP.insert(str(sample_data["smp"]) if sample_data["smp"] is not None else '')
-        self.read_aluminum.insert(str(sample_data["aluminum"]) if sample_data["aluminum"] is not None else '')
-        self.read_calcium.insert(str(sample_data["calcium"]) if sample_data["calcium"] is not None else '')
-        self.read_magnesium.insert(str(sample_data["magnesium"]) if sample_data["magnesium"] is not None else '')
-        self.read_copper.insert(str(sample_data["copper"]) if sample_data["copper"] is not None else '')
-        self.read_iron.insert(str(sample_data["iron"]) if sample_data["iron"] is not None else '')
-        self.read_manganese.insert(str(sample_data["manganese"]) if sample_data["manganese"] is not None else '')
-        self.read_zinc.insert(str(sample_data["zinc"]) if sample_data["zinc"] is not None else '')
-        self.blank_test_aluminum.insert('0')
-        self.blank_test_calcium.insert('0')
-        self.blank_test_magnesium.insert('0')
-        self.blank_test_copper.insert('0')
-        self.blank_test_iron.insert('0')
-        self.blank_test_manganese.insert('0')
-        self.blank_test_zinc.insert('0')
+        self.sample_number.setText(str(sample_data["sample_number"]))
+        self.collection_depth.setText(str(sample_data["depth"]))
+        self.date.setText(sample_data["collection_date"])
+        self.description.setText(sample_data["description"])
+        self.area.setText(str(sample_data["total_area"]))
+        self.latitude.setText(str(sample_data["latitude"]))
+        self.longitude.setText(str(sample_data["longitude"]))
+        used_config = json.loads(sample_data['used_config'])
+        if sample_data["phosphorus"] is None:
+            self.phosphorus.setText('')
+        else:
+            if used_config['phosphorus']['selected'] == 'factors':
+                self.phosphorus.setText(str(round(sample_data["phosphorus"]/used_config['phosphorus']['value'], 2)))
+            else:
+                self.phosphorus.setText(str(round(
+                    sample_data["phosphorus"]*used_config['phosphorus']['value']['a']
+                    + used_config['phosphorus']['value']['b'], 2)))
+
+        if sample_data["potassium"] is None:
+            self.potassium.setText('')
+        else:
+            if used_config['phosphorus']['selected'] == 'factors':
+                self.potassium.setText(str(round(sample_data["potassium"]/used_config['potassium']['value'], 2)))
+            else:
+                self.potassium.setText(str(round(
+                    sample_data["potassium"]*used_config['potassium']['value']['a']
+                    + used_config['potassium']['value']['b'], 2)))
+
+        if sample_data["organic_matter"] is None:
+            self.organic_matter.setText('')
+        else:
+            if used_config['organic_matter']['selected'] == 'factors':
+                self.organic_matter.setText(str(round(sample_data["potassium"]/used_config['potassium']['value'], 2)))
+            else:
+                self.organic_matter.setText(str(round(
+                    sample_data["organic_matter"]*used_config['potassium']['value']['a']
+                    + used_config['organic_matter']['value']['b'], 2)))
+
+        self.clay_input.setText(str(sample_data["clay"]) if sample_data["clay"] is not None else '')
+        self.silte_input.setText(str(sample_data["silte"]) if sample_data["silte"] is not None else '')
+        self.sand_input.setText(str(sample_data["sand"]) if sample_data["sand"] is not None else '')
+        self.ph.setText(str(sample_data["ph"]) if sample_data["ph"] is not None else '')
+        self.SMP.setText(str(sample_data["smp"]) if sample_data["smp"] is not None else '')
+        self.read_aluminum.setText(str(sample_data["aluminum"]) if sample_data["aluminum"] is not None else '')
+        self.read_calcium.setText(str(sample_data["calcium"]) if sample_data["calcium"] is not None else '')
+        self.read_magnesium.setText(str(sample_data["magnesium"]) if sample_data["magnesium"] is not None else '')
+        self.read_copper.setText(str(sample_data["copper"]) if sample_data["copper"] is not None else '')
+        self.read_iron.setText(str(sample_data["iron"]) if sample_data["iron"] is not None else '')
+        self.read_manganese.setText(str(sample_data["manganese"]) if sample_data["manganese"] is not None else '')
+        self.read_zinc.setText(str(sample_data["zinc"]) if sample_data["zinc"] is not None else '')
+        self.blank_test_aluminum.setText('0')
+        self.blank_test_calcium.setText('0')
+        self.blank_test_magnesium.setText('0')
+        self.blank_test_copper.setText('0')
+        self.blank_test_iron.setText('0')
+        self.blank_test_manganese.setText('0')
+        self.blank_test_zinc.setText('0')
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de amostra')
         self.mode = 'edit'
@@ -64,7 +93,6 @@ class RegisterSample(QDialog, RegisterSampleDialog):
 
     def register_action(self) -> None:
         db: Database = Database()
-
         try:
             if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text() or not self.sample_number.text():
                 raise ValueError("Por favor, preencha todos os campos obrigatórios.")
@@ -135,6 +163,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
 
 
     def clean_input(self):
+        self.sample_number.clear()
         self.collection_depth.clear()
         self.date.clear()
         self.description.clear()

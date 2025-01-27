@@ -21,14 +21,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle('GAIA SOFTWARE')
         self.showMaximized()
-
         base_dir = os.path.dirname(os.path.abspath(__file__))
         bg_dir = os.path.join(base_dir, 'images/background.svg')
         self.setWindowIcon(QPixmap(os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab2.png"))
+        ).replace("\\", "/") + "/logo_lab.png"))
         self.svg_widget = QSvgWidget(bg_dir)
         self.horizontalLayout.addWidget(self.svg_widget)
 
@@ -57,7 +56,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def open_config_window(self) -> None:
         dialog = ConfigurationWindow()
-        dialog.load()
         self.add_window(dialog)
 
     def open_info_window(self) -> None:
@@ -84,7 +82,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """Adicionar uma janela à lista e exibi-la."""
         self.open_windows.append(dialog)
         dialog.setAttribute(Qt.WA_DeleteOnClose)  # Remove referência ao fechar
-        dialog.destroyed.connect(lambda: self.open_windows.remove(dialog))
         dialog.show()  # Exibe a janela de forma não modal
 
 
