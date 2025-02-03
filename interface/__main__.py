@@ -22,7 +22,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle('GAIA SOFTWARE')
         self.showMaximized()
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        bg_dir = os.path.join(base_dir, 'images/background.svg')
+        bg_dir = os.path.join(base_dir, 'interface', 'images', 'background.svg')
         self.setWindowIcon(QPixmap(os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
@@ -43,12 +43,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionBackup.triggered.connect(self.open_backup_window)
         self.actionSelo.triggered.connect(self.open_upload_report_stamp_window)
 
+        
+
+        
+
     def closeEvent(self, event):
-        """Fechar todas as janelas abertas antes de encerrar a principal."""
-        for window in self.open_windows:
-            window.close()  # Fecha cada janela aberta
+        for window in self.open_windows[:]:  # Iterar em uma cópia para evitar conflitos
+            window.close()
         self.open_windows.clear()
-        event.accept()  # Permitir o fechamento da janela principal
+        event.accept()
 
     def open_requester_window(self) -> None:
         dialog = RequesterWindow()
@@ -79,9 +82,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_window(dialog)
 
     def add_window(self, dialog):
-        """Adicionar uma janela à lista e exibi-la."""
         self.open_windows.append(dialog)
         dialog.setAttribute(Qt.WA_DeleteOnClose)  # Remove referência ao fechar
+        dialog.destroyed.connect(lambda: self.open_windows.remove(dialog))  # Remove da lista quando deletado
         dialog.show()  # Exibe a janela de forma não modal
 
 

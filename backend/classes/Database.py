@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import sys
 from backend.classes.Sample import Sample
 from backend.classes.Report import Report
 from backend.classes.Person import Person
@@ -11,7 +12,7 @@ from backend.classes.Property import Property
 
 class Database:
     def __init__(self) -> None:
-        base_dir: str = os.path.dirname(os.path.abspath(__file__))
+        base_dir: str = os.path.dirname(sys.executable)
         db_path: str = os.path.join(base_dir, 'soil_analysis.db')
         self.__con: sqlite3.Connection = sqlite3.connect(db_path)
         self.__con.row_factory = sqlite3.Row
@@ -63,7 +64,7 @@ class Database:
         latitude float, smp float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
          zinc float, base_sum float, clay float, silte float, classification string, sand float, ctc float, v_percent float, aluminum_saturation float,
-        effective_ctc float, used_config, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
+        effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), agreement varchar(255), fk_sample_id integer,
         FOREIGN KEY (fk_sample_id) REFERENCES sample(id) ON DELETE CASCADE)""")
         self.__con.commit()
@@ -115,7 +116,7 @@ class Database:
                 aluminum = :aluminum, h_al = :h_al, calcium = :calcium, magnesium = :magnesium, copper = :copper,
                 iron = :iron, manganese = :manganese, zinc = :zinc, base_sum = :base_sum, ctc = :ctc, v_percent = :v_percent,
                 aluminum_saturation = :aluminum_saturation, effective_ctc = :effective_ctc, smp = :smp, silte = :silte,
-                 sand = :sand, clay =:clay, classification = :classification, used_config = :used_config
+                 sand = :sand, clay =:clay, classification = :classification
             WHERE id = :id
         """, sample_dict)
         self.__con.commit()
@@ -271,13 +272,13 @@ class Database:
             description, sample_number, collection_date, total_area, latitude, longitude, 
             depth, phosphorus, potassium, organic_matter, ph, aluminum, h_al, calcium, magnesium, 
             copper, iron, manganese, zinc, base_sum, ctc, v_percent, aluminum_saturation,
-            effective_ctc, fk_property_id, smp, silte, sand, clay, classification, used_config
+            effective_ctc, fk_property_id, smp, silte, sand, clay, classification
         ) 
         VALUES(
             :description, :sample_number, :collection_date, :total_area, :latitude, :longitude, 
             :depth, :phosphorus, :potassium, :organic_matter, :ph, :aluminum, :h_al, :calcium, 
             :magnesium, :copper, :iron, :manganese, :zinc, :base_sum, :ctc, :v_percent, 
-            :aluminum_saturation, :effective_ctc, :property_id, :smp, :silte, :sand, :clay, :classification, :used_config
+            :aluminum_saturation, :effective_ctc, :property_id, :smp, :silte, :sand, :clay, :classification
         )
         """, sample_dict)
         

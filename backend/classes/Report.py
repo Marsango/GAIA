@@ -63,7 +63,8 @@ class Report:
 
     def add_fonts(self) -> None:
 
-        font_dir = r"C:\Users\brun0\OneDrive\Documentos\LabSolos\GAIA\backend\classes\fonts"
+        #font_dir = r"C:\Users\brun0\OneDrive\Documentos\LabSolos\GAIA\backend\classes\fonts"
+        font_dir = os.path.join(base_dir, "backend", "classes", "fonts")
         pdfmetrics.registerFont(TTFont('arial', f"{font_dir}\\arial.ttf"))
         pdfmetrics.registerFont(TTFont('arialbd', f"{font_dir}\\arialbd.ttf"))
         pdfmetrics.registerFont(TTFont('arialbi', f"{font_dir}\\arialbi.ttf"))
@@ -280,7 +281,6 @@ class Report:
                             start_x + 25.2 * self.find_line(data[j][0].getPlainText(), float(data[j][1]), reference),
                             current_y)
             current_y = current_y + table._rowHeights[j] / 2
-            print(f"{data[j][0].getPlainText()}: {data[j][1]}")
         self.__pdf.setLineWidth(1)
         self.__pdf.setStrokeColor(colors.black)
 
