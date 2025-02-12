@@ -16,7 +16,11 @@ class BackupWindow(QDialog, BackupDialog):
         #-----------------Talvez arrumar o  caminho do bd--------------------------#
 
         # Define o caminho para o banco de dados
-        self.__db_location = os.path.join(base_dir, 'soil_analysis.db')
+        self.__db_location = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # Diretório raiz do projeto
+            "backend",
+            "classes"
+        ).replace("\\", "/") + "/soil_analysis.db"
 
         # Define o caminho para o diretório de relatórios
         self.__report_location = os.path.join(
@@ -31,7 +35,7 @@ class BackupWindow(QDialog, BackupDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
 
         # Instancia a classe Database para manipulação do banco de dados
         db: Database = Database()

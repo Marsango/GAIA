@@ -14,7 +14,7 @@ class UploadLogo(QDialog, UploadLogoDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.file_path.setReadOnly(True)
         self.upload_button.clicked.connect(self.upload)
         self.save_button.clicked.connect(self.save)

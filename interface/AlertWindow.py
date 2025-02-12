@@ -17,7 +17,7 @@ class AlertWindow(QDialog, AlertDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # Caminho do diretório atual
             "interface",  # Pasta interface
             "images"  # Subpasta images
-        ).replace("\\", "/") + "/logo_lab.png"))  # Substitui barras invertidas por barras normais no caminho
+        ).replace("\\", "/") + "/GAIA_icon.png"))  # Substitui barras invertidas por barras normais no caminho
 
         self.label_2.setText(message)  # Define o texto da mensagem no label_2
         self.pushButton.clicked.connect(self.close)  # Conecta o botão para fechar a janela ao ser clicado

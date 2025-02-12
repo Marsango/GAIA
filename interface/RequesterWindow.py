@@ -22,7 +22,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.requester_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.add.clicked.connect(self.register_person)
         self.edit.clicked.connect(self.edit_requester)
@@ -86,8 +86,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             list_of_ids: list[int] = [int(self.requester_table.item(item_row, 0).text()) for item_row in selected_requesters]
             dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids,  table_type=self.current_table_type, message="Deseja deletar todos os solicitantes selecionados?")
             dialog.exec()
-            sucessful_dialog: AlertWindow = AlertWindow("Solicitante deletado com sucesso!")
-            sucessful_dialog.exec()
+
 
         except Exception as e:
             error = handle_exception(e)

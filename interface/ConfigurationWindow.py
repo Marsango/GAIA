@@ -17,7 +17,7 @@ class ConfigurationWindow(QDialog, ConfigurationDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.save_config.clicked.connect(self.save)
         self.phosphorus_widget_line.hide()
         self.phosphorus_widget_factor.show()

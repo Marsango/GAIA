@@ -21,7 +21,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
         self.create_country_completer()
         self.country_input.editingFinished.connect(self.country_changed)

@@ -62,14 +62,11 @@ class Report:
         ).replace("\\", "/")
 
     def add_fonts(self) -> None:
-
-        #font_dir = r"C:\Users\brun0\OneDrive\Documentos\LabSolos\GAIA\backend\classes\fonts"
-        font_dir = os.path.join(base_dir, "backend", "classes", "fonts")
-        pdfmetrics.registerFont(TTFont('arial', f"{font_dir}\\arial.ttf"))
-        pdfmetrics.registerFont(TTFont('arialbd', f"{font_dir}\\arialbd.ttf"))
-        pdfmetrics.registerFont(TTFont('arialbi', f"{font_dir}\\arialbi.ttf"))
-        pdfmetrics.registerFont(TTFont('ariali', f"{font_dir}\\ariali.ttf"))
-        pdfmetrics.registerFont(TTFont('arilbk', f"{font_dir}\\ariblk.ttf"))
+        pdfmetrics.registerFont(TTFont('arial', f"{self.__fonts_path}/arial.ttf"))
+        pdfmetrics.registerFont(TTFont('arialbd', f"{self.__fonts_path}/arialbd.ttf"))
+        pdfmetrics.registerFont(TTFont('arialbi', f"{self.__fonts_path}/arialbi.ttf"))
+        pdfmetrics.registerFont(TTFont('ariali', f"{self.__fonts_path}/ariali.ttf"))
+        pdfmetrics.registerFont(TTFont('arilbk', f"{self.__fonts_path}/ariblk.ttf"))
 
     def setup_pdf(self, number: int, path: str) -> canvas.Canvas:
         self.add_fonts()
@@ -103,89 +100,71 @@ class Report:
         self.__pdf.line(pos_horizontal1, pos_vertical2, pos_horizontal2, pos_vertical2)
         self.__pdf.line(pos_horizontal2, pos_vertical1, pos_horizontal2, pos_vertical2)
 
-    def write_main_info_square(self, info: sqlite3.Row, report_id: int) -> None:
-        x_start_left: int = 75
-        x_end_left: int = 275
-        x_start_right: int = 315
-        x_end_right: int = 515
+    def write_main_info_square(self, info: sqlite3.Row, report_id: int) -> int:
+        x_start: int = 75
+        x_end: int = 515
         y_start: int = 710
-        acceptable_width_left: int = x_end_left - x_start_left
-        acceptable_width_right: int = x_end_right - x_start_right
+        acceptable_width: int = x_end - x_start
         self.__pdf.setFont('arial', 9)
+        current_x: float = x_start
         current_y: int = y_start
-
-        # Texts for left and right columns
-        left_texts: list[str] = [
-            f"Solicitante: {info['requester_name']}",
-            f"Propriedade: {info['property_name']}",
-            f"Talhão: {info['sample_description']}",
-            f"Laudo: {report_id}  Amostra: {info['sample_number']}",            
-            f"Convênio: {self.__agreement}"
-            
+        document_text: str = f"CPF: {info['document_number']}" if info["document_type"] == "cpf" else f"CNPJ: {info['document_number']}"
+        texts_to_draw: list[str] = [
+        f"Solicitante: {info['requester_name']} ?{document_text} ?",
+        f"Propriedade: {info['property_name']} ?Município: {info['city']} ?UF: {info['state']} ?Matrícula: {info['registration_number']} ?",
+        f"Talhão: {info['sample_description']} ?Convênio: {self.__agreement} ?Profundidade: {info['depth']}cm ?Área: {info['total_area']}m² ?",
+        f"Laudo: {report_id} ?Amostra: {info['sample_number']} ?Data: {info['collection_date']} ?",
         ]
-        right_texts: list[str] = [
-            f"Documento: {'CPF' if info['document_type'] == 'cpf' else 'CNPJ'} {info['document_number']}",
-            f"Matrícula: {info['registration_number']}",
-            f"Área: {info['total_area']}m²  Profundidade: {info['depth']}cm",
-            f"Data: {info['collection_date']}"       
-        ]
-
-        # Tratamento especial para "Município" e "UF"
-        city = info['city']
-        state = info['state']
-        if (len(state) + len(city)) > 9:  # Verifica se o estado é maior que 9 caracteres
-            right_texts.insert(1, f"Município: {city}")  # Adiciona município sem UF
-            right_texts.insert(2, f"UF: {state}")  # Adiciona UF em linha separada
-        else:
-            right_texts.insert(1, f"Município: {city}  UF: {state}")
 
         def justify_text(text: str, max_width: int) -> str:
-            words: list[str] = text.split("?")
-            words: list[str] = [word for word in words if word != ' ' and word != '']
+            print(text)
+            words = text.split("?")
+            words = [word for word in words if word != ' ' and word != '']
             if len(words) == 1:
                 return words[0]
-            words_width: float = sum(pdfmetrics.stringWidth(word, 'arial', 10) for word in words)
-            space_width: float = pdfmetrics.stringWidth(' ', 'arial', 10)
-            available_spaces: float = ((max_width - words_width) / space_width) - 2
-            space_step: int = int(available_spaces // (len(words) - 1))
-            justified_line: str = words[0]
+            words_width = sum(pdfmetrics.stringWidth(word, 'arial', 9) for word in words)
+            space_width = pdfmetrics.stringWidth(' ', 'arial', 9)
+            available_spaces = (max_width - words_width) / space_width
+            space_step = int(available_spaces//(len(words) - 1))
+            justified_line = words[0]
             for i in range(1, len(words)):
                 justified_line += ' ' + ' ' * space_step + words[i]
             return justified_line
 
-        def break_line(text: str) -> dict[str, str]:
+        def break_line(text) -> dict[str, str]:
             fields: list[str] = text.split("?")
-            current_text: str = fields[0]
+            current_text = fields[0] + '?'
             for j in range(1, len(fields)):
-                if pdfmetrics.stringWidth(current_text + fields[j], 'arial', 10) > acceptable_width:
+                if pdfmetrics.stringWidth(current_text + fields[j], 'arial', 9) > acceptable_width - 30:
                     break
                 else:
-                    current_text += fields[j]
+                    current_text += fields[j] + '?'
             return {'current_line': current_text, 'next_line': text[len(current_text):]}
 
-        def fit_text_size(text: str, current_y: int):
+        def fit_text_size(text, current_y) -> dict[str, int | str]:
             breaked_lines: dict[str, str] = break_line(text)
-            self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end - x_start))
+            self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end-x_start))
             current_y -= 12
-            while pdfmetrics.stringWidth(breaked_lines['next_line'], 'arial', 10) > acceptable_width:
+            while pdfmetrics.stringWidth(breaked_lines['next_line'], 'arial', 9) > acceptable_width:
                 breaked_lines: dict[str, str] = break_line(breaked_lines['next_line'])
-                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end - x_start))
+                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['current_line'], x_end-x_start))
                 current_y -= 12
-            if breaked_lines['next_line']:
-                self.__pdf.drawString(x_start, current_y, justify_text(breaked_lines['next_line'], x_end - x_start))
+            return {'current_y': current_y, 'remaining_text': breaked_lines['next_line']}
+
+        remaining_text: str = ''
+        for line in texts_to_draw:
+            line_to_draw = remaining_text + line if remaining_text != '' and remaining_text != ' ' else line
+            text_size: float = pdfmetrics.stringWidth(line_to_draw, 'arial', 9)
+            if text_size + current_x > x_end:
+                fit_parameters = fit_text_size(line_to_draw, current_y)
+                current_y = fit_parameters['current_y']
+                remaining_text = fit_parameters['remaining_text']
+            else:
+                self.__pdf.drawString(x_start, current_y, justify_text(line_to_draw, x_end-x_start))
                 current_y -= 12
-            return current_y
-
-        for text in left_texts:
-            self.__pdf.drawString(x_start_left, current_y, justify_text(text, acceptable_width_left))
-            current_y -= 12
-
-        current_y = y_start
-        for text in right_texts:
-            self.__pdf.drawString(x_start_right, current_y, justify_text(text, acceptable_width_right))
-            current_y -= 12
-
-        self.draw_square(x_start_left - 5, x_end_right + 5, y_start + 10, current_y + 3)
+                remaining_text = ''
+        self.draw_square(x_start - 5, x_end + 5, y_start + 10, current_y+2)
+        return current_y - 5
 
 
     def draw_footer(self, coord_y: int):
@@ -242,7 +221,7 @@ class Report:
             if row[1] == 'None':
                 data[j][1] = 'N/A'
         data = self.sort_table(data)
-        style = TableStyle([
+        style = [
             ('BACKGROUND', (0, 0), (6, 0), colors.lightgrey),
             ('SPAN', (0, 0), (1, 0)),
             ('SPAN', (2, 0), (6, 0)),
@@ -252,7 +231,7 @@ class Report:
             ('BOX', (0, 0), (-1, -1), 0.5, colors.black),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTSIZE', (0, 0), (-1, -1), 8)
-        ])
+        ]
         standard_size = 0.3
         table = Table(data, style=style,
                       colWidths=colwidths if colwidths is not None else [None, None, standard_size * inch,
@@ -487,6 +466,10 @@ class Report:
                                      '** De acordo com o Zoneamento Agrícola de Risco Climático'
                                      ' (ZARC), IN SPA/MAPA nº 01 de 21 de junho de 2022, do MAPA')
 
+    def draw_report_stamp(self, coord_x, coord_y):
+        self.__pdf.drawImage(f'{self.__images_location}/report_stamp.png', coord_x, coord_y, 100, 100,
+                             preserveAspectRatio=True, mask='auto')
+
     def generate_pdf(self, report_data: sqlite3.Row, path_to_save: str, report_id: int, sample_values: sqlite3.Row,
                      reference: dict[str, dict[str, float]]) -> None:
         self.__pdf: canvas.Canvas = self.setup_pdf(report_id, path_to_save)
@@ -496,6 +479,5 @@ class Report:
         self.draw_tables(sample_values, reference)
         self.draw_signature_space(70, 156, 203.44799999999998)
         self.write_explanation(90)
+        self.draw_report_stamp(20, 65)
         self.__pdf.save()
-        dialog: AlertWindow = AlertWindow("Laudo salvo com sucesso!")
-        dialog.exec()

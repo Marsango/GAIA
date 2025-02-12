@@ -23,7 +23,7 @@ class SampleWindow(QDialog, SampleDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         owner: str = kwargs.get('owner') if kwargs.get('owner') else ''
         _property: str = kwargs.get('property') if kwargs.get('property') else ''
         self.owner.setText(owner)
@@ -95,8 +95,6 @@ class SampleWindow(QDialog, SampleDialog):
 
             dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, table_type="sample", message="Deseja deletar todas as amostras selecionadas?")
             dialog.exec()
-            sucessful_dialog: AlertWindow = AlertWindow("Solicitante deletado com sucesso!")
-            sucessful_dialog.exec()
 
         except Exception as e:
             error = handle_exception(e)

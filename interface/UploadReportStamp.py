@@ -14,7 +14,7 @@ class UploadReportStamp(QDialog, UploadLogoDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/report_stamp.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.instruction.setText("ATENÇÃO! A imagem do selo não deve ter fundo ou vai sobrepor outros elementos do laudo.")
         self.file_path.setReadOnly(True)
         self.upload_button.clicked.connect(self.upload)
@@ -24,6 +24,7 @@ class UploadReportStamp(QDialog, UploadLogoDialog):
             "interface",
             "images"
         ).replace("\\", "/")
+        self.label_2.setText('Selo atual')
         self.image_label.setPixmap(QPixmap(f"{self.__image_location}/report_stamp.png"))
 
     def upload(self) -> None:

@@ -18,7 +18,7 @@ class GetReport(QDialog, GetReportDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.report_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.report_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.report_table.setSelectionBehavior(QAbstractItemView.SelectRows)

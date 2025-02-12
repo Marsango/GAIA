@@ -2,7 +2,7 @@ import sys
 import os
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtSvgWidgets import *
 from PySide6.QtWidgets import (QApplication, QMainWindow)
 from interface.GetReport import GetReport
@@ -13,6 +13,9 @@ from interface.ConfigurationWindow import ConfigurationWindow
 from interface.UploadLogo import UploadLogo
 from interface.BackupWindow import BackupWindow
 from interface.UploadReportStamp import UploadReportStamp
+import ctypes
+myappid = 'mycompany.myproduct.subproduct.version'
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -22,12 +25,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle('GAIA SOFTWARE')
         self.showMaximized()
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        bg_dir = os.path.join(base_dir, 'interface', 'images', 'background.svg')
-        self.setWindowIcon(QPixmap(os.path.join(
+        bg_dir = os.path.join(base_dir, 'images', 'background.svg')
+        self.setWindowIcon(QIcon(os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.ico"))
         self.svg_widget = QSvgWidget(bg_dir)
         self.horizontalLayout.addWidget(self.svg_widget)
 

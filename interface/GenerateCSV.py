@@ -22,7 +22,7 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.selected_ids = selected_ids
         self.file_path.setReadOnly(True)
         self.path_button.clicked.connect(self.open_dialog)
@@ -56,7 +56,7 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
             item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def open_dialog(self) -> None:
-        filename: QFileDialog.getOpenFileName = QFileDialog.getSaveFileName()[0]
+        filename: QFileDialog.getOpenFileName = QFileDialog.getSaveFileName(filter="*.csv")[0]
         self.file_path.setText(filename)
 
     def translate_params(self, params) -> str:
@@ -90,7 +90,7 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
         return selected_parameters
 
     def save(self) -> None:
-        with open(f'{self.file_path.text()}.csv', 'w', newline='') as file:
+        with open(f'{self.file_path.text()}', 'w', newline='') as file:
             writer = csv.writer(file)
             columns = self.get_selected_parameters()
             writer.writerow(columns)

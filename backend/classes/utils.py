@@ -1,7 +1,7 @@
 import json
 import logging
 from typing import Any
-from .exceptions import CPFAlreadyExistsError
+from .exceptions import CPFAlreadyExistsError, CNPJAlreadyExistsError
 
 
 def read_current_stored_config() -> dict[str, float]:
@@ -48,16 +48,17 @@ def translate_errors(field: str) -> str:
     translate_dict = {'country': "País", 'state': 'Estado', 'city': 'Cidade', 'street': 'Rua',
                       'company_name': 'Razão social',
                       'address_number': 'Número do endereço', 'name': 'Nome', 'birth_date': 'Nascimento',
-                      'phone_number': 'Telefone', 'location': 'Localização', 'date': 'Data', 'cep': 'CEP', 'cpf': 'CPF'}
+                      'phone_number': 'Telefone', 'location': 'Localização', 'date': 'Data', 'cep': 'CEP', 'cpf': 'CPF',
+                      'registration_number': 'Numero de matrícula'}
     return translate_dict.get(field, field)
 
 
 def handle_exception(e: Exception) -> str:
     # Verifica se é um erro de tipo ou valor
     if isinstance(e, TypeError) or isinstance(e, ValueError):
-        if 'is empty' in str(e):
+        if 'vazio' in str(e):
             empty_field = str(e).split("'")[1]
-            error_message = f"O campo '{translate_errors(empty_field)}' deve ser preenchido corretamente!"
+            error_message = f"O campo '{translate_errors(empty_field)}' deve ser preenchido!"
             logging.warning(error_message)
             return error_message
         elif 'Error with values of' in str(e):
@@ -68,11 +69,16 @@ def handle_exception(e: Exception) -> str:
         elif 'CPF inválido' in str(e):
             return str(e)
         else:
-            return f'Erro desconhecido: {str(e)}'
+            return f'Erro: {str(e)}'
 
     # Verifica se é um erro de CPF duplicado
     elif isinstance(e, CPFAlreadyExistsError):
-        error_message = f"Erro de CPF: {str(e)}"
+        error_message = f"{str(e)}"
+        logging.error(error_message)
+        return error_message
+
+    elif isinstance(e, CNPJAlreadyExistsError):
+        error_message = f"{str(e)}"
         logging.error(error_message)
         return error_message
 
@@ -80,5 +86,5 @@ def handle_exception(e: Exception) -> str:
     else:
         error_message = f"Erro desconhecido: {str(e)}"
         logging.error(error_message)
-        return "Ocorreu um erro desconhecido. Por favor, tente novamente mais tarde."
+        return error_message
 

@@ -5,6 +5,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog)
 
 from backend.classes.Configuration import Configuration
+from backend.classes.utils import handle_exception
 from interface.base_windows.register_sample import RegisterSampleDialog
 from backend.classes.Database import Database
 from backend.classes.Sample import Sample
@@ -22,7 +23,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
         self.mode: str = 'register'
 
@@ -50,7 +51,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         if sample_data["potassium"] is None:
             self.potassium.setText('')
         else:
-            if used_config['phosphorus']['selected'] == 'factors':
+            if used_config['potassium']['selected'] == 'factors':
                 self.potassium.setText(str(round(sample_data["potassium"]/used_config['potassium']['value'], 2)))
             else:
                 self.potassium.setText(str(round(
@@ -61,10 +62,10 @@ class RegisterSample(QDialog, RegisterSampleDialog):
             self.organic_matter.setText('')
         else:
             if used_config['organic_matter']['selected'] == 'factors':
-                self.organic_matter.setText(str(round(sample_data["potassium"]/used_config['potassium']['value'], 2)))
+                self.organic_matter.setText(str(round(sample_data["organic_matter"]/used_config['organic_matter']['value'], 2)))
             else:
                 self.organic_matter.setText(str(round(
-                    sample_data["organic_matter"]*used_config['potassium']['value']['a']
+                    sample_data["organic_matter"]*used_config['organic_matter']['value']['a']
                     + used_config['organic_matter']['value']['b'], 2)))
 
         self.clay_input.setText(str(sample_data["clay"]) if sample_data["clay"] is not None else '')
@@ -154,7 +155,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
             if self.mode == 'register':
                 self.clean_input()
         except ValueError as e:
-            widget: AlertWindow = AlertWindow(f"Erro: {str(e)}")
+            widget: AlertWindow = AlertWindow(f"Erro: {handle_exception(e)}")
             widget.exec()
         except TypeError as e:
             widget: AlertWindow = AlertWindow(f"Erro: você deve preencher o restante dos valores granulométricos.")

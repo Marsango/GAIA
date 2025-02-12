@@ -20,7 +20,7 @@ class PropertyWindow(QDialog, PropertyDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.requester_list: list[sqlite3.Row] | None = None
         self.property_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.property_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -88,8 +88,6 @@ class PropertyWindow(QDialog, PropertyDialog):
 
             dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, table_type="property", message="Deseja deletar todos as propriedades selecionadas?")
             dialog.exec()
-            successful_dialog: AlertWindow = AlertWindow("Solicitante deletado com sucesso!")
-            successful_dialog.exec()
 
         except Exception as e:
             error = handle_exception(e)

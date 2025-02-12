@@ -26,7 +26,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.sample_id = sample_id
         self.label.setText('Convênio: ')
         self.parameters_table.verticalHeader().setVisible(False)
@@ -59,6 +59,33 @@ class GenerateReport(QDialog, GenerateReportDialog):
             "CTC Potencial": "ctc"
         }
 
+        self.__reverse_element_sample_mapping = {
+            'phosphorus': 'Fósforo - P',
+            'potassium': 'Potássio - K',
+            'copper': 'Cobre - Cu',
+            'organic_matter': 'Matéria Orgânica - MO',
+            'iron': 'Ferro - Fe',
+            'zinc': 'Zinco - Zn',
+            'manganese': 'Manganês - Mn',
+            'ph': 'pH CaCl',
+            'smp': 'Índice SMP',
+            'aluminum': 'Alumínio - Al',
+            'h_al': 'H + Al',
+            'calcium': 'Cálcio - Ca',
+            'magnesium': 'Magnésio - Mg',
+            'base_sum': 'Soma de Bases - SB',
+            'v_percent': 'V (%)',
+            'aluminum_saturation': 'Sat. Alumínio',
+            'effective_ctc': 'CTC Efetiva',
+            'ctc': 'CTC Potencial'
+        }
+        self.__translate_keys_dict = {
+            'very low': 'Muito Baixo',
+            'low': 'Baixo',
+            'medium': 'Médio',
+            'high': 'Alto',
+            'very high': 'Muito Alto'
+        }
         for row, name in enumerate(available_graphs):
             check_box_item: QTableWidgetItem = QTableWidgetItem(name)
             check_box_item.setText(name)
@@ -108,31 +135,38 @@ class GenerateReport(QDialog, GenerateReportDialog):
             widget: AlertWindow = AlertWindow(error_message)
             widget.exec()
             return
-        file_path = self.open_save_dialog()
-        sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
-        sample_values: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
-        reference: dict[str, dict[str, float]] = self.get_selected_parameters()
-        report_id: int = db.get_next_report_id()
-        script_path: Path = Path(__file__).resolve()
-        backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
-        report: Report = Report(file_location=str(backup_path), agreement=self.technician_input.text())
-        report.generate_pdf(sample_info, file_path, report_id, sample_values, reference)
-        shutil.copy(file_path, backup_path)
-        db.insert_report(report, self.sample_id)
-        db.close_connection()
+        try:
+            file_path = self.open_save_dialog()
+            sample_info: sqlite3.Row = db.get_sample_info(self.sample_id)
+            sample_values: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
+            reference: dict[str, dict[str, float]] = self.get_selected_parameters()
+            report_id: int = db.get_next_report_id()
+            script_path: Path = Path(__file__).resolve()
+            backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
+            report: Report = Report(file_location=str(backup_path), agreement=self.technician_input.text())
+            report.generate_pdf(sample_info, file_path, report_id, sample_values, reference)
+            shutil.copy(file_path, backup_path)
+            db.insert_report(report, self.sample_id)
+            dialog: AlertWindow = AlertWindow("Laudo salvo com sucesso!")
+            dialog.exec()
+        except Exception as e:
+            widget: AlertWindow = AlertWindow(f'Erro: {str(e)}')
+            widget.exec()
+        finally:
+            db.close_connection()
 
     def open_save_dialog(self) -> str:
         filename: QFileDialog.getSaveFileName = QFileDialog.getSaveFileName(filter="*.pdf")
         return filename[0]
 
+
     def verify_consistency(self, selected_parameters: dict[str, dict[str, float]]) -> None:
         for parameter, values in selected_parameters.items():
             for (key_a, val_a), (key_b, val_b) in pairwise(values.items()):
                 if val_a >= val_b:
-                    error_message = f"Erro: o valor {key_a} não pode ser maior que o {key_b} em {parameter}."
-                    widget: AlertWindow = AlertWindow(error_message)
-                    widget.exec()
-                    return
+                    error_message = (f"Erro: o valor {self.__translate_keys_dict[key_a]} não pode ser maior ou igual a {self.__translate_keys_dict[key_b]}"
+                                     f" em {self.__reverse_element_sample_mapping[parameter]}.")
+                    raise ValueError(error_message)
 
 
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:

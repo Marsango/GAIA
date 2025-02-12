@@ -14,5 +14,5 @@ class InfoWindow(QDialog, InfoDialog):
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "interface",
             "images"
-        ).replace("\\", "/") + "/logo_lab.png"))
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.pushButton.clicked.connect(self.close)

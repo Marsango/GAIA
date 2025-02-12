@@ -1,18 +1,18 @@
 import sqlite3
 import os
-import sys
 from backend.classes.Sample import Sample
 from backend.classes.Report import Report
 from backend.classes.Person import Person
 from backend.classes.Address import Address
 from backend.classes.Company import Company
+from backend.classes.exceptions import CNPJAlreadyExistsError
 from backend.classes.utils import *
 from backend.classes.Property import Property
 
 
 class Database:
     def __init__(self) -> None:
-        base_dir: str = os.path.dirname(sys.executable)
+        base_dir: str = os.path.dirname(os.path.abspath(__file__))
         db_path: str = os.path.join(base_dir, 'soil_analysis.db')
         self.__con: sqlite3.Connection = sqlite3.connect(db_path)
         self.__con.row_factory = sqlite3.Row
@@ -64,7 +64,7 @@ class Database:
         latitude float, smp float, longitude float, depth float, phosphorus float, potassium float, organic_matter float, ph float,
          aluminum float, h_al float, calcium float, magnesium float, copper float, iron float, manganese float, 
          zinc float, base_sum float, clay float, silte float, classification string, sand float, ctc float, v_percent float, aluminum_saturation float,
-        effective_ctc float, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
+        effective_ctc float, used_config, fk_property_id, FOREIGN KEY (fk_property_id) REFERENCES property(id) ON DELETE CASCADE)""")
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS report(id INTEGER PRIMARY KEY, file_location varchar(255), agreement varchar(255), fk_sample_id integer,
         FOREIGN KEY (fk_sample_id) REFERENCES sample(id) ON DELETE CASCADE)""")
         self.__con.commit()
@@ -115,7 +115,7 @@ class Database:
                 phosphorus = :phosphorus, potassium = :potassium, organic_matter = :organic_matter, ph = :ph,
                 aluminum = :aluminum, h_al = :h_al, calcium = :calcium, magnesium = :magnesium, copper = :copper,
                 iron = :iron, manganese = :manganese, zinc = :zinc, base_sum = :base_sum, ctc = :ctc, v_percent = :v_percent,
-                aluminum_saturation = :aluminum_saturation, effective_ctc = :effective_ctc, smp = :smp, silte = :silte,
+                aluminum_saturation = :aluminum_saturation, effective_ctc = :effective_ctc, used_config = :used_config, smp = :smp, silte = :silte,
                  sand = :sand, clay =:clay, classification = :classification
             WHERE id = :id
         """, sample_dict)
@@ -187,8 +187,13 @@ class Database:
         requester_id: int = self.insert_requester(company, address_id)
         company_dict: dict[str, Any] = to_dict(company)
         company_dict['requester_id'] = requester_id
-        self.__cur.execute("""INSERT INTO company(company_name, cnpj, fk_requester_id)
-        VALUES(:company_name, :cnpj, :requester_id)""", company_dict)
+        try:
+            self.__cur.execute("""INSERT INTO company(company_name, cnpj, fk_requester_id)
+            VALUES(:company_name, :cnpj, :requester_id)""", company_dict)
+        except sqlite3.IntegrityError as e:
+            print(str(e))
+            if 'UNIQUE constraint failed: company.cnpj' in str(e):
+                raise CNPJAlreadyExistsError(company_dict['cnpj'])
         self.__con.commit()
 
     def insert_requester(self, requester: Person | Company, address_id: int) -> int:
@@ -272,13 +277,13 @@ class Database:
             description, sample_number, collection_date, total_area, latitude, longitude, 
             depth, phosphorus, potassium, organic_matter, ph, aluminum, h_al, calcium, magnesium, 
             copper, iron, manganese, zinc, base_sum, ctc, v_percent, aluminum_saturation,
-            effective_ctc, fk_property_id, smp, silte, sand, clay, classification
+            effective_ctc, fk_property_id, smp, silte, sand, clay, classification, used_config
         ) 
         VALUES(
             :description, :sample_number, :collection_date, :total_area, :latitude, :longitude, 
             :depth, :phosphorus, :potassium, :organic_matter, :ph, :aluminum, :h_al, :calcium, 
             :magnesium, :copper, :iron, :manganese, :zinc, :base_sum, :ctc, :v_percent, 
-            :aluminum_saturation, :effective_ctc, :property_id, :smp, :silte, :sand, :clay, :classification
+            :aluminum_saturation, :effective_ctc, :property_id, :smp, :silte, :sand, :clay, :classification, :used_config
         )
         """, sample_dict)
         
