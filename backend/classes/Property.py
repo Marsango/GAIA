@@ -10,7 +10,18 @@ class Property:
         self.__country: str = country
         self.__state: str = state
         self.__city: str = city
-        self.__registration_number: str = registration_number
+        self.__registration_number: str | None = None
+        self.verify_registration_number(registration_number)
 
     def get_location(self) -> dict[str, str]:
         return {"country": self.__country, "state": self.__state, "city": self.__city, "location": self.__location}
+
+    def verify_registration_number(self, registration_number) -> None:
+        try:
+            int(registration_number)
+        except:
+            raise ValueError("Error with values of 'registration_number'")
+        if int(registration_number) >= 0:
+            self.__registration_number = registration_number
+        else:
+            raise ValueError("Error with values of 'registration_number'")

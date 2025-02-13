@@ -1,3 +1,6 @@
+import os
+
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from interface.base_windows.register_property import RegisterPropertyDialog
 from PySide6.QtCore import Qt
@@ -13,6 +16,11 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
         self.current_property_id: int | None = None
         self.setupUi(self)
         self.setWindowTitle('Registro de propriedade')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
         self.create_country_completer()
         self.country_input.editingFinished.connect(self.country_changed)
@@ -21,12 +29,12 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
         self.mode: str = 'register'
 
     def edit_mode(self, property_data) -> None:
-        self.country_input.insert(property_data['country'])
-        self.state_input.insert(property_data['state'])
-        self.city_input.insert(property_data['city'])
-        self.name_input.insert(property_data['name'])
-        self.registration_number_input.insert(str(property_data['registration_number']))
-        self.location_input.insert(property_data['location'])
+        self.country_input.setText(property_data['country'])
+        self.state_input.setText(property_data['state'])
+        self.city_input.setText(property_data['city'])
+        self.name_input.setText(property_data['name'])
+        self.registration_number_input.setText(str(property_data['registration_number']))
+        self.location_input.setText(property_data['location'])
 
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de propriedade')
@@ -65,7 +73,7 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
             if self.mode == 'register':
                 db.insert_property(property, self.requester_id)
                 success: str = "Propriedade registrada com sucesso!"
-            elif self.mode == 'edit':
+            else:
                 db.edit_property(property, self.current_property_id)
                 success: str = "Alterações salvas com sucesso!"
             widget: AlertWindow = AlertWindow(success)

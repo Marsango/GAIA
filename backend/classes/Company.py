@@ -25,7 +25,7 @@ class Company(Requester):
             return 11 - sum_verificator
 
 
-    def verify_cnpj(self, cnpj: str) -> str:
+    def verify_cnpj(self, cnpj: str) -> None:
         _sum: int = 0
         if len(cnpj) != 14 or any(not char.isdigit() for char in cnpj):
             raise ValueError("Error with values of 'cnpj'")

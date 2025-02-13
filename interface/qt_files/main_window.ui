@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1958</width>
+    <height>1151</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="frame">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(70, 0, 0);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap>../../../../Downloads/UpscaleImage_1_20240722.jpeg</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>false</bool>
+         </property>
+         <property name="textInteractionFlags">
+          <set>Qt::NoTextInteraction</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1958</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuCadastro">
+    <property name="title">
+     <string>Cadastro</string>
+    </property>
+    <addaction name="actionSolicitantes"/>
+    <addaction name="actionConsultar_laudo_2"/>
+   </widget>
+   <widget class="QMenu" name="menuConfigura_es">
+    <property name="title">
+     <string>Configuracoes</string>
+    </property>
+    <addaction name="actionFatores_vari_veis"/>
+    <addaction name="actionSobre"/>
+    <addaction name="actionLogo"/>
+    <addaction name="actionBackup"/>
+    <addaction name="actionSelo"/>
+   </widget>
+   <addaction name="menuCadastro"/>
+   <addaction name="menuConfigura_es"/>
+  </widget>
+  <action name="actionPropriedade">
+   <property name="text">
+    <string>Propriedade</string>
+   </property>
+  </action>
+  <action name="actionAmostra">
+   <property name="text">
+    <string>Amostra</string>
+   </property>
+  </action>
+  <action name="actionGerar_laudo">
+   <property name="text">
+    <string>Gerar laudo</string>
+   </property>
+  </action>
+  <action name="actionConsultar_laudo">
+   <property name="text">
+    <string>Consultar laudo</string>
+   </property>
+  </action>
+  <action name="actionGr_ficos">
+   <property name="text">
+    <string>Graficos</string>
+   </property>
+  </action>
+  <action name="actionFatores_vari_veis">
+   <property name="text">
+    <string>Fatores variaveis</string>
+   </property>
+  </action>
+  <action name="actionPessoa_F_sica">
+   <property name="text">
+    <string>Pessoa Física</string>
+   </property>
+  </action>
+  <action name="actionPessoa_Jur_dica">
+   <property name="text">
+    <string>Pessoa Jurídica</string>
+   </property>
+  </action>
+  <action name="actionSolicitantes">
+   <property name="text">
+    <string>Solicitantes</string>
+   </property>
+  </action>
+  <action name="actionSobre">
+   <property name="text">
+    <string>Sobre</string>
+   </property>
+  </action>
+  <action name="actionConsultar_laudo_2">
+   <property name="text">
+    <string>Consultar laudo</string>
+   </property>
+  </action>
+  <action name="actionLogo">
+   <property name="text">
+    <string>Logo</string>
+   </property>
+  </action>
+  <action name="actionBackup">
+   <property name="text">
+    <string>Backup</string>
+   </property>
+  </action>
+  <action name="actionSelo">
+   <property name="text">
+    <string>Selo</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

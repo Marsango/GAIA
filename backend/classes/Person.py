@@ -1,10 +1,9 @@
 from backend.classes.Requester import Requester
 from datetime import date
-from typing import get_type_hints, Any
+from typing import get_type_hints
 from backend.classes.utils import verify_type
 from backend.classes.Address import Address
 from datetime import datetime
-from .exceptions import CPFAlreadyExistsError
 
 
 class Person(Requester):
@@ -12,6 +11,7 @@ class Person(Requester):
     def __init__(self, phone_number: str, email: str, name: str, birth_date: str, cpf: str, address: Address) -> None:
         self.__birth_date: date | None = None
         self.__cpf: str | None = None
+        self.__email: str | None = None
         verify_type(get_type_hints(Person.__init__), locals())
         self.verify_valid_date(birth_date)
         self.verify_valid_cpf(cpf)
@@ -38,7 +38,7 @@ class Person(Requester):
             digit_sum: int = sum([int(x)*(len(cpf_fraction) + 1 - i) for i, x in enumerate(cpf_fraction)])
             calculated_digit: int = (digit_sum * 10 % 11) % 10
             if int(expected_digit) != calculated_digit:
-                raise ValueError("Error with values of 'cpf'")
+                raise ValueError(f"CPF inválido: erro no dígito verificador {expected_digit}.")
 
         verify_valid_digit(first_digit_verification, cpf[:9])
         verify_valid_digit(second_digit_verification, cpf[:10])

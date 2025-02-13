@@ -18,8 +18,11 @@ class GraphParameters:
             return {"very low": 0, "low": 0, "medium": 0, "high": 0, "very high": 0}
 
     def set_graph_parameters(self, graph_type: str, new_values: dict[str, float]):
-        with open(self.file_location, "r") as file:
-            saved_parameters: dict[Any, Any] = json.load(file)
-        saved_parameters[graph_type] = new_values
+        try:
+            with open(self.file_location, "r") as file:
+                saved_parameters: dict[Any, Any] = json.load(file)
+            saved_parameters[graph_type] = new_values
+        except:
+            saved_parameters = {}
         with open(self.file_location, "w") as file:
             json.dump(saved_parameters, file)

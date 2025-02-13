@@ -138,7 +138,62 @@
        </widget>
       </item>
       <item>
+       <widget class="QFrame" name="frame_3">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>100</height>
+         </size>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Filtro</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="search_parameter">
+           <item>
+            <property name="text">
+             <string>Nome</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CPF/CNPJ</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Digite:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="search_bar"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
        <widget class="QTableWidget" name="requester_table">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>337</height>
+         </size>
+        </property>
         <column>
          <property name="text">
           <string>id</string>

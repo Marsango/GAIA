@@ -13,14 +13,20 @@ class Requester:
         self.verify_valid_phone_number(phone_number)
         self.__address: Address = address
 
-    def verify_valid_email(self, email: str) -> str:
+    def verify_valid_email(self, email: str) -> None:
         email_regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
         if not re.match(email_regex, email):
             raise ValueError("Error with values of 'email'")
         self.__email = email
 
-    def verify_valid_phone_number(self, phone_number: str) -> str:
+    def verify_valid_phone_number(self, phone_number: str) -> None:
         phone_regex = r"^\+?[\d\s()-]{7,15}$"
         if not re.match(phone_regex, phone_number):
             raise ValueError("Error with values of 'phone_number'")
         self.__phone_number = phone_number
+
+    def get_phone_number(self) -> str:
+        return self.__phone_number
+
+    def get_email(self) -> str:
+        return self.__email

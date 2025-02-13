@@ -122,6 +122,19 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="csv_button">
+           <property name="maximumSize">
+            <size>
+             <width>125</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Exportar para CSV</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="add">
            <property name="maximumSize">
             <size>

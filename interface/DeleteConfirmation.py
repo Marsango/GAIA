@@ -1,3 +1,7 @@
+import os
+
+from PySide6.QtGui import QPixmap
+
 from backend.classes.Database import Database
 from backend.classes.utils import handle_exception
 from interface.AlertWindow import AlertWindow
@@ -10,12 +14,18 @@ class DeleteConfirmation(QDialog, DeleteDialog):
         self.setupUi(self)
         self.setWindowTitle('Confirmação')
         self.confirm_button.clicked.connect(self.delete_action)
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.cancel_button.clicked.connect(self.close)
         self.list_of_ids: list[int] = list_of_ids
         self.table_type: str = table_type
         message = kwargs.get('message')
         if message:
             self.label.setText(f"<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">{message}</span></p></body></html>")
+        self.translate_dict = {'person': 'Solicitante', 'company': 'Solicitante', 'property': 'Propriedade', 'sample': 'Amostra'}
 
     def delete_action(self) -> None:
         db: Database = Database()
@@ -29,6 +39,10 @@ class DeleteConfirmation(QDialog, DeleteDialog):
                     db.delete_property(id)
                 elif self.table_type == 'sample':
                     db.delete_sample(id)
+            plural: str = 's' if len(self.list_of_ids) > 1 else ''
+            gender: str = 'a' if self.table_type == 'property' or self.table_type == 'sample' else 'o'
+            widget: AlertWindow = AlertWindow(f'{self.translate_dict[self.table_type]}{plural} deletad{gender}{plural} com sucesso!')
+            widget.exec()
         except Exception as e:
             error = handle_exception(e)
             widget: AlertWindow = AlertWindow(error)

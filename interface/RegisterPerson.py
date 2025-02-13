@@ -1,3 +1,6 @@
+import os
+
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from interface.base_windows.register_person import RegisterPersonDialog
 from PySide6.QtCore import Qt
@@ -10,32 +13,39 @@ from backend.classes.utils import handle_exception
 class RegisterPerson(QDialog, RegisterPersonDialog):
     def __init__(self) -> None:
         super(RegisterPerson, self).__init__()
-        self.current_person_id = None
+        self.requester_id: int | None = None
+        self.current_person_id: int | None = None
         self.setupUi(self)
         self.setWindowTitle('Registro de Pessoa Física')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
         self.create_country_completer()
         self.country_input.editingFinished.connect(self.country_changed)
         self.state_input.editingFinished.connect(self.state_changed)
         self.city_input.editingFinished.connect(self.city_changed)
-        self.mode = 'register'
+        self.mode: str = 'register'
 
     def edit_mode(self, person_data) -> None:
-        self.country_input.insert(person_data['country'])
-        self.state_input.insert(person_data['state'])
-        self.city_input.insert(person_data['city'])
-        self.street_input.insert(person_data['street'])
-        self.address_number_input.insert(str(person_data['address_number']))
-        self.cep_input.insert(person_data['cep'])
-        self.name_input.insert(person_data['name'])
-        self.email_input.insert(person_data['email'])
-        self.cpf_input.insert(person_data['cpf'])
-        self.birth_date_input.insert(person_data['birth_date'])
-        self.phone_number_input.insert(person_data['phone_number'])
+        self.country_input.setText(person_data['country'])
+        self.state_input.setText(person_data['state'])
+        self.city_input.setText(person_data['city'])
+        self.street_input.setText(person_data['street'])
+        self.address_number_input.setText(str(person_data['address_number']))
+        self.cep_input.setText(person_data['cep'])
+        self.name_input.setText(person_data['name'])
+        self.email_input.setText(person_data['email'])
+        self.cpf_input.setText(person_data['cpf'])
+        self.birth_date_input.setText(person_data['birth_date'])
+        self.phone_number_input.setText(person_data['phone_number'])
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de Pessoa Física')
         self.mode = 'edit'
         self.current_person_id = int(person_data['id'])
+        self.requester_id = int(person_data['requester_id'])
 
 
     def create_country_completer(self) -> None:
@@ -84,7 +94,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
                 db.insert_person(person, address)
                 success_text: str = "Solicitante registrado com sucesso!"
             elif self.mode == 'edit':
-                db.edit_person(person, address, self.current_person_id)
+                db.edit_person(person, address, self.current_person_id, self.requester_id)
                 success_text: str = "Alterações salvas com sucesso!"
             widget: AlertWindow = AlertWindow(success_text)
             widget.exec()

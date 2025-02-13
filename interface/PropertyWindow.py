@@ -1,3 +1,6 @@
+import os
+
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.property_window import PropertyDialog
 from interface.DeleteConfirmation import DeleteConfirmation
@@ -13,6 +16,11 @@ class PropertyWindow(QDialog, PropertyDialog):
         super(PropertyWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Propriedades cadastradas')
+        self.setWindowIcon(QPixmap(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "interface",
+            "images"
+        ).replace("\\", "/") + "/GAIA_icon.png"))
         self.requester_list: list[sqlite3.Row] | None = None
         self.property_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.property_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -80,8 +88,6 @@ class PropertyWindow(QDialog, PropertyDialog):
 
             dialog: DeleteConfirmation = DeleteConfirmation(list_of_ids=list_of_ids, table_type="property", message="Deseja deletar todos as propriedades selecionadas?")
             dialog.exec()
-            successful_dialog: AlertWindow = AlertWindow("Solicitante deletado com sucesso!")
-            successful_dialog.exec()
 
         except Exception as e:
             error = handle_exception(e)

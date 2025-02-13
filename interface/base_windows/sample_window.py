@@ -32,13 +32,13 @@ class SampleDialog(object):
         self.frame = QFrame(Dialog)
         self.frame.setObjectName(u"frame")
         self.frame.setMinimumSize(QSize(712, 0))
-        self.frame.setFrameShape(QFrame.NoFrame)
+        self.frame.setFrameShape(QFrame.Shape.NoFrame)
         self.verticalLayout_2 = QVBoxLayout(self.frame)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.frame_3 = QFrame(self.frame)
         self.frame_3.setObjectName(u"frame_3")
-        self.frame_3.setFrameShape(QFrame.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Raised)
+        self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.label = QLabel(self.frame_3)
@@ -57,8 +57,8 @@ class SampleDialog(object):
 
         self.frame_4 = QFrame(self.frame)
         self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setFrameShape(QFrame.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Raised)
+        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_4)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.label_2 = QLabel(self.frame_4)
@@ -66,11 +66,11 @@ class SampleDialog(object):
 
         self.horizontalLayout_3.addWidget(self.label_2)
 
-        self._property = QLineEdit(self.frame_4)
-        self._property.setObjectName(u"property")
-        self._property.setReadOnly(True)
+        self.property = QLineEdit(self.frame_4)
+        self.property.setObjectName(u"property")
+        self.property.setReadOnly(True)
 
-        self.horizontalLayout_3.addWidget(self._property)
+        self.horizontalLayout_3.addWidget(self.property)
 
 
         self.verticalLayout_2.addWidget(self.frame_4)
@@ -79,7 +79,7 @@ class SampleDialog(object):
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setMinimumSize(QSize(720, 46))
         self.frame_2.setMaximumSize(QSize(625, 30))
-        self.frame_2.setFrameShape(QFrame.NoFrame)
+        self.frame_2.setFrameShape(QFrame.Shape.NoFrame)
         self.horizontalLayout = QHBoxLayout(self.frame_2)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.generate_report = QPushButton(self.frame_2)
@@ -87,6 +87,12 @@ class SampleDialog(object):
         self.generate_report.setMaximumSize(QSize(100, 16777215))
 
         self.horizontalLayout.addWidget(self.generate_report)
+
+        self.csv_button = QPushButton(self.frame_2)
+        self.csv_button.setObjectName(u"csv_button")
+        self.csv_button.setMaximumSize(QSize(125, 16777215))
+
+        self.horizontalLayout.addWidget(self.csv_button)
 
         self.add = QPushButton(self.frame_2)
         self.add.setObjectName(u"add")
@@ -125,7 +131,7 @@ class SampleDialog(object):
         self.sample_table.setHorizontalHeaderItem(3, __qtablewidgetitem3)
         __qtablewidgetitem4 = QTableWidgetItem()
         self.sample_table.setHorizontalHeaderItem(4, __qtablewidgetitem4)
-        self.sample_table.setObjectName(u"property_table")
+        self.sample_table.setObjectName(u"sample_table")
         self.sample_table.horizontalHeader().setDefaultSectionSize(142)
 
         self.verticalLayout_2.addWidget(self.sample_table)
@@ -144,6 +150,7 @@ class SampleDialog(object):
         self.label.setText(QCoreApplication.translate("Dialog", u"Propriet\u00e1rio:", None))
         self.label_2.setText(QCoreApplication.translate("Dialog", u"Propriedade:", None))
         self.generate_report.setText(QCoreApplication.translate("Dialog", u"Gerar Laudo", None))
+        self.csv_button.setText(QCoreApplication.translate("Dialog", u"Exportar para CSV", None))
         self.add.setText(QCoreApplication.translate("Dialog", u"Adicionar", None))
         self.edit.setText(QCoreApplication.translate("Dialog", u"Editar", None))
         self.delete_2.setText(QCoreApplication.translate("Dialog", u"Excluir", None))
