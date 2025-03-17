@@ -1,62 +1,59 @@
 # GAIA
-## Siga as intruções
-### Passo 1: 
 
-- Antes de começar a contribuir para o projeto, certifique-se de ter o pyhton instalados no seu sistema:
+![GitHub repo size](https://img.shields.io/github/repo-size/Marsango/GAIA?style=for-the-badge)
+![GitHub language count](https://img.shields.io/github/languages/count/Marsango/GAIA?style=for-the-badge)
+![GitHub forks](https://img.shields.io/github/forks/Marsango/GAIA?style=for-the-badge)
+![Bitbucket open issues](https://img.shields.io/bitbucket/issues/Marsango/GAIA?style=for-the-badge)
+![Bitbucket open pull requests](https://img.shields.io/bitbucket/pr-raw/Marsango/GAIA?style=for-the-badge)
 
-### Passo 2: Clonar o Repositório
+<img src="https://github.com/Marsango/GAIA/blob/develop/interface/images/background.svg">
 
-- Você precisa clonar o repositório do projeto Node.js para a sua máquina local. Use o Git para fazer isso:
+> Software para análise de solos desenvolvido para o Laboratório de Análise de Solos da Universidade Tecnológica Federal do Paraná, Campus Pato Branco.
+
+### Ajustes e melhorias
+
+O projeto ainda está em desenvolvimento e as próximas atualizações serão voltadas para as seguintes tarefas:
+
+- [ ] Estilizar com CSS.
+- [ ] Integração com a WEB.
+- [ ] Descentralização do banco de dados.
+- [ ] Adquirir dados diretamente da máquina
+
+## 💻 Pré-requisitos
+
+- Instale a versão 3.12 ou superior do python.
+
+## 🚀 Instalando o gaia
+
+Para instalar o GAIA como usuário, siga estas etapas:
+
+- Clone o repositório
+- Acesse a pasta build/distr
+- Abra o arquivo GAIA.exe
+
+  A instalação está feita para o usuário.
+
+  Para instalar o GAIA como desenvolvedor, siga estas etapas:
+
+- Clone o repositório
+- Acesse a pasta em que o projeto foi clonado.
 ```
-git clone <URL-do-repositório>
-cd <diretório-do-projeto>
+pip install requirements.txt
 ```
-### Passo 3: Baixar as Bibliotecas 
-
-- Instale as seguintes bibliotecas:
-
-chardet  
-contourpy  
-cycler  
-fonttools  
-kiwisolver  
-matplotlib  
-numpy  
-packaging  
-pillow  
-pip  
-pyparsing  
-PyQt6  
-PyQt6-Qt6  
-PyQt6_sip  
-PySide6_Essentials  
-python-dateutil  
-reportlab  
-shiboken6  
-six  
-
+- Pra rodar o software, dê o seguinte comando:
 ```
-pip install <Nome da Biblioteca>  
-```
-
-### Passo 4: Iniciar a Aplicação 
-
-- Depois de instalar as dependências, você pode iniciar a aplicação :
-
-```
-python -m interface  
+python -m interface
 ```
 
-### Agora é só codar
+## 📫 Contribuindo para o GAIA
 
+Para contribuir com o GAIA, siga estas etapas:
 
-### Como contribuir 
+1. Faça um fork deste repositório.
+2. Crie um branch: `git checkout -b <nome_branch>`.
+3. Faça suas alterações e confirme-as: `git commit -m '<mensagem_commit>'`
+4. Envie para o branch original: `git push origin <nome_do_projeto> / <local>`
+5. Crie a solicitação de pull.
 
-- Faça uma branch com o nome da feature que você está desenvolvendo , e faça os commits nela.
-- Posteriormente suas alterações serão revisadas e "mergeadas" com a main.
+Como alternativa, consulte a documentação do GitHub em [como criar uma solicitação pull](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request).
 
-```
-git add .
-git commit -m "Sua mensagem de confirmação aqui"
-git push
-```
