@@ -1,10 +1,11 @@
 import "./App.css";
-import ContentContainer from "./components/ContentContainer/ContentContainer.jsx";
+import ContentContainer from "./components/ContentContainer/ContentContainer";
+import UserArea from "./components/UserArea/UserArea"
 function App() {
   return (
     <>
       <div className="app-container">
-        <ContentContainer></ContentContainer>
+      <UserArea></UserArea>
       </div>
     </>
   );

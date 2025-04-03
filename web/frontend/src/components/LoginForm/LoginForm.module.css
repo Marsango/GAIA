@@ -13,6 +13,7 @@ input {
   margin: 7px;
   height: 33%;
   width: 68%;
+  text-indent: 10px;
 }
 
 button {
@@ -23,8 +24,4 @@ button {
   cursor: pointer;
   background-color: #66452a;
   color: white;
-}
-
-input::placeholder {
-  padding: 10px;
 }

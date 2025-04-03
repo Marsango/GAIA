@@ -1,5 +1,5 @@
 import styles from "./ContentContainer.module.css"
-import LoginForm from "../LoginForm/LoginForm.jsx"
+import LoginForm from "../LoginForm/LoginForm.js"
 
 export default function ContentContainer(){
     return (
