@@ -1,0 +1,12 @@
+.pdf-container {
+    width: 100%;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+  }
+  
+  .pdf-container canvas {
+    display: block;
+  }
+  

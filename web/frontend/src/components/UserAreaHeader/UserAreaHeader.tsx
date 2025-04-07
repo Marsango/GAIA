@@ -1,6 +1,11 @@
 import styles from "./UserAreaHeader.module.css"
+import { RefObject } from 'react'
 
-export default function UserAreaHeader( {headerRef} ){
+type UserAreaHeaderProps = {
+    headerRef: RefObject<HTMLDivElement | null>
+}
+
+export default function UserAreaHeader( {headerRef}: UserAreaHeaderProps ){
     return (
         <div ref={headerRef} className={styles["header-container"]}>
             <div className={styles["left-side"]}>Laboratório de Solos da UTFPR</div>
