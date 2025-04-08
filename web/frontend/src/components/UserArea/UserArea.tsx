@@ -16,7 +16,7 @@ export default function UserArea() {
   const sampleContainerRef = useRef<HTMLDivElement>(null);
   const mainContainerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  const itemHeight = 100;
+  const [itemHeight, setItemHeight] = useState(100);
   const [elementsInList, setElementsInList] = useState(0);
   const isScrolling = useRef(false);
   const scrollTimeoutRef = useRef<number | null>(null);
@@ -32,7 +32,8 @@ export default function UserArea() {
           mainContainerRef.current.getBoundingClientRect().height -
           headerRef.current.getBoundingClientRect().height -
           48;
-        const newElementsInList = Math.floor(availableHeight / itemHeight);
+        const newElementsInList = Math.floor(availableHeight / 100);
+        const newHeight = availableHeight/newElementsInList;
 
         setElementsInList((prev) => {
           if (prev !== newElementsInList) {
@@ -41,9 +42,21 @@ export default function UserArea() {
           return prev;
         });
 
+        setItemHeight((prev) => {
+          if (prev !== newHeight){
+            return newHeight;
+          }
+          return prev;
+        })
+
         sampleContainerRef.current.style.height = `${
-          Math.floor(availableHeight / 100) * 100 + 48
+          newHeight * newElementsInList + 48
         }px`;
+        
+        if (listRef.current){
+          listRef.current.style.gridTemplateRows = `repeat(auto-fill, ${newHeight}px)`;
+        }
+
         if (pdfViewerRef.current) {
           pdfViewerRef.current.style.height = `${
             availableHeight + 48
@@ -100,7 +113,7 @@ export default function UserArea() {
           >
             {array_test().map((text: string) => (
               <li>
-                <button>{text}</button>
+                <button style={{height: `${itemHeight}px`}}>{text}</button>
               </li>
             ))}
           </ul>

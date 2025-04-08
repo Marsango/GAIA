@@ -13,6 +13,7 @@ export default function UserAreaHeader( {headerRef}: UserAreaHeaderProps ){
                 <button className={styles["header-button"]}>Laudos</button>
                 <button className={styles["header-button"]}>Contato</button>
                 <button className={styles["header-button"]}>Minha conta</button>
+                <div>Bem-vindo, fulano!</div>
             </div>
         </div>
     )
