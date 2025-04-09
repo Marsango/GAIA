@@ -41,3 +41,10 @@
 .header-button:hover{
     background-color: #4e3521;
 }
+
+.header-button.active{
+    background-color: #3d2a1a;
+}
+.header-button.download:active{
+    background-color: #7a5536;
+}

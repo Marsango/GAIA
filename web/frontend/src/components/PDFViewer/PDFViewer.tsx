@@ -1,7 +1,7 @@
 import React, { RefObject, useEffect, useRef } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import type { RenderParameters } from "pdfjs-dist/types/src/display/api";
-import styles from "./PDFViewer.module.css"
+import styles from "./PDFViewer.module.css";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -47,7 +47,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, ref }) => {
 
   return (
     <div ref={ref} className={styles["pdf-container"]}>
-      <canvas ref={canvasRef}/>
+      <canvas ref={canvasRef} />
     </div>
   );
 };
