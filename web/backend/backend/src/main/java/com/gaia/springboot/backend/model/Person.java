@@ -18,18 +18,16 @@ public class Person {
     @Column(name = "cpf", unique = true)
     private String cpf;
 
-    @Column(name = "email")
-    private String email;
-
-    @Column(name = "phone_number")
-    private String phoneNumber;
-
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "fk_requester_id")
     private Requester requester;
 
     public Person(){
 
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getName() {
@@ -48,14 +46,6 @@ public class Person {
         this.birthDate = birthDate;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public String getCpf() {
         return cpf;
     }
@@ -64,20 +54,20 @@ public class Person {
         this.cpf = cpf;
     }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
     public Requester getRequester() {
         return requester;
     }
 
-    public void setRequester(Requester requester) {
-        this.requester = requester;
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", birthDate='" + birthDate + '\'' +
+                ", cpf='" + cpf + '\'' +
+                ", requester=" + requester +
+                '}';
     }
 }
 

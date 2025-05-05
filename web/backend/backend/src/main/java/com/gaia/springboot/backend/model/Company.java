@@ -43,8 +43,5 @@ public class Company {
         return requester;
     }
 
-    public void setRequester(Requester requester) {
-        this.requester = requester;
-    }
 }
 

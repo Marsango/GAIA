@@ -66,8 +66,5 @@ public class Property {
         return requester;
     }
 
-    public void setRequester(Requester requester) {
-        this.requester = requester;
-    }
 }
 

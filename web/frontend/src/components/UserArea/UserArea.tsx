@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import PDFViewer from "../PDFViewer/PDFViewer";
 import SampleList from "../SampleList/SampleList";
 import MyAccountArea from "../MyAccountArea/MyAccountArea";
-import LoginForm from "../LoginForm/LoginForm";
 
 export default function UserArea() {
   const mainContainerRef = useRef<HTMLDivElement>(null);

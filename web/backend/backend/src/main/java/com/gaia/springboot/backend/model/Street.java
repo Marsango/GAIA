@@ -24,15 +24,9 @@ public class Street {
         return streetName;
     }
 
-    public void setStreetName(String streetName) {
-        this.streetName = streetName;
-    }
 
     public City getCity() {
         return city;
     }
 
-    public void setCity(City city) {
-        this.city = city;
-    }
 }

@@ -15,12 +15,12 @@ public class Report {
     @Column(name = "agreement")
     private String agreement;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "fk_sample_id")
     private Sample sample;
 
     public Report(){
-        
+
     }
 
     public String getFileLocation() {

@@ -12,5 +12,26 @@ public class Country {
 
     @Column(name = "country_name", unique = true)
     private String countryName;
+
+    protected Country(){
+
+    }
+
+    public Country(String countryName){
+        this.countryName = countryName;
+    }
+
+    @Override
+    public String toString() {
+        return "Country{" +
+                "countryId=" + countryId +
+                ", countryName='" + countryName + '\'' +
+                '}';
+    }
+
+    public String getCountryName() {
+        return countryName;
+    }
+
 }
 

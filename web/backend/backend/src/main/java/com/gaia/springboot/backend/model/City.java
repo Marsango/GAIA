@@ -24,15 +24,10 @@ public class City {
         return cityName;
     }
 
-    public void setCityName(String cityName) {
-        this.cityName = cityName;
-    }
 
     public State getState() {
         return state;
     }
 
-    public void setState(State state) {
-        this.state = state;
-    }
+
 }
