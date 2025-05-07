@@ -70,11 +70,6 @@ class GetReportDialog(object):
 
         self.horizontalLayout_2.addWidget(self.frame_4)
 
-        self.close_button = QPushButton(self.frame_2)
-        self.close_button.setObjectName(u"close_button")
-
-        self.horizontalLayout_2.addWidget(self.close_button)
-
 
         self.verticalLayout.addWidget(self.frame_2)
 
@@ -95,6 +90,5 @@ class GetReportDialog(object):
         ___qtablewidgetitem3 = self.report_table.horizontalHeaderItem(3)
         ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"Propriedade", None));
         self.copy_button.setText(QCoreApplication.translate("Dialog", u"Fazer c\u00f3pia", None))
-        self.close_button.setText(QCoreApplication.translate("Dialog", u"Sair", None))
     # retranslateUi
 

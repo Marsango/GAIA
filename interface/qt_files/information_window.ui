@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>509</width>
+    <height>301</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Explicação:&lt;/p&gt;&lt;p&gt;Na configuração dos parâmetros, há as colunas muito baixo, baixo, médio, alto e muito alto.&lt;/p&gt;&lt;p&gt;Se valor &amp;lt; muito baixo, então muito baixo.&lt;/p&gt;&lt;p&gt;Se valor  &amp;gt;= muito baixo e  valor &amp;lt; baixo, então baixo.&lt;/p&gt;&lt;p&gt;Se valor &amp;gt;= baixo e valor &amp;lt; médio, então médio.&lt;/p&gt;&lt;p&gt;Se valor &amp;gt;= médio e &amp;lt; alto, então alto.&lt;/p&gt;&lt;p&gt;Se valor &amp;gt;= alto, então muito alto.&lt;/p&gt;&lt;p&gt;O valor muito alto em teoria não precisa definir, mas o software acusará erro caso não defina.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="ok_button">
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Ok!</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

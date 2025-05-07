@@ -100,6 +100,12 @@ class Report:
         self.__pdf.line(pos_horizontal1, pos_vertical2, pos_horizontal2, pos_vertical2)
         self.__pdf.line(pos_horizontal2, pos_vertical1, pos_horizontal2, pos_vertical2)
 
+    def format_cpf(self, cpf: str) -> str:
+        return f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+
+    def format_cnpj(self, cnpj: str) -> str:
+        return f"{cnpj[:2]}.{cnpj[2:5]}.{cnpj[5:8]}/{cnpj[8:12]}-{cnpj[12:]}"
+
     def write_main_info_square(self, info: sqlite3.Row, report_id: int) -> int:
         x_start: int = 75
         x_end: int = 515
@@ -108,7 +114,7 @@ class Report:
         self.__pdf.setFont('arial', 9)
         current_x: float = x_start
         current_y: int = y_start
-        document_text: str = f"CPF: {info['document_number']}" if info["document_type"] == "cpf" else f"CNPJ: {info['document_number']}"
+        document_text: str = f"CPF: {self.format_cpf(info['document_number'])}" if info["document_type"] == "cpf" else f"CNPJ: {self.format_cnpj(info['document_number'])}"
         texts_to_draw: list[str] = [
         f"Solicitante: {info['requester_name']} ?{document_text} ?",
         f"Propriedade: {info['property_name']} ?Município: {info['city']} ?UF: {info['state']} ?Matrícula: {info['registration_number']} ?",
