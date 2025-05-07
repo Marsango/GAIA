@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'register_person.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.7.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -34,8 +34,7 @@ class RegisterPersonDialog(object):
         self.top_frame.setStyleSheet(u"QFrame#top_frame { \n"
 " border: none; background: transparent;\n"
 " }")
-        self.top_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.top_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.top_frame.setFrameShape(QFrame.Shape.NoFrame)
         self.horizontalLayout_2 = QHBoxLayout(self.top_frame)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.left_frame = QFrame(self.top_frame)
@@ -43,8 +42,7 @@ class RegisterPersonDialog(object):
         self.left_frame.setStyleSheet(u"QFrame{\n"
 "border: none; background: transparent;\n"
 "}")
-        self.left_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.left_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.left_frame.setFrameShape(QFrame.Shape.NoFrame)
         self.verticalLayout_5 = QVBoxLayout(self.left_frame)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.personal_data_gbox = QGroupBox(self.left_frame)
@@ -57,8 +55,7 @@ class RegisterPersonDialog(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.frame = QFrame(self.personal_data_gbox)
         self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.Shape.NoFrame)
         self.verticalLayout_7 = QVBoxLayout(self.frame)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
         self.name_input = QLineEdit(self.frame)
@@ -76,8 +73,7 @@ class RegisterPersonDialog(object):
 
         self.frame_2 = QFrame(self.personal_data_gbox)
         self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_2.setFrameShape(QFrame.Shape.NoFrame)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_2)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.groupBox = QGroupBox(self.frame_2)
@@ -90,7 +86,6 @@ class RegisterPersonDialog(object):
         self.cpf_input.setObjectName(u"cpf_input")
         self.cpf_input.setMinimumSize(QSize(100, 15))
         self.cpf_input.setMaximumSize(QSize(100, 15))
-        self.cpf_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.verticalLayout_4.addWidget(self.cpf_input)
 
@@ -106,7 +101,6 @@ class RegisterPersonDialog(object):
         self.birth_date_input.setObjectName(u"birth_date_input")
         self.birth_date_input.setMinimumSize(QSize(80, 15))
         self.birth_date_input.setMaximumSize(QSize(80, 15))
-        self.birth_date_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.birth_date_input.setPlaceholderText(u"")
 
         self.horizontalLayout_5.addWidget(self.birth_date_input)
@@ -121,7 +115,6 @@ class RegisterPersonDialog(object):
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.phone_number_input = QLineEdit(self.groupBox_2)
         self.phone_number_input.setObjectName(u"phone_number_input")
-        self.phone_number_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.verticalLayout_6.addWidget(self.phone_number_input)
 
@@ -137,8 +130,7 @@ class RegisterPersonDialog(object):
         self.frame_4 = QFrame(self.left_frame)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setMaximumSize(QSize(16777215, 100))
-        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_4.setFrameShape(QFrame.Shape.NoFrame)
         self.horizontalLayout = QHBoxLayout(self.frame_4)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.register_button = QPushButton(self.frame_4)
@@ -222,6 +214,8 @@ class RegisterPersonDialog(object):
         self.street_input.setPlaceholderText(QCoreApplication.translate("Form", u"Rua", None))
         self.address_number_input.setText("")
         self.address_number_input.setPlaceholderText(QCoreApplication.translate("Form", u"N\u00famero", None))
+        self.cep_input.setInputMask(QCoreApplication.translate("Form", u"99999-999", None))
+        self.cep_input.setText(QCoreApplication.translate("Form", u"-", None))
         self.cep_input.setPlaceholderText(QCoreApplication.translate("Form", u"CEP", None))
     # retranslateUi
 

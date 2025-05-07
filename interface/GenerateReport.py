@@ -14,6 +14,7 @@ from interface.base_windows.generate_report import GenerateReportDialog
 from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from backend.classes.Report import Report
+from InformationWindow import InformationWindow
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QHeaderView, QFileDialog)
 
 
@@ -96,7 +97,12 @@ class GenerateReport(QDialog, GenerateReportDialog):
         self.get_graph_values()
         self.parameters_table.itemChanged.connect(self.update_graph_values)
         self.generate_report.clicked.connect(self.create_report)
+        self.info_button.clicked.connect(self.open_info_window)
 
+
+    def open_info_window(self):
+        dialog: InformationWindow = InformationWindow()
+        dialog.exec()
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:
         if item.column() != 0:

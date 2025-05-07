@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'generate_report.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.7.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -24,7 +24,7 @@ class GenerateReportDialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(621, 368)
+        Dialog.resize(621, 392)
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.parameters_table = QTableWidget(Dialog)
@@ -48,8 +48,8 @@ class GenerateReportDialog(object):
 
         self.frame_2 = QFrame(Dialog)
         self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setFrameShape(QFrame.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame_2)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.label = QLabel(self.frame_2)
@@ -67,8 +67,8 @@ class GenerateReportDialog(object):
 
         self.frame = QFrame(Dialog)
         self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.generate_report = QPushButton(self.frame)
@@ -76,6 +76,12 @@ class GenerateReportDialog(object):
         self.generate_report.setMaximumSize(QSize(100, 300))
 
         self.horizontalLayout.addWidget(self.generate_report)
+
+        self.info_button = QPushButton(self.frame)
+        self.info_button.setObjectName(u"info_button")
+        self.info_button.setMaximumSize(QSize(100, 300))
+
+        self.horizontalLayout.addWidget(self.info_button)
 
 
         self.verticalLayout.addWidget(self.frame)
@@ -102,5 +108,6 @@ class GenerateReportDialog(object):
         ___qtablewidgetitem5.setText(QCoreApplication.translate("Dialog", u"Muito Alto", None));
         self.label.setText(QCoreApplication.translate("Dialog", u"T\u00e9cnico:", None))
         self.generate_report.setText(QCoreApplication.translate("Dialog", u"Gerar Laudo", None))
+        self.info_button.setText(QCoreApplication.translate("Dialog", u"Informa\u00e7\u00f5es", None))
     # retranslateUi
 
