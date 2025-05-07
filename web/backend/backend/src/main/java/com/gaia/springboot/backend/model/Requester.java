@@ -15,7 +15,7 @@ public class Requester {
     @Column(name = "email")
     private String email;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "fk_address_id")
     private Address address;
 
@@ -27,6 +27,15 @@ public class Requester {
                 ", email='" + email + '\'' +
                 ", address=" + address +
                 '}';
+    }
+
+    protected Requester(){
+
+    }
+    public Requester(String phoneNumber, String email, Address address) {
+        this.phoneNumber = phoneNumber;
+        this.email = email;
+        this.address = address;
     }
 
     public Long getRequesterId() {
@@ -53,7 +62,4 @@ public class Requester {
         return address;
     }
 
-    public void setAddress(Address address) {
-        this.address = address;
-    }
 }

@@ -22,8 +22,8 @@ public class PersonController {
         return personService.getAll();
     }
 
-//    @PostMapping
-//    public PersonDto createPerson(@RequestBody PersonDto newPerson){
-//        return personService.save();
-//    }
+    @PostMapping
+    public PersonDto createPerson(@RequestBody PersonDto newPerson){
+        return personService.save(newPerson);
+    }
 }

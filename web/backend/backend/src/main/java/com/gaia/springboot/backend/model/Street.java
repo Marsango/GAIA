@@ -16,8 +16,17 @@ public class Street {
     @JoinColumn(name = "fk_city_id")
     private City city;
 
-    public Street(){
+    protected Street(){
 
+    }
+
+    public Street(String streetName, City city) {
+        this.streetName = streetName;
+        this.city = city;
+    }
+
+    public Long getStreetId() {
+        return streetId;
     }
 
     public String getStreetName() {

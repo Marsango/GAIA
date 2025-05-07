@@ -119,9 +119,6 @@ public class Sample {
         return property;
     }
 
-    public void setProperty(Property property) {
-        this.property = property;
-    }
 
     public String getUsedConfig() {
         return usedConfig;

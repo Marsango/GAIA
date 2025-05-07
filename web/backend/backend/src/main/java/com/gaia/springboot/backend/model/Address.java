@@ -31,8 +31,21 @@ public class Address {
     @JoinColumn(name = "fk_street_id")
     private Street street;
 
-    public Address(){
+    protected Address(){
 
+    }
+
+    public Address(String cep, String addressNumber, Country country, State state, City city, Street street) {
+        this.cep = cep;
+        this.addressNumber = addressNumber;
+        this.country = country;
+        this.state = state;
+        this.city = city;
+        this.street = street;
+    }
+
+    public Long getAddressId() {
+        return addressId;
     }
 
     public String getCep() {

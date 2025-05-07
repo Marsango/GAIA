@@ -16,8 +16,17 @@ public class City {
     @JoinColumn(name = "fk_state_id")
     private State state;
 
-    public City(){
+    protected City(){
 
+    }
+
+    public City(String cityName, State state) {
+        this.cityName = cityName;
+        this.state = state;
+    }
+
+    public Long getCityId() {
+        return cityId;
     }
 
     public String getCityName() {

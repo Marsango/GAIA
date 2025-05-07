@@ -2,6 +2,7 @@ package com.gaia.springboot.backend.service;
 
 import com.gaia.springboot.backend.dto.PersonDto;
 import com.gaia.springboot.backend.mapper.PersonMapper;
+import com.gaia.springboot.backend.model.Person;
 import com.gaia.springboot.backend.repository.PersonRepository;
 import org.springframework.stereotype.Service;
 
@@ -26,8 +27,8 @@ public class PersonService {
         return personDtoList;
     }
 
-//    public PersonDto createNewPerson(){
-//        Person newPerson = new Person();
-//
-//    }
+    public PersonDto save(PersonDto newPerson){
+        Person person = personMapper.dtoToPerson(newPerson);
+        return personMapper.toDto(personRepository.save(person));
+    }
 }

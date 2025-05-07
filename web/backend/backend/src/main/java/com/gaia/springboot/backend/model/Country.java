@@ -17,6 +17,7 @@ public class Country {
 
     }
 
+
     public Country(String countryName){
         this.countryName = countryName;
     }
@@ -27,6 +28,10 @@ public class Country {
                 "countryId=" + countryId +
                 ", countryName='" + countryName + '\'' +
                 '}';
+    }
+
+    public Long getCountryId() {
+        return countryId;
     }
 
     public String getCountryName() {

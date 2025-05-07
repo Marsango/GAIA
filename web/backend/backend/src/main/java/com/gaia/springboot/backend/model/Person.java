@@ -18,12 +18,19 @@ public class Person {
     @Column(name = "cpf", unique = true)
     private String cpf;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "fk_requester_id")
     private Requester requester;
 
-    public Person(){
+    protected Person(){
 
+    }
+
+    public Person(String name, String birthDate, String cpf, Requester requester) {
+        this.name = name;
+        this.birthDate = birthDate;
+        this.cpf = cpf;
+        this.requester = requester;
     }
 
     public Long getId() {
