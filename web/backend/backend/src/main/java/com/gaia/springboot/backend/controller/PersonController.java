@@ -31,4 +31,9 @@ public class PersonController {
     public PersonDto patchPerson(@PathVariable Long id, @RequestBody PersonDto newPerson) {
         return personService.updatePerson(id, newPerson);
     }
+
+    @DeleteMapping("/{id}")
+    public void deletePerson(@PathVariable Long id) {
+        personService.deletePerson(id);
+    }
 }
