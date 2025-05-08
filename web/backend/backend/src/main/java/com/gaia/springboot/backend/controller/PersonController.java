@@ -19,11 +19,16 @@ public class PersonController {
     @ResponseBody
     @GetMapping
     public List<PersonDto> getPeople(){
-        return personService.getAll();
+        return personService.getPeople();
     }
 
     @PostMapping
-    public PersonDto createPerson(@RequestBody PersonDto newPerson){
-        return personService.save(newPerson);
+    public PersonDto postPerson(@RequestBody PersonDto newPerson){
+        return personService.savePerson(newPerson);
+    }
+
+    @PatchMapping("/{id}")
+    public PersonDto patchPerson(@PathVariable Long id, @RequestBody PersonDto newPerson) {
+        return personService.updatePerson(id, newPerson);
     }
 }

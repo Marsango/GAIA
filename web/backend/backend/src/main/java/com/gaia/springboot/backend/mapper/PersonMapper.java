@@ -1,19 +1,15 @@
 package com.gaia.springboot.backend.mapper;
 
-import com.gaia.springboot.backend.dto.AddressDto;
 import com.gaia.springboot.backend.dto.PersonDto;
 import com.gaia.springboot.backend.model.*;
-import com.gaia.springboot.backend.repository.CityRepository;
-import com.gaia.springboot.backend.repository.CountryRepository;
-import com.gaia.springboot.backend.repository.StateRepository;
-import com.gaia.springboot.backend.repository.StreetRepository;
-import com.gaia.springboot.backend.service.AddressResolver;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import com.gaia.springboot.backend.service.AddressResolverService;
+import org.mapstruct.*;
+
+import java.util.Optional;
 
 @Mapper(componentModel = "spring",
-uses =  {AddressResolver.class, AddressMapper.class} )
+uses =  {AddressResolverService.class, AddressMapper.class}
+)
 public interface PersonMapper {
     @Mapping( target = "email", source = "requester.email")
     @Mapping( target = "phoneNumber", source = "requester.phoneNumber")
@@ -24,4 +20,14 @@ public interface PersonMapper {
     @Mapping( target = "requester.phoneNumber", source = "phoneNumber")
     @Mapping( target = "requester.address", source = "address", qualifiedByName = "resolve")
     Person dtoToPerson(PersonDto personDto);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updatePersonFromDto(PersonDto personDto, @MappingTarget Person person, @Context AddressResolverService addressService);
+
+    @AfterMapping
+    default void afterUpdatePerson(PersonDto personDto, @MappingTarget Person person, @Context AddressResolverService addressService){
+        person.getRequester().setEmail(personDto.getEmail());
+        person.getRequester().setPhoneNumber(personDto.getPhoneNumber());
+        addressService.updateAddress(person.getRequester().getAddress(), personDto.getAddress());
+    }
 }

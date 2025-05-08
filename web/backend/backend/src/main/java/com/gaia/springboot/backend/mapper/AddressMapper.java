@@ -2,8 +2,7 @@ package com.gaia.springboot.backend.mapper;
 
 import com.gaia.springboot.backend.dto.AddressDto;
 import com.gaia.springboot.backend.model.Address;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface AddressMapper {
@@ -13,4 +12,5 @@ public interface AddressMapper {
     @Mapping(source = "city.cityName",    target = "city")
     @Mapping(source = "street.streetName", target = "street")
     AddressDto toDto(Address address);
+
 }

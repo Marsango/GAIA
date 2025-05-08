@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 public class RequesterDto {
     private String phoneNumber;
     private String email;
-    private Address address;
+    private AddressDto address;
 
     public String getPhoneNumber() {
         return phoneNumber;
@@ -24,11 +24,11 @@ public class RequesterDto {
         this.email = email;
     }
 
-    public Address getAddress() {
+    public AddressDto getAddress() {
         return address;
     }
 
-    public void setAddress(Address address) {
+    public void setAddress(AddressDto address) {
         this.address = address;
     }
 }

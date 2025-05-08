@@ -14,17 +14,17 @@ import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AddressResolver {
+public class AddressResolverService {
 
     private final CountryRepository countryRepo;
     private final StateRepository stateRepo;
     private final CityRepository cityRepo;
     private final StreetRepository streetRepo;
 
-    public AddressResolver(CountryRepository countryRepo,
-                           StateRepository stateRepo,
-                           CityRepository cityRepo,
-                           StreetRepository streetRepo) {
+    public AddressResolverService(CountryRepository countryRepo,
+                                  StateRepository stateRepo,
+                                  CityRepository cityRepo,
+                                  StreetRepository streetRepo) {
         this.countryRepo = countryRepo;
         this.stateRepo   = stateRepo;
         this.cityRepo    = cityRepo;
@@ -49,7 +49,6 @@ public class AddressResolver {
         City city = cityRepo.findOneByStateAndCityName(state, dto.getCity());
         if (city == null){
             city = new City(dto.getCity(), state);
-            System.out.println(city.getCityId());
             cityRepo.save(city);
         }
 
@@ -58,7 +57,39 @@ public class AddressResolver {
             street = new Street(dto.getStreet(), city);
             streetRepo.save(street);
         }
-
         return new Address(dto.getCep(), dto.getAddressNumber(), country, state, city, street);
     }
+
+    public void updateAddress(Address address, AddressDto dto) {
+        Country country = countryRepo.findOneByCountryName(dto.getCountry());
+        if (country == null) {
+            country = new Country(dto.getCountry());
+            countryRepo.save(country);
+        }
+
+        State state = stateRepo.findOneByCountryAndStateName(country, dto.getState());
+        if (state == null){
+            state = new State(dto.getState(), country);
+            stateRepo.save(state);
+        }
+
+        City city = cityRepo.findOneByStateAndCityName(state, dto.getCity());
+        if (city == null){
+            city = new City(dto.getCity(), state);
+            cityRepo.save(city);
+        }
+
+        Street street = streetRepo.findOneByCityAndStreetName(city, dto.getStreet());
+        if (street == null){
+            street = new Street(dto.getStreet(), city);
+            streetRepo.save(street);
+        }
+        address.setCountry(country);
+        address.setState(state);
+        address.setCity(city);
+        address.setStreet(street);
+        address.setCep(dto.getCep());
+        address.setAddressNumber(dto.getAddressNumber());
+    }
+
 }
