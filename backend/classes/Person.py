@@ -20,10 +20,13 @@ class Person(Requester):
         Requester.__init__(self, phone_number, email, address)
 
     def verify_valid_date(self, birth_date: str) -> None:
-        try:
-            self.__birth_date: str = datetime.strptime(birth_date, '%d/%m/%Y').strftime("%d/%m/%Y")
-        except:
-            raise ValueError("Error with values of 'birth_date'")
+        if birth_date.replace("/", "").strip() != '':
+            try:
+                self.__birth_date: str = datetime.strptime(birth_date, '%d/%m/%Y').strftime("%d/%m/%Y")
+            except:
+                raise ValueError("Error with values of 'birth_date'")
+        else:
+            self.__birth_date = None
 
     def verify_valid_cpf(self, cpf: str) -> None:
         if len(cpf) != 11:

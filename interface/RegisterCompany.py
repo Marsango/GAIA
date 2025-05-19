@@ -105,7 +105,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         self.state_input.setText(company_data['state'])
         self.city_input.setText(company_data['city'])
         self.street_input.setText(company_data['street'])
-        self.address_number_input.setText(str(company_data['address_number']))
+        self.address_number_input.setText(company_data['address_number'])
         self.cep_input.setText(company_data['cep'])
         self.company_name_input.setText(company_data['company_name'])
         self.email_input.setText(company_data['email'])

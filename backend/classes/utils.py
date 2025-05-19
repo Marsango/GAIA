@@ -1,8 +1,9 @@
 import json
 import logging
+from types import NoneType
 from typing import Any
 from .exceptions import CPFAlreadyExistsError, CNPJAlreadyExistsError
-
+allowed_null = ['cep', 'country', 'state', 'city', 'street', 'address_number', 'birth_date', 'email', 'phone_number', 'registration_number', 'location']
 
 def read_current_stored_config() -> dict[str, float]:
     try:
@@ -27,7 +28,7 @@ def verify_type(type_hints: dict[str, Any], function_parameters: dict[str, Any])
             logging.error(f"Erro de tipo para '{key}': Esperado {type_hints[key]}, mas foi recebido {type(function_parameters[key])}.")
             raise TypeError(f"Erro de tipo no campo '{key}': Esperado {type_hints[key]}, mas foi recebido {type(function_parameters[key])}.")
         if isinstance(function_parameters[key], str):
-            if function_parameters[key] == '':
+            if function_parameters[key] == '' and key not in allowed_null:
                 logging.warning(f"Campo vazio detectado para '{key}'.")
                 raise ValueError(f"O campo '{translate_errors(key)}' não pode ser vazio.")
 

@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
@@ -160,6 +161,23 @@ class RequesterWindow(QDialog, RequesterDialog):
             self.current_table_type = 'company'
             self.refresh_table()
 
+    def define_stretch_police(self):
+        self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        table_width: int = 0
+        for i in range(self.requester_table.columnCount()):
+            table_width += self.requester_table.columnWidth(i)
+        if table_width < self.frame.width():
+            self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+    def format_address(self, requester: sqlite3.Row):
+        desired_keys: list[str] = ["street", "address_number", "cep", "city", "state", "country"]
+        final_string: str = ""
+        requester: dict[Any, Any] = dict(requester)
+        for key in desired_keys:
+            if requester.get(key):
+                final_string += requester.get(key) + ", "
+        return final_string[:-2]
+
     def refresh_table(self, **kwargs) -> None:
         db: Database = Database()
         if self.current_table_type == 'person':
@@ -177,7 +195,7 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.setItem(row_position, 3, QTableWidgetItem(person['cpf']))
                 self.requester_table.setItem(row_position, 4, QTableWidgetItem(person['phone_number']))
                 self.requester_table.setItem(row_position, 5, QTableWidgetItem(person['email']))
-                self.requester_table.setItem(row_position, 6, QTableWidgetItem(f"{person['street']}, {person['address_number']} - {person['cep']}, {person['city']}, {person['state']}, {person['country']}"))
+                self.requester_table.setItem(row_position, 6, QTableWidgetItem(self.format_address(person)))
         elif self.current_table_type == 'company':
             if kwargs.get('query_result') is None:
                 companies: list[sqlite3.Row] = db.get_companies()
@@ -192,12 +210,13 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.setItem(row_position, 2, QTableWidgetItem(company['cnpj']))
                 self.requester_table.setItem(row_position, 3, QTableWidgetItem(company['phone_number']))
                 self.requester_table.setItem(row_position, 4, QTableWidgetItem(company['email']))
-                self.requester_table.setItem(row_position, 5, QTableWidgetItem(f"{company['street']}, {company['address_number']} - {company['cep']}, {company['city']}, {company['state']}, {company['country']}"))
+                self.requester_table.setItem(row_position, 6, QTableWidgetItem(self.format_address(company)))
         if self.requester_table.rowCount() == 0:
             self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         else:
             self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         db.close_connection()
+        self.define_stretch_police()
 
 
     def register_person(self) -> None:

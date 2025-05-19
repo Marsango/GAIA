@@ -34,7 +34,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         self.state_input.setText(person_data['state'])
         self.city_input.setText(person_data['city'])
         self.street_input.setText(person_data['street'])
-        self.address_number_input.setText(str(person_data['address_number']))
+        self.address_number_input.setText(person_data['address_number'])
         self.cep_input.setText(person_data['cep'])
         self.name_input.setText(person_data['name'])
         self.email_input.setText(person_data['email'])

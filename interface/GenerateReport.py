@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import traceback
 
 from PySide6 import QtCore, QtGui
 
@@ -150,12 +151,13 @@ class GenerateReport(QDialog, GenerateReportDialog):
             script_path: Path = Path(__file__).resolve()
             backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
             report: Report = Report(file_location=str(backup_path), agreement=self.technician_input.text())
-            report.generate_pdf(sample_info, file_path, report_id, sample_values, reference)
+            report.generate_pdf(dict(sample_info), file_path, report_id, sample_values, reference)
             shutil.copy(file_path, backup_path)
             db.insert_report(report, self.sample_id)
             dialog: AlertWindow = AlertWindow("Laudo salvo com sucesso!")
             dialog.exec()
         except Exception as e:
+            print(traceback.print_exc())
             widget: AlertWindow = AlertWindow(f'Erro: {str(e)}')
             widget.exec()
         finally:

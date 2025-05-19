@@ -5,3 +5,7 @@ class CPFAlreadyExistsError(Exception):
 class CNPJAlreadyExistsError(Exception):
     def __init__(self, cnpj: str):
         super().__init__(f"O CNPJ '{cnpj}' já está cadastrado no sistema.")
+
+class InconsistencyError(Exception):
+    def __init__(self, message):
+        super().__init__(message)

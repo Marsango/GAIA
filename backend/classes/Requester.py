@@ -14,15 +14,21 @@ class Requester:
         self.__address: Address = address
 
     def verify_valid_email(self, email: str) -> None:
-        email_regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
-        if not re.match(email_regex, email):
-            raise ValueError("Error with values of 'email'")
+        if email != '':
+            email_regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+            if not re.match(email_regex, email):
+                raise ValueError("Error with values of 'email'")
+        else:
+            email = None
         self.__email = email
 
     def verify_valid_phone_number(self, phone_number: str) -> None:
-        phone_regex = r"^\+?[\d\s()-]{7,15}$"
-        if not re.match(phone_regex, phone_number):
-            raise ValueError("Error with values of 'phone_number'")
+        if phone_number.strip() != '':
+            phone_regex = r"^\+?[\d\s()-]{7,15}$"
+            if not re.match(phone_regex, phone_number):
+                raise ValueError("Error with values of 'phone_number'")
+        else:
+            phone_number = None
         self.__phone_number = phone_number
 
     def get_phone_number(self) -> str:

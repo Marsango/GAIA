@@ -1,6 +1,6 @@
 import sqlite3
 from reportlab.platypus import Image
-from typing import get_type_hints
+from typing import get_type_hints, Any
 from backend.classes.utils import verify_type
 from reportlab.pdfgen import canvas
 from io import BytesIO
@@ -106,7 +106,32 @@ class Report:
     def format_cnpj(self, cnpj: str) -> str:
         return f"{cnpj[:2]}.{cnpj[2:5]}.{cnpj[5:8]}/{cnpj[8:12]}-{cnpj[12:]}"
 
-    def write_main_info_square(self, info: sqlite3.Row, report_id: int) -> int:
+    def remove_null_values(self, info: dict[Any, Any], document_text: str, report_id: int) -> list[str]:
+        text_to_draw = [f"Solicitante: {info['requester_name']} ?{document_text} ?"]
+        line_two = (
+                (f"Propriedade: {info['property_name']} ?" if info.get('property_name') else "")
+                + (f"Município: {info['city']} ?" if info.get('city') else "")
+                + (f"UF: {info['state']} ?" if info.get('state') else "")
+                + (f"Matrícula: {info['registration_number']} ?" if info.get('registration_number') else "")
+        )
+        line_three = (
+                (f"Talhão: {info['sample_description']} ?" if info.get('sample_description') else "")
+                + (f"Convênio: {self.__agreement} ?" if self.__agreement else "")
+                + (f"Profundidade: {info['depth']}cm ?" if info.get('depth') is not None else "")
+                + (f"Área: {info['total_area']}m² ?" if info.get('total_area') is not None else "")
+        )
+        line_four = (
+                (f"Laudo: {report_id} ?" if report_id else "")
+                + (f"Amostra: {info['sample_number']} ?" if info.get('sample_number') else "")
+                + (f"Data: {info['collection_date']} ?" if info.get('collection_date') else "")
+        )
+        text_to_draw.append(line_two)
+        text_to_draw.append(line_three)
+        text_to_draw.append(line_four)
+        return text_to_draw
+
+
+    def write_main_info_square(self, info: dict[Any, Any], report_id: int) -> int:
         x_start: int = 75
         x_end: int = 515
         y_start: int = 710
@@ -115,15 +140,10 @@ class Report:
         current_x: float = x_start
         current_y: int = y_start
         document_text: str = f"CPF: {self.format_cpf(info['document_number'])}" if info["document_type"] == "cpf" else f"CNPJ: {self.format_cnpj(info['document_number'])}"
-        texts_to_draw: list[str] = [
-        f"Solicitante: {info['requester_name']} ?{document_text} ?",
-        f"Propriedade: {info['property_name']} ?Município: {info['city']} ?UF: {info['state']} ?Matrícula: {info['registration_number']} ?",
-        f"Talhão: {info['sample_description']} ?Convênio: {self.__agreement} ?Profundidade: {info['depth']}cm ?Área: {info['total_area']}m² ?",
-        f"Laudo: {report_id} ?Amostra: {info['sample_number']} ?Data: {info['collection_date']} ?",
-        ]
+        texts_to_draw: list[str] = self.remove_null_values(info, document_text, report_id)
+
 
         def justify_text(text: str, max_width: int) -> str:
-            print(text)
             words = text.split("?")
             words = [word for word in words if word != ' ' and word != '']
             if len(words) == 1:
@@ -476,7 +496,7 @@ class Report:
         self.__pdf.drawImage(f'{self.__images_location}/report_stamp.png', coord_x, coord_y, 100, 100,
                              preserveAspectRatio=True, mask='auto')
 
-    def generate_pdf(self, report_data: sqlite3.Row, path_to_save: str, report_id: int, sample_values: sqlite3.Row,
+    def generate_pdf(self, report_data: dict[Any, Any], path_to_save: str, report_id: int, sample_values: sqlite3.Row,
                      reference: dict[str, dict[str, float]]) -> None:
         self.__pdf: canvas.Canvas = self.setup_pdf(report_id, path_to_save)
         self.draw_header()

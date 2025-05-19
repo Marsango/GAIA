@@ -33,7 +33,7 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
         self.state_input.setText(property_data['state'])
         self.city_input.setText(property_data['city'])
         self.name_input.setText(property_data['name'])
-        self.registration_number_input.setText(str(property_data['registration_number']))
+        self.registration_number_input.setText(property_data['registration_number'])
         self.location_input.setText(property_data['location'])
 
         self.register_button.setText("Salvar alterações")

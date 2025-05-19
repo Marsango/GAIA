@@ -1,5 +1,7 @@
 import sqlite3
 import os
+import traceback
+
 from backend.classes.Sample import Sample
 from backend.classes.Report import Report
 from backend.classes.Person import Person
@@ -21,6 +23,9 @@ class Database:
         self.__con.commit()
         self.create_database()
 
+    def run_query(self, query):
+        self.__cur.execute(query)
+        return self.__cur.fetchall()
     def create_database(self) -> None:
         self.__cur.execute("""CREATE TABLE IF NOT EXISTS requester(
         requester_id integer primary key, phone_number varchar(15), email varchar(255), fk_address_id integer,
@@ -78,6 +83,7 @@ class Database:
             self.__cur.execute("""INSERT INTO person(name, birth_date, cpf, fk_requester_id)
             VALUES(:name, :birth_date, :cpf, :requester_id)""", person_dict)
         except sqlite3.IntegrityError as e:
+            traceback.print_exc()
             if 'UNIQUE constraint failed: person.cpf' in str(e):
                 raise CPFAlreadyExistsError(person_dict['cpf'])
         self.__con.commit()
@@ -216,6 +222,10 @@ class Database:
         address: dict = to_dict(address)
         previous_attribute: str = ''
         previous_attribute_id: int = 0
+        if address['address_number'] == '':
+            address['address_number'] = None
+        if address['cep'] == '':
+            address['cep'] = None
         for attribute in address.keys():
             if attribute == 'cep' or attribute == 'address_number':
                 continue
@@ -333,7 +343,9 @@ class Database:
         return [row['street_name'] for row in self.__cur.fetchall()]
 
     def insert_address_components(self, table: str, row_name: str,
-                                  previous_attribute: str, previous_attribute_id: int) -> int:
+                                  previous_attribute: str, previous_attribute_id: int) -> int | None:
+        if row_name == '':
+            return None
         self.__cur.execute(f"""SELECT {table}_id FROM {table}
         WHERE lower({table}_name) = lower(?)""", (row_name,))
         matches: list[sqlite3.Row] = self.__cur.fetchall()
@@ -374,14 +386,14 @@ class Database:
             requester r ON p.fk_requester_id = r.requester_id
             INNER JOIN 
             address a ON r.fk_address_id = a.address_id
-            INNER JOIN 
-            street s ON a.fk_street_id = s.street_id
-            INNER JOIN 
-            city c ON a.fk_city_id = c.city_id
-            INNER JOIN 
-            state st ON a.fk_state_id = st.state_id
-            INNER JOIN 
-            country co ON a.fk_country_id = co.country_id
+            LEFT JOIN street s   
+                ON a.fk_street_id = s.street_id
+            LEFT JOIN city c     
+                ON a.fk_city_id = c.city_id
+            LEFT JOIN state st   
+                ON a.fk_state_id = st.state_id
+            LEFT JOIN country co 
+                ON a.fk_country_id = co.country_id
             """
         id: int = kwargs.get("id")
         cpf: str = kwargs.get("cpf")
@@ -456,7 +468,7 @@ class Database:
             p.name AS name,
             p.id AS id,
             p.cpf AS document_number,
-            'person' AS requester_type 
+            'person' AS requester_type
         FROM 
             requester r
         INNER JOIN 
@@ -572,10 +584,10 @@ class Database:
             LEFT JOIN person ON person.fk_requester_id = requester.requester_id
             LEFT JOIN company ON company.fk_requester_id = requester.requester_id
             JOIN address ON requester.fk_address_id = address.address_id
-            JOIN street ON address.fk_street_id = street.street_id
-            JOIN city ON address.fk_city_id = city.city_id
-            JOIN state ON address.fk_state_id = state.state_id
-            JOIN country ON address.fk_country_id = country.country_id
+            LEFT JOIN street ON address.fk_street_id = street.street_id
+            LEFT JOIN city ON address.fk_city_id = city.city_id
+            LEFT JOIN state ON address.fk_state_id = state.state_id
+            LEFT JOIN country ON address.fk_country_id = country.country_id
             WHERE sample.id = ?;
         """, (sample_id,))
         return self.__cur.fetchone()
@@ -594,3 +606,9 @@ class Database:
                 LEFT JOIN person ON requester.requester_id = person.fk_requester_id 
                 LEFT JOIN company ON requester.requester_id = company.fk_requester_id;""")
         return self.__cur.fetchall()
+
+
+if __name__ == '__main__':
+    db = Database()
+    for requester in db.get_persons(id=1):
+        print(dict(requester))
