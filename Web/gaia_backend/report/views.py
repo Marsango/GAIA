@@ -1,9 +1,11 @@
 from rest_framework import viewsets, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Propriedade, Laudo
 from .serializers import PropriedadeSerializer, LaudoSerializer
+from authentication.models import Usuario 
+from rest_framework import status
 
 class PropriedadeViewSet(viewsets.ModelViewSet):
     """API para propriedades - CRUD completo"""
@@ -11,37 +13,7 @@ class PropriedadeViewSet(viewsets.ModelViewSet):
     queryset = Propriedade.objects.all()
     
     def get_queryset(self):
-        # Retorna apenas propriedades do usuário logado
-        # return Propriedade.objects.filter(
-        #     proprietario=self.request.user, 
-        #     ativo=True
-        # )
         return Propriedade.objects.all()
-
-# class LaudoViewSet(viewsets.ModelViewSet):
-#     """API para laudos - CRUD completo"""
-#     serializer_class = LaudoSerializer
-#     queryset = Laudo.objects.all()  # ← ADICIONE ESTA LINHA
-#     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-#     filterset_fields = ['data_coleta']
-#     search_fields = ['numero_amostra']
-    
-#     def get_queryset(self):
-#         # Retorna apenas laudos das propriedades do usuário logado
-#         return Laudo.objects.filter(
-#             propriedade__proprietario=self.request.user,
-#             ativo=True
-#         ).select_related('propriedade')
-    
-#     @action(detail=False, methods=['get'])
-#     def por_propriedade(self, request):
-#         """Laudos de uma propriedade específica: /api/laudos/por_propriedade/?propriedade_id=1"""
-#         propriedade_id = request.query_params.get('propriedade_id')
-#         if propriedade_id:
-#             laudos = self.get_queryset().filter(propriedade_id=propriedade_id)
-#             serializer = self.get_serializer(laudos, many=True)
-#             return Response(serializer.data)
-#         return Response([])
 
 class LaudoViewSet(viewsets.ModelViewSet):
     serializer_class = LaudoSerializer
@@ -51,12 +23,6 @@ class LaudoViewSet(viewsets.ModelViewSet):
     search_fields = ['numero_amostra']
     
     def get_queryset(self):
-        # COMENTE o filtro por usuário temporariamente:
-        # return Laudo.objects.filter(
-        #     propriedade__proprietario=self.request.user,
-        #     ativo=True
-        # ).select_related('propriedade')
-        
         return Laudo.objects.filter(ativo=True).select_related('propriedade')
     
     @action(detail=False, methods=['get'])
@@ -67,3 +33,71 @@ class LaudoViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(laudos, many=True)
             return Response(serializer.data)
         return Response([])
+
+@api_view(['POST'])
+def sync_propriedade(request):
+    """API simples para o software cadastrar propriedades"""
+    try:
+        data = request.data
+        
+        # Encontra o proprietário pelo CPF
+        proprietario_cpf = data.get('proprietario_cpf')
+        try:
+            proprietario = Usuario.objects.get(cpf=proprietario_cpf)
+        except Usuario.DoesNotExist:
+            return Response({
+                'error': f'Proprietário com CPF {proprietario_cpf} não encontrado'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Cria a propriedade
+        propriedade = Propriedade.objects.create(
+            nome=data.get('nome'),
+            localizacao=data.get('localizacao', ''),
+            proprietario=proprietario
+        )
+        
+        return Response({
+            'id': propriedade.id,
+            'status': 'created',
+            'message': 'Propriedade criada com sucesso'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def sync_laudo(request):
+    """API simples para o software cadastrar laudos"""
+    try:
+        data = request.data
+        
+        # Encontra a propriedade
+        propriedade_nome = data.get('propriedade_nome')
+        proprietario_cpf = data.get('proprietario_cpf')
+        
+        try:
+            propriedade = Propriedade.objects.get(
+                nome=propriedade_nome,
+                proprietario__cpf=proprietario_cpf
+            )
+        except Propriedade.DoesNotExist:
+            return Response({
+                'error': f'Propriedade {propriedade_nome} não encontrada'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Cria o laudo
+        laudo = Laudo.objects.create(
+            numero_amostra=data.get('numero_amostra'),
+            data_coleta=data.get('data_coleta'),
+            arquivo_pdf=data.get('arquivo_pdf'),
+            propriedade=propriedade
+        )
+        
+        return Response({
+            'id': laudo.id,
+            'status': 'created', 
+            'message': 'Laudo criado com sucesso'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

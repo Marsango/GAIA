@@ -4,7 +4,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from interface.base_windows.register_person import RegisterPersonDialog
 from PySide6.QtCore import Qt
-from backend.classes.Database import Database
+from backend.classes.DatabaseHTTP import DatabaseHTTP
 from backend.classes.Address import Address
 from backend.classes.Person import Person
 from interface.AlertWindow import AlertWindow
@@ -49,28 +49,28 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
 
 
     def create_country_completer(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         completer: QCompleter = QCompleter(db.get_countries(), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.country_input.setCompleter(completer)
 
     def country_changed(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         completer: QCompleter = QCompleter(db.get_states(self.country_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.state_input.setCompleter(completer)
 
     def state_changed(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         completer: QCompleter = QCompleter(db.get_cities(self.state_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.city_input.setCompleter(completer)
 
     def city_changed(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         completer: QCompleter = QCompleter(db.get_streets(self.city_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -78,7 +78,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
 
 
     def register_action(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         try:
 
 

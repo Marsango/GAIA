@@ -65,8 +65,8 @@ class Sample:
                     round((organic_matter - self.__used_config['organic_matter']['value']['b'])/self.__used_config['organic_matter']['value']['a'], 2))
 
         else:
-            from backend.classes.Database import Database
-            db: Database = Database()
+            from backend.classes.DatabaseHTTP import DatabaseHTTP
+            db: DatabaseHTTP = DatabaseHTTP()
             sample_data = db.get_samples(sample_id=sample_id)[0]
 
             if phosphorus == sample_data['phosphorus']:

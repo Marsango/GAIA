@@ -7,7 +7,7 @@ from interface.DeleteConfirmation import DeleteConfirmation
 from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from interface.RegisterProperty import RegisterProperty
-from backend.classes.Database import Database
+from backend.classes.DatabaseHTTP import DatabaseHTTP
 from interface.SampleWindow import SampleWindow
 import sqlite3
 
@@ -37,7 +37,7 @@ class PropertyWindow(QDialog, PropertyDialog):
         self.refresh_table()
 
     def refresh_table(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         properties: list[sqlite3.Row] = db.get_properties(requester_id=self.current_owner_id)
         self.property_table.setRowCount(0)
         for property in properties:
@@ -68,7 +68,7 @@ class PropertyWindow(QDialog, PropertyDialog):
                 return
         row: int = selected_items[0].row()
         id: str = self.property_table.item(row, 0).text()
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         property: sqlite3.Row = db.get_properties(id=id)[0]
         db.close_connection()
         dialog.edit_mode(property)

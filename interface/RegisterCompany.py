@@ -8,7 +8,7 @@ from backend.classes.Address import Address
 from PySide6.QtCore import Qt
 from interface.AlertWindow import AlertWindow
 from PySide6.QtWidgets import (QDialog, QCompleter)
-from backend.classes.Database import Database
+from backend.classes.DatabaseHTTP import DatabaseHTTP
 from backend.classes.utils import handle_exception
 
 
@@ -32,7 +32,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
         self.mode = 'register'
 
     def create_country_completer(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         completer: QCompleter = QCompleter(db.get_countries(), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -40,7 +40,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
 
 
     def country_changed(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         completer: QCompleter = QCompleter(db.get_states(self.country_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -48,7 +48,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
 
 
     def state_changed(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         completer: QCompleter = QCompleter(db.get_cities(self.state_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -56,14 +56,14 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
 
 
     def city_changed(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         completer: QCompleter = QCompleter(db.get_streets(self.city_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.street_input.setCompleter(completer)
 
     def register_action(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         try:
             address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
                                        city=self.city_input.text(), street=self.street_input.text(),

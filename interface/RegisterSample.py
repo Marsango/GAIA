@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QDialog)
 from backend.classes.Configuration import Configuration
 from backend.classes.utils import handle_exception
 from interface.base_windows.register_sample import RegisterSampleDialog
-from backend.classes.Database import Database
+from backend.classes.DatabaseHTTP import DatabaseHTTP
 from backend.classes.Sample import Sample
 from interface.AlertWindow import AlertWindow
 
@@ -93,7 +93,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.current_sample_id = int(sample_data['id'])
 
     def register_action(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         try:
             if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text() or not self.sample_number.text():
                 raise ValueError("Por favor, preencha todos os campos obrigatórios.")

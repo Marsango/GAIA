@@ -9,7 +9,7 @@ from itertools import pairwise
 from pathlib import Path
 from PySide6.QtGui import QPixmap, QColor
 from backend.classes.GraphParameters import GraphParameters
-from backend.classes.Database import Database
+from backend.classes.DatabaseHTTP import DatabaseHTTP
 from interface.base_windows.generate_report import GenerateReportDialog
 from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
@@ -129,7 +129,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
             self.parameters_table.setItem(row, 5, QTableWidgetItem(str(parameters["very high"])))
 
     def create_report(self):
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         if self.technician_input.text() == '':
             error_message = "Erro: O campo de convênio está vazio. Por favor, insira um convênio."
             widget: AlertWindow = AlertWindow(error_message)
@@ -170,7 +170,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
 
 
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         sample_info: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
         selected_parameters: dict[str, dict[str, float]] = {}
         for row in range(self.parameters_table.rowCount()):

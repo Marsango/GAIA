@@ -8,7 +8,7 @@ from PySide6.QtGui import QPixmap
 
 from interface.base_windows.generate_csv import GenerateCSVDialog
 from interface.AlertWindow import AlertWindow
-from backend.classes.Database import Database
+from backend.classes.DatabaseHTTP import DatabaseHTTP
 from PySide6.QtWidgets import (QDialog, QFileDialog, QTableWidgetItem, QHeaderView, QAbstractItemView)
 
 
@@ -94,7 +94,7 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
             writer = csv.writer(file)
             columns = self.get_selected_parameters()
             writer.writerow(columns)
-            db: Database() = Database()
+            db: DatabaseHTTP = DatabaseHTTP()
             not_numeric_columns: list[str] = ['Data', 'Descrição', 'Número']
             samples_info: list[sqlite3.Row] = db.get_samples(id_list = self.selected_ids)
             for sample_info in samples_info:

@@ -8,7 +8,7 @@ from interface.base_windows.sample_window import SampleDialog
 from interface.DeleteConfirmation import DeleteConfirmation
 from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
-from backend.classes.Database import Database
+from backend.classes.DatabaseHTTP import DatabaseHTTP
 from interface.RegisterSample import RegisterSample
 from interface.GenerateReport import GenerateReport
 import sqlite3
@@ -44,7 +44,7 @@ class SampleWindow(QDialog, SampleDialog):
         self.generate_report.clicked.connect(self.report_window)
 
     def refresh_table(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         samples: list[sqlite3.Row] = db.get_samples(property_id=self.current_property_id)
         self.sample_table.setRowCount(0)
         for sample in samples:
@@ -74,7 +74,7 @@ class SampleWindow(QDialog, SampleDialog):
                 return
         row: int = selected_items[0].row()
         id: str = self.sample_table.item(row, 0).text()
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         sample: sqlite3.Row = db.get_samples(sample_id=id)[0]
         db.close_connection()
         dialog: RegisterSample = RegisterSample(self.current_property_id)

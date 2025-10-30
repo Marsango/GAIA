@@ -9,15 +9,13 @@ from datetime import datetime
 class Person(Requester):
 
     def __init__(self, phone_number: str, email: str, name: str, birth_date: str, cpf: str, address: Address) -> None:
-        self.__birth_date: date | None = None
-        self.__cpf: str | None = None
-        self.__email: str | None = None
         verify_type(get_type_hints(Person.__init__), locals())
-        self.verify_valid_date(birth_date)
-        self.verify_valid_cpf(cpf)
-        self.__name: str | None = None
-        self.verify_name(name)
-        Requester.__init__(self, phone_number, email, address)
+
+        super().__init__(phone_number, email, address)
+        
+        self.__birth_date: str = self.verify_valid_date(birth_date)
+        self.__cpf: str = self.verify_valid_cpf(cpf)
+        self.__name: str = self.verify_name(name)
 
     def verify_valid_date(self, birth_date: str) -> None:
         try:
@@ -48,3 +46,19 @@ class Person(Requester):
         if any(char.isdigit() for char in name):
             raise ValueError("Error with values of 'name'")
         self.__name = name
+
+    @property
+    def cpf(self) -> str:
+        return self.__cpf
+
+    @property
+    def name(self) -> str:
+        return self.__name
+
+    @property
+    def email(self) -> str:
+        return super().get_email()
+
+    @property
+    def birth_date(self) -> str:
+        return self.__birth_date

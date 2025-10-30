@@ -66,7 +66,7 @@ const CentralLaudos = () => {
       console.log("Resposta Laudos:", response.data);
 
       if (response.data && Array.isArray(response.data.results)) {
-        setLaudos(response.data.results); // ← MUDE PARA .results
+        setLaudos(response.data.results);
       } else {
         setLaudos([]);
       }

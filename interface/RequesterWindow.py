@@ -8,7 +8,7 @@ from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from interface.RegisterCompany import RegisterCompany
 from interface.RegisterPerson import RegisterPerson
-from backend.classes.Database import Database
+from backend.classes.DatabaseHTTP import DatabaseHTTP
 from interface.PropertyWindow import PropertyWindow
 import sqlite3
 
@@ -35,7 +35,7 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.view_properties.clicked.connect(self.register_property_action)
 
     def search(self) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         if self.search_parameter.currentText() == 'CPF/CNPJ' and self.current_table_type == 'person':
             query_result: list[sqlite3.Row] = db.get_persons(cpf=self.search_bar.text())
         elif self.search_parameter.currentText() == 'Nome' and self.current_table_type == 'person':
@@ -60,7 +60,7 @@ class RequesterWindow(QDialog, RequesterDialog):
                 return
         row: int = selected_items[0].row()
         id: str = self.requester_table.item(row, 0).text()
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         if self.current_table_type == 'person':
             requester_id: int = db.get_persons(id=id)[0]['requester_id']
         else:
@@ -126,7 +126,7 @@ class RequesterWindow(QDialog, RequesterDialog):
 
         row: int = selected_items[0].row()
         id: str = self.requester_table.item(row, 0).text()
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         requesters = db.get_persons(id=id) if self.current_table_type == 'person' else db.get_companies(id=id)
         requester = requesters[0]
         db.close_connection()
@@ -161,7 +161,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             self.refresh_table()
 
     def refresh_table(self, **kwargs) -> None:
-        db: Database = Database()
+        db: DatabaseHTTP = DatabaseHTTP()
         if self.current_table_type == 'person':
             if kwargs.get('query_result') is None:
                 persons: list[sqlite3.Row] = db.get_persons()
