@@ -1,6 +1,6 @@
 import { useState } from "react";
 import InputLogin from "../../components/InputLogin";
-//import useNavigate from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { PageContainer, Button, LoginForm, Title } from "./styled";
 import Logo_lab_Branco from "../../assets/images/Logo_lab_Branco.svg";
 
@@ -8,8 +8,9 @@ const Login = () => {
   const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (!cpf || !password) {
@@ -17,46 +18,39 @@ const Login = () => {
       return;
     }
 
-    // try {
-    //   const response = await fetch("/api/login", { // endpoint do backend
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json"
-    //     },
-    //     body: JSON.stringify({ email, password })
-    //   });
-
-    //   if (!response.ok) {
-    //     // lê mensagem de erro enviada pelo servidor (se houver)
-    //     const errBody = await response.json().catch(() => ({}));
-    //     throw new Error(errBody.message || `Erro ${response.status}`);
-    //   }
-
-    //   const data = await response.json(); // ex: { token: "...", user: {...} }
-
-    //   // Exemplo de armazenamento simples (ver observações de segurança abaixo)
-    //   localStorage.setItem("token", data.token);
-    //   // você pode salvar dados do usuário em um context/global store também
-
-    //   // redirecionar após login
-    //   navigate("/dashboard");
-    // }
     try {
-      // Simulação de chamada de API
-      if (cpf === "123" && password === "123") {
-        // Login bem-sucedido
-        localStorage.setItem("token", "token_simulado");
-        //navigate("/dashboard");
-        console.log("Login bem-sucedido");
-      } else {
-        throw new Error("Credenciais inválidas");
+      // Esta é a chamada de API REAL
+      const response = await fetch("http://127.0.0.1:8000/api/auth/login/", { // URL completa do Backend
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        // O backend espera "username", que é o que você digita no campo "cpf"
+        body: JSON.stringify({ cpf: cpf, password: password }) 
+      });
+
+      if (!response.ok) {
+        // lê mensagem de erro enviada pelo servidor 
+        const errBody = await response.json().catch(() => ({}));
+        // Tenta pegar uma mensagem de erro específica do backend
+        const detailError = errBody.detail || "Credenciais inválidas";
+        throw new Error(detailError);
       }
+
+      const data = await response.json(); 
+
+      // Salva o token
+      localStorage.setItem("token", data.token);
+      
+      // Redireciona para a página de relatórios
+      navigate("/reports"); 
+
     } catch (err) {
-      console.error(err); // importante: não logue senhas
+      console.error(err); 
       setError(err.message || "Erro ao fazer login");
     }
   };
-
+    
   return (
     <PageContainer>
       <LoginForm onSubmit={handleSubmit}>
