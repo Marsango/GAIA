@@ -6,14 +6,23 @@ from .models import Propriedade, Laudo
 from .serializers import PropriedadeSerializer, LaudoSerializer
 from authentication.models import Usuario 
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class PropriedadeViewSet(viewsets.ModelViewSet):
     """API para propriedades - CRUD completo"""
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    
     serializer_class = PropriedadeSerializer
     queryset = Propriedade.objects.all()
     
     def get_queryset(self):
-        return Propriedade.objects.all()
+        user = self.request.user
+        if user.is_authenticated:
+            # Mostra apenas propriedades do usuário logado
+            return Propriedade.objects.filter(proprietario=user)
+        return Propriedade.objects.none()
 
 class LaudoViewSet(viewsets.ModelViewSet):
     serializer_class = LaudoSerializer
@@ -23,7 +32,10 @@ class LaudoViewSet(viewsets.ModelViewSet):
     search_fields = ['numero_amostra']
     
     def get_queryset(self):
-        return Laudo.objects.filter(ativo=True).select_related('propriedade')
+        user = self.request.user
+        if user.is_authenticated:
+            return Laudo.objects.filter(propriedade__proprietario=user, ativo=True)
+        return Laudo.objects.none()
     
     @action(detail=False, methods=['get'])
     def por_propriedade(self, request):

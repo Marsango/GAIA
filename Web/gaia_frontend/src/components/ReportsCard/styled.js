@@ -17,6 +17,14 @@ export const Header = styled.div`
   cursor: pointer;
 `;
 
+export const Divider = styled.hr`
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 12px 0;
+  font-family: "Poppins", sans-serif;
+`;
+
+
 export const Conteudo = styled.div`
   max-height: ${(p) => (p.$expandido ? "200px" : "0")};
   opacity: ${(p) => (p.$expandido ? "1" : "0")};
@@ -42,11 +50,16 @@ export const Button = styled.button`
   display: flex;
   align-items: center;
   gap: 5px;
-  width: 350px;
+  width: 250px;
   font-size: 20px;
   justify-content: center;
 `;
 
 export const Data = styled.div`
   font-size: 25px;
+`;
+
+export const NumeroAmostra = styled.div`
+  font-size: 20px;
+  font-family: "Poppins", sans-serif;
 `;

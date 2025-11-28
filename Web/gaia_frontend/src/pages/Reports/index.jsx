@@ -3,6 +3,7 @@ import axios from "axios";
 import Header from "../../components/Header";
 import PropertiesCard from "../../components/PropertiesCard";
 import ReportsCard from "../../components/ReportsCard";
+import api from "../../api/api";
 import {
   PageContainer,
   Title,
@@ -19,8 +20,9 @@ const CentralLaudos = () => {
   const [propriedades, setPropriedades] = useState([]);
   const [laudos, setLaudos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  axios.defaults.withCredentials = true;
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     carregarPropriedades();
@@ -28,25 +30,21 @@ const CentralLaudos = () => {
 
   const carregarPropriedades = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/propriedades/"
-      );
+      const token = localStorage.getItem("token");
 
-      console.log("Resposta completa:", response.data);
+      const response = await api.get("propriedades/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (response.data && Array.isArray(response.data.results)) {
-        setPropriedades(response.data.results); // ← MUDE PARA .results
-        if (response.data.results.length > 0) {
-          setSelectedProperty(response.data.results[0].id);
-        }
-      } else {
-        setError("Estrutura da resposta inesperada");
-        setPropriedades([]);
+      setPropriedades(response.data.results || []);
+      if (response.data.results?.length > 0) {
+        setSelectedProperty(response.data.results[0].id);
       }
     } catch (error) {
       console.error("Erro ao carregar propriedades:", error);
-      setError("Erro ao carregar propriedades: " + error.message);
-      setPropriedades([]);
+      setError("Não foi possível carregar as propriedades.");
     }
   };
 
@@ -56,26 +54,34 @@ const CentralLaudos = () => {
     }
   }, [selectedProperty]);
 
-  const carregarLaudos = async (PropertyId) => {
-    setLoading(true);
+  const carregarLaudos = async (propriedadeId) => {
     try {
+      const token = localStorage.getItem("token");
+
       const response = await axios.get(
-        `http://localhost:8000/api/laudos/?propriedade=${PropertyId}`
+        `http://localhost:8000/api/laudos/por_propriedade/?propriedade_id=${propriedadeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      console.log("Resposta Laudos:", response.data);
-
-      if (response.data && Array.isArray(response.data.results)) {
-        setLaudos(response.data.results);
-      } else {
-        setLaudos([]);
-      }
+      setLaudos(response.data); // <-- SÓ OS LAUDOS DA PROPRIEDADE
     } catch (error) {
       console.error("Erro ao carregar laudos:", error);
-      setLaudos([]);
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const agruparPorData = (laudos) => {
+    return laudos.reduce((acc, laudo) => {
+      const data = laudo.data_coleta;
+
+      if (!acc[data]) acc[data] = [];
+      acc[data].push(laudo);
+
+      return acc;
+    }, {});
   };
 
   return (
@@ -104,19 +110,19 @@ const CentralLaudos = () => {
           <Reports>
             <Subtitle>Laudos</Subtitle>
             <ReportList>
-              {Array.isArray(laudos) && laudos.length > 0
-                ? laudos.map((laudo) => (
-                    <ReportsCard
-                      key={laudo.id}
-                      laudo={{
-                        id: laudo.id,
-                        amostra: laudo.numero_amostra,
-                        data: laudo.data_coleta,
-                        arquivoUrl: `http://localhost:8000${laudo.arquivo_pdf}`,
-                      }}
-                    />
-                  ))
-                : !loading && <p>Nenhum laudo encontrado</p>}
+              {Object.entries(agruparPorData(laudos)).map(
+                ([data, laudosDoDia]) => (
+                  <ReportsCard
+                    key={data}
+                    data={data}
+                    amostras={laudosDoDia.map((l) => ({
+                      id: l.id,
+                      numero: l.numero_amostra,
+                      arquivoUrl: `${l.arquivo_pdf}`,
+                    }))}
+                  />
+                )
+              )}
             </ReportList>
           </Reports>
         </Content>
