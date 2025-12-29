@@ -21,19 +21,13 @@ const Login = () => {
     }
 
     try {
-      const data = await login(cpf, password); // Chama o backend
+      const data = await login(cpf, password);
 
-      if (data && data.access) {
-        // Salva o token e, se quiser, os dados do usuário
-        localStorage.setItem("token", data.access);
-        localStorage.setItem("refresh", data.refresh);
-        localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.access);
+      localStorage.setItem("refresh", data.refresh);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-        navigate("/reports");
-        console.log("Login bem-sucedido:", data);
-      } else {
-        throw new Error("Resposta inesperada do servidor");
-      }
+      navigate("/reports");
     } catch (err) {
       console.error("Erro no login:", err);
       setError("CPF ou senha inválidos.");

@@ -8,17 +8,20 @@ export async function login(cpf, password) {
       cpf,
       password,
     });
-
     console.log("Usuário logado:", response.data);
-
-    // Se o backend retornar um token, salve no localStorage
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token);
-    }
-
     return response.data; // Retorna os dados do usuário
   } catch (error) {
     console.error("Erro no login:", error.response?.data || error.message);
     throw error;
   }
+
+
+    //   // Se o backend retornar um token, salve no localStorage
+    //   if (response.data.token) {
+    //     localStorage.setItem("token", response.data.token);
+    //   }
+
+    // } catch (error) {
+    //   console.error("Erro no login:", error.response?.data || error.message);
+    //   throw error;
 }

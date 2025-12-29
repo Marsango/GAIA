@@ -6,27 +6,33 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import make_password
 from .serializers import LoginSerializer, UsuarioSerializer
 from .models import Usuario
+from rest_framework_simplejwt.tokens import RefreshToken
 
 @api_view(['POST'])
-@permission_classes([AllowAny])  # Permite acesso sem login
+@permission_classes([AllowAny])
 def login_view(request):
     serializer = LoginSerializer(data=request.data)
-    
+
     if serializer.is_valid():
         user = serializer.validated_data['user']
-        login(request, user)  # Cria a sessão
-        
-        user_data = UsuarioSerializer(user).data
+
+        refresh = RefreshToken.for_user(user)
+
         return Response({
-            'message': 'Login realizado com sucesso',
-            'user': user_data
-        })
-    
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": {
+                "id": user.id,
+                "nome": f"{user.first_name} {user.last_name}",
+                "cpf": user.cpf,
+                "email": user.email
+            }
+        }, status=status.HTTP_200_OK)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def logout_view(request):
-    logout(request)
     return Response({'message': 'Logout realizado com sucesso'})
 
 @api_view(['GET'])

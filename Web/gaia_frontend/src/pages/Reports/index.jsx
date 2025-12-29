@@ -30,21 +30,21 @@ const CentralLaudos = () => {
 
   const carregarPropriedades = async () => {
     try {
-      const token = localStorage.getItem("token");
+      setLoading(true);
 
-      const response = await api.get("propriedades/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get("propriedades/");
 
-      setPropriedades(response.data.results || []);
-      if (response.data.results?.length > 0) {
-        setSelectedProperty(response.data.results[0].id);
+      const lista = response.data.results || [];
+      setPropriedades(lista);
+
+      if (lista.length > 0) {
+        setSelectedProperty(lista[0].id);
       }
     } catch (error) {
       console.error("Erro ao carregar propriedades:", error);
       setError("Não foi possível carregar as propriedades.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,18 +56,11 @@ const CentralLaudos = () => {
 
   const carregarLaudos = async (propriedadeId) => {
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get(
-        `http://localhost:8000/api/laudos/por_propriedade/?propriedade_id=${propriedadeId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `laudos/por_propriedade/?propriedade_id=${propriedadeId}`
       );
 
-      setLaudos(response.data); // <-- SÓ OS LAUDOS DA PROPRIEDADE
+      setLaudos(response.data);
     } catch (error) {
       console.error("Erro ao carregar laudos:", error);
     }
