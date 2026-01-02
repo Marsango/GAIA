@@ -1,9 +1,15 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { InputContainer, Label, InputWrapper, Input } from "./styled";
+import {
+  InputContainer,
+  Label,
+  InputWrapper,
+  Input,
+  ErrorText,
+} from "./styled";
 
-export default function InputStyled({ label, type, ...props }) {
+export default function InputStyled({ label, type, error, ...props }) {
   const [showPassword, setShowPassword] = useState(false);
 
   const inputType = type === "password" && showPassword ? "text" : type;
@@ -11,7 +17,7 @@ export default function InputStyled({ label, type, ...props }) {
   return (
     <InputContainer>
       <Label>{label}</Label>
-      <InputWrapper>
+      <InputWrapper $hasError={!!error}>
         <Input type={inputType} {...props} />
         {type === "password" && (
           <span
@@ -23,6 +29,7 @@ export default function InputStyled({ label, type, ...props }) {
           </span>
         )}
       </InputWrapper>
+      {error && <ErrorText>{error}</ErrorText>}
     </InputContainer>
   );
 }

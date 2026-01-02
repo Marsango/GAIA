@@ -21,11 +21,18 @@ export const InputWrapper = styled.div`
   display: flex;
   align-items: center;
   border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid ${props => props.$hasError ? '#ff6b6b' : '#ccc'};
   transition: border-color 0.3s ease;
 
   &:focus-within {
     border-color: ${green};
   }
+`;
+
+export const ErrorText = styled.span`
+  color: red;
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
 `;
 
 export const Input = styled.input`
@@ -42,7 +49,7 @@ export const Icon = styled.div`
   cursor: pointer;
   color: #888;
   position: absolute;
-  right: 0;
+  right: 0; 
   display: flex;
   align-items: center;
   height: 100%;

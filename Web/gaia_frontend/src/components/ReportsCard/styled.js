@@ -8,6 +8,7 @@ export const Card = styled.div`
   background: white;
   width: 550px;
   font-family: "Poppins", sans-serif;
+  overflow: hidden;
 `;
 
 export const Header = styled.div`
@@ -26,11 +27,27 @@ export const Divider = styled.hr`
 
 
 export const Conteudo = styled.div`
-  max-height: ${(p) => (p.$expandido ? "200px" : "0")};
+  max-height: ${(p) => (p.$expandido ? "500px" : "0")};
   opacity: ${(p) => (p.$expandido ? "1" : "0")};
-  overflow: hidden;
+  overflow-y: ${(p) => (p.$expandido ? "auto" : "hidden")};
+  overflow-x: hidden;
   transition: all 0.4s ease;
   margin-top: ${(p) => (p.$expandido ? "10px" : "0")};
+  padding-right: ${(p) => (p.$expandido ? "4px" : "0")};
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
 `;
 
 export const ButtonRow = styled.div`

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -168,6 +169,16 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # 1 hora
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # 7 dias
+    'ROTATE_REFRESH_TOKENS': True,  # Gera novo refresh token a cada uso
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=120),  # 2 horas
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
 # Static files (CSS, JS, imagens do próprio Django)

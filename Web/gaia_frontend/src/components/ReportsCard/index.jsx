@@ -15,11 +15,36 @@ import {
 const ReportCard = ({ data, amostras }) => {
   const [expandido, setExpandido] = useState(false);
 
+  const formatarDataBR = (dataString) => {
+    // Se já estiver no formato BR, retorna como está
+    if (dataString && dataString.includes("/")) {
+      return dataString;
+    }
+
+    try {
+      // Converte YYYY-MM-DD para DD/MM/YYYY
+      if (dataString && dataString.includes("-")) {
+        const [ano, mes, dia] = dataString.split("-");
+        return `${dia}/${mes}/${ano}`;
+      }
+
+      // Tenta converter data ISO
+      const date = new Date(dataString);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString("pt-BR");
+      }
+
+      return dataString || "Data não disponível";
+    } catch {
+      return dataString || "Data não disponível";
+    }
+  };
+
   return (
     <Card>
       <Header onClick={() => setExpandido(!expandido)}>
         <Data>
-          <strong>Data da coleta:</strong> {data}
+          <strong>Data da coleta:</strong> {formatarDataBR(data)}
         </Data>
         {expandido ? <FaChevronUp /> : <FaChevronDown />}
       </Header>

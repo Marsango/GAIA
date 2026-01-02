@@ -8,7 +8,6 @@ export const FullPageContainer = styled.div`
 export const Title = styled.h1`
   text-align: center;
   margin-bottom: 1rem;
-  padding-bottom: 40px;
 `;
 
 export const Content = styled.div`
@@ -16,12 +15,13 @@ export const Content = styled.div`
   justify-content: center;
   align-items: start;
   background-color: #f9f9f9;
-  height: 450px;
   width: fit-content;
   margin: 0 auto;
   padding: 20px;
   border-radius: 10px;
   border: 1px solid #2e7d32;
+  overflow: hidden;
+  margin-bottom: 40px;
 `;
 
 export const Properties = styled.div`

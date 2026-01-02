@@ -14,7 +14,7 @@ export const LoginForm = styled.form`
     display: flex;
     flex-direction: column;
     width: 400px;
-    height: 481px;
+    height: 520px;
     gap: 12px;
     padding: 16px;
     padding-top: 30px;
@@ -34,6 +34,7 @@ export const Button = styled.button`
     width: 60%;
     font-weight: 600;
     font-size: 15px;
+
     &:hover {
         background: darken(${green}, 10%);
     }
@@ -49,4 +50,15 @@ export const Title = styled.h1`
 export const Logo = styled.img`
     width: 150px;
     height: auto;
+`;
+
+export const ErrorMessage = styled.p`
+    font-family: 'Poppins', sans-serif;
+    color: #d32f2f; /* Vermelho */
+    font-size: 17px;
+    text-align: center;
+    min-height: 20px;
+    font-weight: 500;
+    padding: 8px;
+    width: 100%;
 `;
