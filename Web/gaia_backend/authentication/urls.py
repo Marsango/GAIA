@@ -7,4 +7,5 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('user-info/', views.current_user, name='current-user'),
     path('sync/usuario/', views.sync_usuario, name='sync-usuario'),
+    path('login/cpf/', views.login_with_cpf, name='login-with-cpf'),
 ]

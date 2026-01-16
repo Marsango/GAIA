@@ -1,27 +1,25 @@
 from rest_framework import serializers
-from .models import Propriedade, Laudo
+from .models import Propriedade, Laudo, Amostra, Empresa, Person, Endereco
 
-class PropriedadeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Propriedade
-        fields = '__all__'  # Pega todos os campos do model
-
-class LaudoSerializer(serializers.ModelSerializer):
-    # Campos extras que não estão no model, mas são úteis para o frontend
-    propriedade_nome = serializers.CharField(source='propriedade.nome', read_only=True)
-    arquivo_url = serializers.SerializerMethodField()
+class AmostraSerializer(serializers.ModelSerializer):
+    
+    propriedade_name = serializers.CharField(source='propriedade.name', read_only=True)
     
     class Meta:
+        model = Amostra
+        fields = '__all__'
+        read_only_fields = ['usuario', 'data_cadastro']
+    
+    def create(self, validated_data):
+        # O campo usuario sera preenchido automaticamente pelo save() do modelo
+        # Nao atribuimos o request.user aqui pois ele eh um Usuario, nao uma Person
+        return super().create(validated_data)
+
+
+class LaudoSerializer(serializers.ModelSerializer):
+    class Meta:
         model = Laudo
-        fields = [
-            'id',
-            'numero_amostra', 
-            'data_coleta',
-            'arquivo_pdf',
-            'arquivo_url',           # Campo extra
-            'propriedade_nome',      # Campo extra
-            'propriedade'            # ID da propriedade
-        ]
+        fields = '__all__'
     
     def get_arquivo_url(self, obj):
         """Gera a URL completa para baixar o PDF"""
@@ -30,3 +28,44 @@ class LaudoSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.arquivo_pdf.url)
         return None
+    
+class EmpresaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Empresa
+        fields = '__all__'
+
+class PersonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Person
+        fields = '__all__'
+
+class EnderecoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Endereco
+        fields = '__all__'
+
+class PropriedadeSerializer(serializers.ModelSerializer):
+    proprietario_id = serializers.IntegerField(write_only=True)
+    endereco_detalhes = EnderecoSerializer(source='endereco', read_only=True)
+    
+
+    class Meta:
+        model = Propriedade
+        fields = '__all__'
+
+    def create(self, validated_data):
+        proprietario_id = validated_data.pop('proprietario_id')
+
+        # tenta pessoa
+        pessoa = Person.objects.filter(id=proprietario_id).first()
+        if pessoa:
+            validated_data['proprietario_pessoa'] = pessoa
+            return super().create(validated_data)
+
+        # tenta empresa
+        empresa = Empresa.objects.filter(id=proprietario_id).first()
+        if empresa:
+            validated_data['proprietario_empresa'] = empresa
+            return super().create(validated_data)
+
+        raise serializers.ValidationError("Proprietário não encontrado")

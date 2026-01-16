@@ -34,3 +34,9 @@ class Company(Requester):
         if sum_verificator_one != int(cnpj[-2]) or sum_verificator_two != int(cnpj[-1]):
             raise ValueError(f"Error with values of 'cnpj'")
         self.__cnpj = cnpj
+
+    def get_company_name(self) -> str:
+        return self.__company_name
+    
+    def get_cnpj(self) -> str | None:
+        return self.__cnpj

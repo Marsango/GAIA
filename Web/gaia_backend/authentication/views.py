@@ -11,6 +11,70 @@ from django.contrib.auth import get_user_model
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def login_with_cpf(request):
+    """Login usando CPF (para site e software)"""
+    cpf = request.data.get('cpf')
+    password = request.data.get('password')
+    
+    if not cpf or not password:
+        return Response(
+            {'error': 'CPF e senha são obrigatórios'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    User = get_user_model()
+    
+    try:
+        # Buscar usuário por CPF
+        if hasattr(User(), 'cpf'):
+            # Model tem campo CPF
+            user = User.objects.get(cpf=cpf)
+        else:
+            # Usar CPF como username (limpar pontuação)
+            cpf_limpo = cpf.replace('.', '').replace('-', '')
+            user = User.objects.get(username=cpf_limpo)
+        
+        # Verificar senha
+        if user.check_password(password):
+            if user.is_active:
+                # Gerar token JWT
+                refresh = RefreshToken.for_user(user)
+                
+                return Response({
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                    'user': {
+                        'id': user.id,
+                        'nome': f'{user.first_name} {user.last_name}'.strip(),
+                        'email': user.email,
+                        'cpf': cpf,
+                        'is_staff': user.is_staff,
+                    }
+                })
+            else:
+                return Response(
+                    {'error': 'Conta desativada'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            return Response(
+                {'error': 'Senha incorreta'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            
+    except User.DoesNotExist:
+        return Response(
+            {'error': 'CPF não cadastrado'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def login_view(request):
     serializer = LoginSerializer(data=request.data)
 

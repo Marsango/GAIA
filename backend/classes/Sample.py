@@ -55,7 +55,7 @@ class Sample:
             else:
                 self.__potassium: float | None = round(potassium * self.__used_config['potassium']['value'], 2)\
                     if self.__used_config['potassium']['selected'] == 'factors' else (
-                    round((phosphorus - self.__used_config['potassium']['value']['b'])/self.__used_config['potassium']['value']['a'], 2))
+                    round((potassium - self.__used_config['potassium']['value']['b'])/self.__used_config['potassium']['value']['a'], 2))
 
             if organic_matter is None:
                 self.__organic_matter: float | None = None
@@ -88,7 +88,7 @@ class Sample:
                 else:
                     self.__potassium: float | None = round(potassium * self.__used_config['potassium']['value'], 2) \
                         if self.__used_config['potassium']['selected'] == 'factors' else (
-                        round((phosphorus - self.__used_config['potassium']['value']['b']) /
+                        round((potassium - self.__used_config['potassium']['value']['b']) /
                               self.__used_config['potassium']['value']['a'], 2))
 
             if organic_matter == sample_data['organic_matter']:
@@ -106,7 +106,7 @@ class Sample:
         self.__ph: float | None = ph
         self.__smp: float | None = smp
         self.__aluminum : float | None = aluminum
-        if self.__organic_matter > 50:
+        if self.__organic_matter is not None and self.__organic_matter > 50:
             self.__h_al: float = round(math.pow(2.7182, (6.9056 - (0.08824 * self.__smp))), 1) if smp is not None else None
         else:
             try:
@@ -144,7 +144,16 @@ class Sample:
 
     def verify_valid_date(self, collection_date: str) -> None:
         try:
-            self.__collection_date: str = datetime.strptime(collection_date, '%d/%m/%Y').strftime("%d/%m/%Y")
+            # Tenta parse de diferentes formatos
+            for fmt in ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d"]:
+                try:
+                    parsed = datetime.strptime(collection_date, fmt)
+                    self.__collection_date: str = parsed.strftime("%y/%m/%d")
+                    return
+                except ValueError:
+                    continue
+            # Se nenhum formato funcionou, levanta erro
+            raise ValueError("Nenhum formato de data válido")
         except:
             raise ValueError("Error with values of 'Data'")
 

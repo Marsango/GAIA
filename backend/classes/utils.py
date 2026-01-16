@@ -33,16 +33,37 @@ def verify_type(type_hints: dict[str, Any], function_parameters: dict[str, Any])
 
 
 def to_dict(_object: Any) -> dict[str, Any]:
+    """Converte objeto para dicionário - VERSÃO CORRIGIDA"""
     try:
-        aux_dict: dict[str, Any] = {}
-        _object = _object.__dict__
-        for key in _object:
-            aux_dict[key.split('__')[1]] = _object[key]
-        return aux_dict
+        # Se não é objeto, retorna como está
+        if not hasattr(_object, '__dict__'):
+            return _object if isinstance(_object, dict) else {}
+        
+        result = {}
+        obj_dict = _object.__dict__
+        
+        for key, value in obj_dict.items():
+            # Lidar com diferentes formatos de atributos:
+            # 1. Atributo privado: "_Person__name" → "name"
+            # 2. Atributo privado simples: "__name" → "name"  
+            # 3. Atributo público: "name" → "name"
+            
+            if '__' in key:
+                # Divide pelo último '__' (para lidar com name mangling)
+                parts = key.split('__')
+                clean_key = parts[-1]  # Pega a última parte
+            else:
+                clean_key = key
+            
+            # Só adiciona se não for vazio
+            if clean_key:
+                result[clean_key] = value
+        
+        return result
+        
     except Exception as e:
         logging.error(f"Erro ao converter objeto para dicionário: {e}")
-        raise ValueError("Erro ao converter objeto para dicionário.")
-
+        return {}  # Retorna dict vazio em vez de crashar
 
 def translate_errors(field: str) -> str:
     translate_dict = {'country': "País", 'state': 'Estado', 'city': 'Cidade', 'street': 'Rua',
