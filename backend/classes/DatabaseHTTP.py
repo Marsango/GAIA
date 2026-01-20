@@ -1,3 +1,5 @@
+#nao sendo utilizada
+
 import requests
 import json
 from typing import Optional, List, Dict, Any
