@@ -13,6 +13,7 @@ from interface.base_windows.generate_report import GenerateReportDialog
 from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from backend.classes.Report import Report
+from backend.classes.Database import Database
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QHeaderView, QFileDialog)
 
 
@@ -94,8 +95,16 @@ class GenerateReport(QDialog, GenerateReportDialog):
             self.parameters_table.setItem(row, 0, check_box_item)
         self.get_graph_values()
         self.parameters_table.itemChanged.connect(self.update_graph_values)
+        self.parameters_table.itemDoubleClicked.connect(self.clear_cell_on_edit)
         self.generate_report.clicked.connect(self.create_report)
 
+
+    def clear_cell_on_edit(self, item: QTableWidgetItem) -> None:
+        """Limpa o texto da célula ao clicar duas vezes para evitar sobreposição visual"""
+        if item.column() != 0:  # Não limpar a primeira coluna (nome do parâmetro)
+            self.parameters_table.blockSignals(True)
+            item.setText("")
+            self.parameters_table.blockSignals(False)
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:
         if item.column() != 0:

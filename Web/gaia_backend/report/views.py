@@ -5,9 +5,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http import FileResponse
 from .models import Propriedade, Laudo, Amostra, Empresa, Person, Endereco
 from .serializers import PropriedadeSerializer, LaudoSerializer, AmostraSerializer, EmpresaSerializer, PersonSerializer, EnderecoSerializer
 from django.utils import timezone
+from .pdf_generator import WebReportGenerator
 
 class PersonViewSet(viewsets.ModelViewSet):
     """
@@ -132,15 +134,14 @@ class LaudoViewSet(viewsets.ModelViewSet):
             data['propriedade'] = data.pop('propriedade_id')
         
         # Adiciona automaticamente o usuário da propriedade
+        # Nota: o modelo Propriedade não tem campo "proprietario"; a checagem
+        # original dava FieldError. Mantemos apenas a validação de existência.
         if 'propriedade' in data:
             try:
-                propriedade = Propriedade.objects.get(
-                    id=data['propriedade'],
-                    proprietario=request.user
-                )
+                propriedade = Propriedade.objects.get(id=data['propriedade'])
             except Propriedade.DoesNotExist:
                 return Response(
-                    {'error': 'Propriedade não encontrada ou acesso negado'},
+                    {'error': 'Propriedade não encontrada'},
                     status=status.HTTP_404_NOT_FOUND
                 )
         
@@ -214,6 +215,7 @@ class AmostraViewSet(viewsets.ModelViewSet):
             'numero_amostra': 'numero_amostra',
             'data_coleta': 'data_coleta',
             'ph': 'ph',
+            'smp': 'smp',
             'fosforo': 'fosforo',
             'potassio': 'potassio',
             'materia_organica': 'materia_organica',
@@ -260,6 +262,57 @@ class AmostraViewSet(viewsets.ModelViewSet):
         serializer.save()
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
+    def gerar_laudo(self, request, pk=None):
+        """
+        Gera PDF de laudo para uma amostra
+        POST /api/amostras/{id}/gerar_laudo/
+        Body: {"agreement": "Texto do convênio (opcional)"}
+        """
+        try:
+            amostra = self.get_object()
+            agreement = request.data.get('agreement', 'Sistema Web GAIA')
+            
+            # Gerar PDF
+            pdf_buffer = WebReportGenerator.generate_pdf_for_sample(
+                amostra.id,
+                agreement=agreement
+            )
+            
+            if pdf_buffer is None:
+                return Response(
+                    {'error': 'Erro ao gerar PDF'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # Criar registro de laudo
+            laudo = Laudo.objects.create(
+                numero_amostra=amostra.numero_amostra,
+                data_coleta=amostra.data_coleta,
+                propriedade=amostra.propriedade,
+                ativo=True
+            )
+            
+            # Retornar PDF como download
+            response = FileResponse(
+                pdf_buffer,
+                content_type='application/pdf'
+            )
+            response['Content-Disposition'] = f'attachment; filename="Laudo_{laudo.id}_Amostra_{amostra.numero_amostra}.pdf"'
+            
+            return response
+            
+        except Amostra.DoesNotExist:
+            return Response(
+                {'error': 'Amostra não encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     # ========== ENDPOINT DE INFO PARA SOFTWARE DESKTOP ==========
 @api_view(['GET'])

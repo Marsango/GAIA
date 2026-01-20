@@ -8,6 +8,7 @@ from PySide6.QtGui import QPixmap
 
 from interface.base_windows.generate_csv import GenerateCSVDialog
 from interface.AlertWindow import AlertWindow
+from backend.classes.Database import Database
 from PySide6.QtWidgets import (QDialog, QFileDialog, QTableWidgetItem, QHeaderView, QAbstractItemView)
 
 
@@ -55,8 +56,11 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
             item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def open_dialog(self) -> None:
-        filename: QFileDialog.getOpenFileName = QFileDialog.getSaveFileName(filter="*.csv")[0]
-        self.file_path.setText(filename)
+        # Deixa o usuário escolher apenas a pasta e propõe um nome padrão para o CSV.
+        directory = QFileDialog.getExistingDirectory(self, "Selecionar pasta para salvar")
+        if directory:
+            default_name = "export.csv"
+            self.file_path.setText(os.path.join(directory, default_name))
 
     def translate_params(self, params) -> str:
         translate_dict = {

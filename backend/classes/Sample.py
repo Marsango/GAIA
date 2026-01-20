@@ -153,7 +153,8 @@ class Sample:
             for fmt in ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d"]:
                 try:
                     parsed = datetime.strptime(collection_date, fmt)
-                    self.__collection_date: str = parsed.strftime("%y/%m/%d")
+                    # Armazena no formato dd/mm/YYYY para a UI; wrapper converte para API.
+                    self.__collection_date: str = parsed.strftime("%d/%m/%Y")
                     return
                 except ValueError:
                     continue

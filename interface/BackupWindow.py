@@ -3,6 +3,7 @@ from PIL.ImageQt import QPixmap
 from interface.base_windows.backup_window import BackupDialog
 from interface.AlertWindow import AlertWindow
 from PySide6.QtWidgets import (QDialog, QFileDialog)
+from backend.classes.Database import Database
 import shutil, os
 import datetime
 

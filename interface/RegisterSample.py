@@ -8,6 +8,7 @@ from backend.classes.Configuration import Configuration
 from backend.classes.utils import handle_exception
 from interface.base_windows.register_sample import RegisterSampleDialog
 from backend.classes.Sample import Sample
+from backend.classes.Database import Database
 from interface.AlertWindow import AlertWindow
 
 
@@ -16,6 +17,7 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         super(RegisterSample, self).__init__()
         self.current_property_id: int = property_id
         self.current_sample_id: int | None = None
+        self.database = Database()
         self.setupUi(self)
         self.setWindowTitle('Registro de amostra')
         self.setWindowIcon(QPixmap(os.path.join(
@@ -31,41 +33,69 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.sample_number.clear()
         self.sample_number.setText(str(sample_data["sample_number"]))
         self.collection_depth.setText(str(sample_data["depth"]))
-        self.date.setText(sample_data["collection_date"])
+        # Normaliza data vinda da API (YYYY-MM-DD) para dd/mm/YYYY para a UI
+        date_val = sample_data.get("collection_date")
+        if date_val:
+            try:
+                from datetime import datetime
+                parsed = datetime.strptime(str(date_val), "%Y-%m-%d")
+                date_str = parsed.strftime("%d/%m/%Y")
+            except Exception:
+                date_str = str(date_val)
+        else:
+            date_str = ""
+        self.date.setText(date_str)
         self.description.setText(sample_data["description"])
         self.area.setText(str(sample_data["total_area"]))
         self.latitude.setText(str(sample_data["latitude"]))
         self.longitude.setText(str(sample_data["longitude"]))
-        used_config = json.loads(sample_data['used_config'])
+        
+        # Verificar se used_config existe e não é None
+        used_config = None
+        if sample_data.get('used_config'):
+            try:
+                used_config = json.loads(sample_data['used_config'])
+            except (json.JSONDecodeError, TypeError):
+                used_config = None
+        
         if sample_data["phosphorus"] is None:
             self.phosphorus.setText('')
         else:
-            if used_config['phosphorus']['selected'] == 'factors':
-                self.phosphorus.setText(str(round(sample_data["phosphorus"]/used_config['phosphorus']['value'], 2)))
+            if used_config and 'phosphorus' in used_config:
+                if used_config['phosphorus']['selected'] == 'factors':
+                    self.phosphorus.setText(str(round(sample_data["phosphorus"]/used_config['phosphorus']['value'], 2)))
+                else:
+                    self.phosphorus.setText(str(round(
+                        sample_data["phosphorus"]*used_config['phosphorus']['value']['a']
+                        + used_config['phosphorus']['value']['b'], 2)))
             else:
-                self.phosphorus.setText(str(round(
-                    sample_data["phosphorus"]*used_config['phosphorus']['value']['a']
-                    + used_config['phosphorus']['value']['b'], 2)))
+                self.phosphorus.setText(str(sample_data["phosphorus"]))
 
         if sample_data["potassium"] is None:
             self.potassium.setText('')
         else:
-            if used_config['potassium']['selected'] == 'factors':
-                self.potassium.setText(str(round(sample_data["potassium"]/used_config['potassium']['value'], 2)))
+            if used_config and 'potassium' in used_config:
+                if used_config['potassium']['selected'] == 'factors':
+                    self.potassium.setText(str(round(sample_data["potassium"]/used_config['potassium']['value'], 2)))
+                else:
+                    self.potassium.setText(str(round(
+                        sample_data["potassium"]*used_config['potassium']['value']['a']
+                        + used_config['potassium']['value']['b'], 2)))
             else:
-                self.potassium.setText(str(round(
-                    sample_data["potassium"]*used_config['potassium']['value']['a']
-                    + used_config['potassium']['value']['b'], 2)))
+                self.potassium.setText(str(sample_data["potassium"]))
 
         if sample_data["organic_matter"] is None:
             self.organic_matter.setText('')
         else:
-            if used_config['organic_matter']['selected'] == 'factors':
-                self.organic_matter.setText(str(round(sample_data["organic_matter"]/used_config['organic_matter']['value'], 2)))
+            if used_config and 'organic_matter' in used_config:
+                if used_config['organic_matter']['selected'] == 'factors':
+                    self.organic_matter.setText(str(round(sample_data["organic_matter"]/used_config['organic_matter']['value'], 2)))
+                else:
+                    self.organic_matter.setText(str(round(
+                        sample_data["organic_matter"]*used_config['organic_matter']['value']['a']
+                        + used_config['organic_matter']['value']['b'], 2)))
             else:
-                self.organic_matter.setText(str(round(
-                    sample_data["organic_matter"]*used_config['organic_matter']['value']['a']
-                    + used_config['organic_matter']['value']['b'], 2)))
+                self.organic_matter.setText(str(sample_data["organic_matter"]))
 
         self.clay_input.setText(str(sample_data["clay"]) if sample_data["clay"] is not None else '')
         self.silte_input.setText(str(sample_data["silte"]) if sample_data["silte"] is not None else '')
@@ -92,7 +122,6 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         self.current_sample_id = int(sample_data['id'])
 
     def register_action(self) -> None:
-        db = Database()
         try:
             if not self.collection_depth.text() or not self.area.text() or not self.latitude.text() or not self.longitude.text() or not self.sample_number.text():
                 raise ValueError("Por favor, preencha todos os campos obrigatórios.")
@@ -142,10 +171,10 @@ class RegisterSample(QDialog, RegisterSampleDialog):
                                     manganese=manganese,
                                     zinc=zinc, clay=clay, sand=sand, silte=silte, is_editing=is_editing, sample_id = self.current_sample_id)
             if self.mode == 'register':
-                db.insert_sample(sample, self.current_property_id, int(self.sample_number.text()))
+                self.database.insert_sample(sample, self.current_property_id, int(self.sample_number.text()))
                 success: str = "Amostra registrada com sucesso!"
             else:
-                db.edit_sample(sample, self.current_sample_id)
+                self.database.edit_sample(sample, self.current_sample_id)
                 success: str = "Alterações salvas com sucesso!"
 
             widget: AlertWindow = AlertWindow(success)
@@ -159,7 +188,12 @@ class RegisterSample(QDialog, RegisterSampleDialog):
         except TypeError as e:
             widget: AlertWindow = AlertWindow(f"Erro: você deve preencher o restante dos valores granulométricos.")
             widget.exec()
-        db.close_connection()
+
+    def closeEvent(self, event):
+        try:
+            self.database.close_connection()
+        finally:
+            super().closeEvent(event)
 
 
     def clean_input(self):

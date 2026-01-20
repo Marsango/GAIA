@@ -93,6 +93,7 @@ class Amostra(models.Model):
     potassio = models.FloatField(null=True, blank=True)
     materia_organica = models.FloatField(null=True, blank=True)
     ph = models.FloatField(null=True, blank=True)
+    smp = models.FloatField(null=True, blank=True)
     aluminio = models.FloatField(null=True, blank=True)
     h_al = models.FloatField(null=True, blank=True)
     calcio = models.FloatField(null=True, blank=True)
@@ -134,7 +135,7 @@ class Amostra(models.Model):
 class Laudo(models.Model):
     numero_amostra = models.IntegerField()
     data_coleta = models.DateField()
-    arquivo_pdf = models.FileField(upload_to='laudos/pdf/')
+    arquivo_pdf = models.FileField(upload_to='laudos/pdf/', blank=True, null=True)
     propriedade = models.ForeignKey(Propriedade, on_delete=models.CASCADE)
     ativo = models.BooleanField(default=True)
     data_criacao = models.DateTimeField(auto_now_add=True)

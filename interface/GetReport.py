@@ -32,6 +32,9 @@ class GetReport(QDialog, GetReportDialog):
         reports: list[sqlite3.Row] = db.get_report_info()
         self.report_table.setRowCount(0)
         for report in reports:
+            # Ignora laudos sem ID (API pode retornar entradas vazias)
+            if report['id'] is None:
+                continue
             row_position: int = self.report_table.rowCount()
             self.report_table.insertRow(row_position)
             self.report_table.setItem(row_position, 0, QTableWidgetItem(str(report['id'])))
@@ -51,10 +54,16 @@ class GetReport(QDialog, GetReportDialog):
                 widget.exec()
                 return
         row: int = selected_items[0].row()
-        id: int = int(self.report_table.item(row, 0).text())
+        id_text = self.report_table.item(row, 0).text()
+        try:
+            id_val: int = int(id_text)
+        except (TypeError, ValueError):
+            widget: AlertWindow = AlertWindow("Laudo selecionado sem ID válido.")
+            widget.exec()
+            return
         file_path = self.open_save_dialog()
         script_path: Path = Path(__file__).resolve()
-        backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {id}.pdf"
+        backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {id_val}.pdf"
         shutil.copy(backup_path, file_path)
         widget: AlertWindow = AlertWindow("Cópia feita com sucesso!")
         widget.exec()

@@ -80,6 +80,7 @@ class DatabaseHTTPWrapper:
                 "%d-%m-%Y",
                 "%d-%m-%y",
                 "%Y/%m/%d",
+                "%y/%m/%d",  # compatível com Sample.verify_valid_date (yy/mm/dd)
             ]
 
             for fmt in formats:
@@ -110,7 +111,6 @@ class DatabaseHTTPWrapper:
                 self.token = data.get("access")
                 if self.token:
                     self.headers["Authorization"] = f"Bearer {self.token}"
-                    print("✅ Login automático realizado")
                     return True
             return False
         except:
@@ -133,14 +133,11 @@ class DatabaseHTTPWrapper:
                 self.token = data.get("access")
                 if self.token:
                     self.headers["Authorization"] = f"Bearer {self.token}"
-                    print(f"✅ Login automático realizado (CPF: {login_cpf})")
                     return True
 
-            print(f"❌ Falha no login: {response.status_code}")
             return False
 
         except Exception as e:
-            print(f"❌ Erro no login automático: {e}")
             return False
 
     def _make_request(self, method: str, endpoint: str,
@@ -150,17 +147,11 @@ class DatabaseHTTPWrapper:
             url = f"{self.base_url}{endpoint}"
 
             if not self.token:
-                print("⚠️ Sem token, tentando login automático...")
                 if not self._auto_login():
                     raise RuntimeError("Falha no auto-login")
 
             headers = self.headers.copy()
             headers["Authorization"] = f"Bearer {self.token}"
-
-            print(f"\n REQUEST:")
-            print(f"  {method.upper()} {url}")
-            if data:
-                print(json.dumps(data, indent=2, ensure_ascii=False))
 
             response = self.session.request(
                 method=method.upper(),
@@ -170,10 +161,6 @@ class DatabaseHTTPWrapper:
                 params=params,
                 timeout=30
             )
-
-            print(f"\n RESPONSE:")
-            print(f"  Status: {response.status_code}")
-            print(f"  Text: {response.text[:300]}")
 
             if response.status_code == 204:
                 return True
@@ -187,7 +174,6 @@ class DatabaseHTTPWrapper:
                 return True
 
             if response.status_code == 401 and not _retry:
-                print("🔑 Token expirado, renovando...")
                 if self._auto_login():
                     return self._make_request(
                         method, endpoint, data, params, _retry=True
@@ -199,7 +185,6 @@ class DatabaseHTTPWrapper:
             )
 
         except Exception as e:
-            print(f" ERRO em _make_request: {e}")
             raise   
 
     
@@ -215,7 +200,7 @@ class DatabaseHTTPWrapper:
     # ========== MÉTODOS COMPATÍVEIS COM SQLite ANTIGO ==========
     
     def insert_person(self, person: Person, address: Address) -> dict:
-        """MESMA ASSINATURA DO SQLITE ANTIGO - VERSÃO DEBUG"""
+        """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
             address_dict = to_dict(address)
             
@@ -240,11 +225,9 @@ class DatabaseHTTPWrapper:
             endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_data)
             
             if not endereco_result:
-                print(f"❌ FALHA: Não foi possível criar endereço")
                 endereco_id = None
             else:
                 endereco_id = endereco_result.get("id")
-                print(f"✅ Endereço criado com ID: {endereco_id}")
             
             # 2. Criar pessoa
             pessoa_data = {
@@ -261,16 +244,11 @@ class DatabaseHTTPWrapper:
             pessoa_result = self._make_request("POST", "/api/pessoas/", data=pessoa_data)
             
             if pessoa_result and 'id' in pessoa_result:
-                print(f"✅ Pessoa '{name}' inserida com sucesso (ID: {pessoa_result['id']})")
                 return pessoa_result
             else:
-                print(f"❌ FALHA AO CRIAR PESSOA")
-                raise Exception("Falha ao criar pessoa - Verifique logs acima")
+                raise Exception("Falha ao criar pessoa")
                     
         except Exception as e:
-            print(f"❌ ERRO GERAL: {e}")
-            import traceback
-            traceback.print_exc()
             raise
     
     def edit_person(self, person: Person, address: Address, id: int, requester_id: int) -> None:
@@ -313,22 +291,17 @@ class DatabaseHTTPWrapper:
                 pessoa_payload["endereco"] = endereco_id
 
             self._make_request("PUT", f"/api/pessoas/{id}/", data=pessoa_payload)
-            print(f"✅ Pessoa {id} atualizada")
 
         except Exception as e:
-            print(f"❌ Erro ao editar pessoa: {e}")
             raise
     
     def delete_person(self, id: int) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
             result = self._make_request("DELETE", f"/api/pessoas/{id}/")
-            if result:
-                print(f"✅ Pessoa {id} excluída")
-            else:
+            if not result:
                 raise Exception("Falha ao excluir pessoa")
         except Exception as e:
-            print(f"❌ Erro ao excluir pessoa: {e}")
             raise
     
     def insert_company(self, company: Company, address: Address) -> dict:
@@ -366,13 +339,11 @@ class DatabaseHTTPWrapper:
             empresa_result = self._make_request("POST", "/api/empresas/", data=empresa_data)
             
             if empresa_result and 'id' in empresa_result:
-                print(f"✅ Empresa {company_dict.get('company_name')} cadastrada")
                 return empresa_result
             else:
                 raise Exception("Falha ao criar empresa")
                 
         except Exception as e:
-            print(f"❌ Erro ao cadastrar empresa: {e}")
             raise
     
     def edit_company(self, company: Company, address: Address, id: int, requester_id: int) -> None:
@@ -410,22 +381,17 @@ class DatabaseHTTPWrapper:
                 empresa_payload["endereco"] = endereco_id
 
             self._make_request("PUT", f"/api/empresas/{id}/", data=empresa_payload)
-            print(f"✅ Empresa {id} atualizada")
 
         except Exception as e:
-            print(f"❌ Erro ao editar empresa: {e}")
             raise
     
     def delete_company(self, id: int) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
             result = self._make_request("DELETE", f"/api/empresas/{id}/")
-            if result:
-                print(f"✅ Empresa {id} excluída")
-            else:
+            if not result:
                 raise Exception("Falha ao excluir empresa")
         except Exception as e:
-            print(f"❌ Erro ao excluir empresa: {e}")
             raise
     
     def insert_property(self, property: Property, requester_id: int, address: Address) -> dict:
@@ -454,15 +420,11 @@ class DatabaseHTTPWrapper:
             "localizacao": property_dict.get("localizacao", ""),
             "proprietario_id": requester_id,
         }
-        print(f"DEBUG DatabaseHTTPWrapper.insert_property - enviando: {data}")
-
         result = self._make_request("POST", "/api/propriedades/", data=data)
 
         if not result or "id" not in result:
             raise Exception("Falha ao criar propriedade")
 
-        print(f"✅ Propriedade '{property_dict['name']}' cadastrada")
-        print(f"   ID: {result['id']}")
         return result
         
     def edit_property(self, property: Property, property_id: int, address: Address = None) -> None:
@@ -528,25 +490,19 @@ class DatabaseHTTPWrapper:
 
             result = self._make_request("PUT", f"/api/propriedades/{property_id}/", data=data)
 
-            if result:
-                print(f"✅ Propriedade {property_id} atualizada")
-            else:
+            if not result:
                 raise Exception("Falha ao atualizar propriedade")
 
         except Exception as e:
-            print(f"❌ Erro ao editar propriedade: {e}")
             raise
     
     def delete_property(self, id: int) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
             result = self._make_request("DELETE", f"/api/propriedades/{id}/")
-            if result:
-                print(f"✅ Propriedade {id} excluída")
-            else:
+            if not result:
                 raise Exception("Falha ao excluir propriedade")
         except Exception as e:
-            print(f"❌ Erro ao excluir propriedade: {e}")
             raise
     
     def insert_sample(self, sample: Sample, property_id: int, sample_number: int) -> dict:
@@ -554,50 +510,61 @@ class DatabaseHTTPWrapper:
         try:
             sample_dict = to_dict(sample)
 
-            # DEBUG: Verificar ID da propriedade
-            print(f"🔍 Validando propriedade ID: {property_id}")
-            
-            # Primeiro, tentar verificar se a propriedade existe e pertence ao usuário
+            # Verificar se a propriedade existe
             try:
-                # Verificar propriedade via API
                 propriedade_info = self._make_request("GET", f"/api/propriedades/{property_id}/")
                 if not propriedade_info:
                     raise Exception(f"Propriedade ID {property_id} não encontrada")
-                print(f"✅ Propriedade encontrada: {propriedade_info.get('name', 'N/A')}")
             except Exception as e:
-                print(f"❌ Erro ao buscar propriedade {property_id}: {e}")
                 raise         
                 
+            # Enviar para o endpoint completo para persistir todos os campos
             data = {
-                # Endpoint criar_simples espera "propriedade_id"; manter só este nome para evitar 400
                 "propriedade_id": property_id,
                 "numero_amostra": sample_number,
                 "data_coleta": self._format_date(sample_dict.get("collection_date")),
                 "descricao": sample_dict.get("description", f"Amostra {sample_number}"),
+                # Parâmetros químicos
                 "ph": sample_dict.get("ph"),
+                "smp": sample_dict.get("smp"),
                 "fosforo": sample_dict.get("phosphorus"),
                 "potassio": sample_dict.get("potassium"),
                 "materia_organica": sample_dict.get("organic_matter"),
+                "aluminio": sample_dict.get("aluminum"),
+                "h_al": sample_dict.get("h_al"),
+                "calcio": sample_dict.get("calcium"),
+                "magnesio": sample_dict.get("magnesium"),
+                "cobre": sample_dict.get("copper"),
+                "ferro": sample_dict.get("iron"),
+                "manganes": sample_dict.get("manganese"),
+                "zinco": sample_dict.get("zinc"),
+                "soma_bases": sample_dict.get("base_sum"),
+                "ctc": sample_dict.get("ctc"),
+                "v_percent": sample_dict.get("v_percent"),
+                "saturacao_aluminio": sample_dict.get("aluminum_saturation"),
+                "ctc_efetiva": sample_dict.get("effective_ctc"),
+                # Parâmetros físicos
                 "argila": sample_dict.get("clay"),
                 "silte": sample_dict.get("silte"),
                 "areia": sample_dict.get("sand"),
                 "classificacao": sample_dict.get("classification"),
+                # Geo/metadata
+                "area_total": sample_dict.get("total_area"),
+                "latitude": sample_dict.get("latitude"),
+                "longitude": sample_dict.get("longitude"),
+                "profundidade": sample_dict.get("depth"),
             }
-            
-            result = self._make_request("POST", "/api/amostras/criar_simples/", data=data)
+
+            result = self._make_request("POST", "/api/amostras/", data=data)
             
             if result and 'id' in result:
-                print(f"✅ Amostra {sample_number} cadastrada (ID: {result['id']})")
                 return result
             elif isinstance(result, dict):
-                # Pode ter retornado dados mas sem 'id' diretamente - verificar
-                print(f"⚠️ Resposta da API: {result}")
                 raise Exception("Resposta da API sem ID da amostra")
             else:
                 raise Exception("Falha ao criar amostra")
                 
         except Exception as e:
-            print(f"❌ Erro ao cadastrar amostra: {e}")
             raise
     
     def edit_sample(self, sample: Sample, sample_id: int) -> None:
@@ -616,46 +583,63 @@ class DatabaseHTTPWrapper:
                 "descricao": sample_dict.get("description") or current.get("descricao", ""),
                 "data_coleta": self._format_date(sample_dict.get("collection_date") or current.get("data_coleta")),
                 "ph": sample_dict.get("ph") or current.get("ph"),
+                "smp": sample_dict.get("smp") or current.get("smp"),
                 "fosforo": sample_dict.get("phosphorus") or current.get("fosforo"),
                 "potassio": sample_dict.get("potassium") or current.get("potassio"),
                 "materia_organica": sample_dict.get("organic_matter") or current.get("materia_organica"),
+                "aluminio": sample_dict.get("aluminum") or current.get("aluminio"),
+                "h_al": sample_dict.get("h_al") or current.get("h_al"),
+                "calcio": sample_dict.get("calcium") or current.get("calcio"),
+                "magnesio": sample_dict.get("magnesium") or current.get("magnesio"),
+                "cobre": sample_dict.get("copper") or current.get("cobre"),
+                "ferro": sample_dict.get("iron") or current.get("ferro"),
+                "manganes": sample_dict.get("manganese") or current.get("manganes"),
+                "zinco": sample_dict.get("zinc") or current.get("zinco"),
+                "soma_bases": sample_dict.get("base_sum") or current.get("soma_bases"),
+                "ctc": sample_dict.get("ctc") or current.get("ctc"),
+                "v_percent": sample_dict.get("v_percent") or current.get("v_percent"),
+                "saturacao_aluminio": sample_dict.get("aluminum_saturation") or current.get("saturacao_aluminio"),
+                "ctc_efetiva": sample_dict.get("effective_ctc") or current.get("ctc_efetiva"),
                 "argila": sample_dict.get("clay") or current.get("argila"),
                 "silte": sample_dict.get("silte") or current.get("silte"),
                 "areia": sample_dict.get("sand") or current.get("areia"),
                 "classificacao": sample_dict.get("classification") or current.get("classificacao"),
+                "area_total": sample_dict.get("total_area") or current.get("area_total"),
+                "latitude": sample_dict.get("latitude") or current.get("latitude"),
+                "longitude": sample_dict.get("longitude") or current.get("longitude"),
+                "profundidade": sample_dict.get("depth") or current.get("profundidade"),
             }
 
             result = self._make_request("PUT", f"/api/amostras/{sample_id}/", data=data)
 
-            if result:
-                print(f"✅ Amostra {sample_id} atualizada")
-            else:
+            if not result:
                 raise Exception("Falha ao atualizar amostra")
 
         except Exception as e:
-            print(f"❌ Erro ao editar amostra: {e}")
             raise
     
     def delete_sample(self, id: int) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
             result = self._make_request("DELETE", f"/api/amostras/{id}/")
-            if result:
-                print(f"✅ Amostra {id} excluída")
-            else:
+            if not result:
                 raise Exception("Falha ao excluir amostra")
         except Exception as e:
-            print(f"❌ Erro ao excluir amostra: {e}")
             raise
 
     def insert_report(self, report: Report, sample_id: int) -> Optional[int]:
         """Insere laudo (PDF)"""
         report_dict = to_dict(report)
         
+        # Buscar informações da amostra para pegar numero_amostra e data_coleta
+        amostra = self._make_request("GET", f"/api/amostras/{sample_id}/")
+        if not amostra:
+            return None
+        
         data = {
-            "numero_amostra": sample_id,
-            "data_coleta": datetime.now().strftime("%Y-%m-%d"),
-            "propriedade": self._get_property_from_sample(sample_id),
+            "numero_amostra": amostra.get('numero_amostra'),
+            "data_coleta": amostra.get('data_coleta') or datetime.now().strftime("%Y-%m-%d"),
+            "propriedade": amostra.get('propriedade'),
             "ativo": True
         }
         
@@ -667,7 +651,6 @@ class DatabaseHTTPWrapper:
             if file_location:
                 self._upload_report_pdf(result['id'], file_location)
             
-            print(f"✅ Laudo criado com ID: {result['id']}")
             return result['id']
         
         return None
@@ -696,6 +679,9 @@ class DatabaseHTTPWrapper:
                         params['search'] = cpf_digits
                 elif name:
                     params['search'] = name
+
+                # Lista decrescente por ID (mais recentes primeiro)
+                params['ordering'] = '-id'
 
                 response = self._make_request("GET", "/api/pessoas/", params=params)
 
@@ -735,9 +721,6 @@ class DatabaseHTTPWrapper:
             return formatted
 
         except Exception as e:
-            print(f"❌ Erro ao buscar pessoas: {e}")
-            import traceback
-            traceback.print_exc()
             return []
 
     
@@ -761,6 +744,9 @@ class DatabaseHTTPWrapper:
                         params['search'] = cnpj_digits
                 elif company_name:
                     params['search'] = company_name
+
+                # Lista decrescente por ID (mais recentes primeiro)
+                params['ordering'] = '-id'
 
                 response = self._make_request("GET", "/api/empresas/", params=params)
 
@@ -802,7 +788,6 @@ class DatabaseHTTPWrapper:
             return formatted
 
         except Exception as e:
-            print(f"❌ Erro ao buscar empresas: {e}")
             return []
 
     
@@ -842,7 +827,6 @@ class DatabaseHTTPWrapper:
             return requesters
 
         except Exception as e:
-            print(f"❌ Erro ao buscar solicitantes: {e}")
             return []
 
     
@@ -853,7 +837,7 @@ class DatabaseHTTPWrapper:
                 result = self._make_request("GET", f"/api/propriedades/{kwargs['id']}/")
                 propriedades = [result] if result else []
             else:
-                result = self._make_request("GET", "/api/propriedades/")
+                result = self._make_request("GET", "/api/propriedades/", params={'ordering': '-id'})
                 propriedades = self._unwrap_results(result)
 
             formatted = []
@@ -889,7 +873,6 @@ class DatabaseHTTPWrapper:
             return formatted
 
         except Exception as e:
-            print(f"❌ Erro ao buscar propriedades: {e}")
             return []
         
     def _get_property_from_sample(self, sample_id: int) -> Optional[int]:
@@ -955,7 +938,7 @@ class DatabaseHTTPWrapper:
                         'classification': amostra.get('classificacao'),
                         'ctc': amostra.get('ctc'),
                         'v_percent': amostra.get('v_percent'),
-                        'aluminum_saturation': amostra.get('al_saturation'),
+                        'aluminum_saturation': amostra.get('saturacao_aluminio'),
                         'effective_ctc': amostra.get('ctc_efetiva'),
                         'used_config': amostra.get('config_usada'),
                         'smp': amostra.get('smp'),
@@ -966,26 +949,61 @@ class DatabaseHTTPWrapper:
             return formatted
             
         except Exception as e:
-            print(f"❌ Erro ao buscar amostras: {e}")
             return []
     
     def get_sample_info(self, sample_id: int) -> SQLiteRow:
-        """RETORNA SQLiteRow COMPATÍVEL"""
+        """RETORNA SQLiteRow COMPATÍVEL para geração de laudo"""
         try:
-            
             amostra = self._make_request("GET", f"/api/amostras/{sample_id}/")
             if not amostra:
                 return SQLiteRow({})
-            
-            propriedade_id = amostra.get('propriedade')
+
+            # Propriedade e endereço
+            propriedade_id = amostra.get("propriedade")
             propriedade = None
+            endereco = {}
+            proprietario_id = None
             
             if propriedade_id:
                 try:
-                    propriedade = self._make_request("GET", f"/api/propriedades/{propriedade_id}/")
+                    propriedade = self._make_request("GET", f"/api/propriedades/{propriedade_id}/") or {}
+                    
+                    # Buscar endereço
+                    endereco_ref = propriedade.get("endereco")
+                    if endereco_ref:
+                        endereco = self._get_complete_address(endereco_ref) or {}
+                    
+                    # Identificar proprietário ID
+                    proprietario_id = propriedade.get("proprietario_pessoa") or propriedade.get("proprietario_empresa")
+                    
                 except Exception as e:
-                    print(f" DEBUG: Erro ao buscar propriedade {propriedade_id}: {e}")
+                    print(f"Erro ao buscar propriedade: {e}")
+                    propriedade = {}
+
+            # Proprietário (pessoa ou empresa)
+            requester_name = ""
+            document_number = ""
+            document_type = ""
             
+            if proprietario_id:
+                # Tentar buscar como pessoa primeiro
+                try:
+                    pessoa = self._make_request("GET", f"/api/pessoas/{proprietario_id}/")
+                    if pessoa:
+                        requester_name = pessoa.get("name", "")
+                        document_number = pessoa.get("cpf", "")
+                        document_type = "cpf"
+                except Exception:
+                    # Se não for pessoa, tentar como empresa
+                    try:
+                        empresa = self._make_request("GET", f"/api/empresas/{proprietario_id}/")
+                        if empresa:
+                            requester_name = empresa.get("name", "")
+                            document_number = empresa.get("cnpj", "")
+                            document_type = "cnpj"
+                    except Exception as e:
+                        print(f"Erro ao buscar proprietário: {e}")
+
             row_data = {
                 'sample_description': amostra.get('descricao', ''),
                 'sample_number': amostra.get('numero_amostra'),
@@ -994,36 +1012,60 @@ class DatabaseHTTPWrapper:
                 'total_area': amostra.get('area_total'),
                 'property_name': propriedade.get('name', '') if propriedade else '',
                 'registration_number': propriedade.get('registration_number', '') if propriedade else '',
+                'city': endereco.get('cidade', '') if endereco else '',
+                'state': endereco.get('estado', '') if endereco else '',
+                'country': endereco.get('pais', 'Brasil') if endereco else 'Brasil',
+                'requester_name': requester_name,
+                'document_number': document_number,
+                'document_type': document_type,
             }
-            
+
             return SQLiteRow(row_data)
-            
+
         except Exception as e:
-            print(f"❌ Erro ao buscar informações da amostra: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Erro geral em get_sample_info: {e}")
             return SQLiteRow({})
     
     def get_report_info(self) -> list:
         """RETORNA LISTA DE SQLiteRow COMPATÍVEL"""
         try:
             result_list = self._make_request("GET", "/api/laudos/") or []
-            
+            # Debug para entender ausência de laudos
+            try:
+                size = len(result_list) if hasattr(result_list, '__len__') else 1
+                print(f"[DEBUG] get_report_info: laudos recebidos = {size}")
+            except Exception:
+                pass
+
+            # Se vier paginado (dict com 'results'), usa a lista interna
+            if isinstance(result_list, dict) and 'results' in result_list:
+                result_list = result_list['results'] or []
+
             formatted = []
             for laudo in result_list if isinstance(result_list, list) else [result_list]:
                 if laudo:
+                    prop_name = None
+                    try:
+                        prop_id = laudo.get('propriedade') if hasattr(laudo, 'get') else None
+                        if prop_id:
+                            prop = self._make_request("GET", f"/api/propriedades/{prop_id}/")
+                            if prop:
+                                prop_name = prop.get('name')
+                    except Exception:
+                        pass
+
                     row_data = {
-                        'id': laudo.get('id'),
+                        'id': laudo.get('id') if hasattr(laudo, 'get') else None,
                         'requester_name': 'A definir',
-                        'date': laudo.get('data_coleta'),
-                        'property': 'A definir',
+                        'date': laudo.get('data_coleta') if hasattr(laudo, 'get') else None,
+                        'property': prop_name or 'A definir',
                     }
                     formatted.append(SQLiteRow(row_data))
             
             return formatted
             
         except Exception as e:
-            print(f"❌ Erro ao buscar laudos: {e}")
+            print(f"[DEBUG] get_report_info erro: {e}")
             return []
     
     def get_next_report_id(self) -> int:
@@ -1066,13 +1108,10 @@ class DatabaseHTTPWrapper:
                 )
                 
                 if response.status_code == 200:
-                    print(f"✅ PDF enviado para laudo {laudo_id}")
                     return True
                 else:
-                    print(f"❌ Falha ao enviar PDF: {response.status_code}")
                     return False
         except Exception as e:
-            print(f"❌ Erro ao fazer upload do PDF: {e}")
             return False
         
     def _unwrap_results(self, response):
