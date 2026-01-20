@@ -2,10 +2,10 @@ import os
 
 from PySide6.QtGui import QPixmap
 
-from backend.classes.DatabaseHTTP import DatabaseHTTP
 from backend.classes.utils import handle_exception
 from interface.AlertWindow import AlertWindow
 from interface.base_windows.delete_confirmation import DeleteDialog
+from backend.classes.Database import Database
 from PySide6.QtWidgets import (QDialog)
 
 class DeleteConfirmation(QDialog, DeleteDialog):
@@ -28,7 +28,7 @@ class DeleteConfirmation(QDialog, DeleteDialog):
         self.translate_dict = {'person': 'Solicitante', 'company': 'Solicitante', 'property': 'Propriedade', 'sample': 'Amostra'}
 
     def delete_action(self) -> None:
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         try:
             for id in self.list_of_ids:
                 if self.table_type == 'person':

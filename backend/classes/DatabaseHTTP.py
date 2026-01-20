@@ -1,6 +1,7 @@
 import requests
 import json
 from typing import Optional, List, Dict, Any
+from datetime import datetime
 from backend.classes.Sample import Sample
 from backend.classes.Report import Report
 from backend.classes.Person import Person
@@ -21,11 +22,43 @@ class DatabaseHTTP:
         self.session = requests.Session()
         
         # Credenciais fixas para software desktop
-        self.TECH_CPF = "999.888.777-00"  # ← CPF do técnico
+        self.TECH_CPF = "99988877700"  # ← CPF do técnico (sem formatação para API)
         self.TECH_PASSWORD = "123456"   # ← Senha do técnico
         
         # Auto login ao iniciar
         self._auto_login()
+    
+    def _format_date(self, date_str: str) -> str:
+        """Converte data para formato YYYY-MM-DD esperado pela API"""
+        if not date_str:
+            return None
+
+        try:
+            # Aceita datetime/date diretamente
+            if hasattr(date_str, "strftime"):
+                return date_str.strftime("%Y-%m-%d")
+
+            # Tenta parse de diferentes formatos (inclui ano com 2 dígitos)
+            formats = [
+                "%Y-%m-%d",
+                "%d/%m/%Y",
+                "%d/%m/%y",
+                "%d-%m-%Y",
+                "%d-%m-%y",
+                "%Y/%m/%d",
+            ]
+
+            for fmt in formats:
+                try:
+                    parsed = datetime.strptime(str(date_str), fmt)
+                    return parsed.strftime("%Y-%m-%d")
+                except ValueError:
+                    continue
+
+            # Se nenhum formato funcionou, retorna original (API validará)
+            return str(date_str)
+        except Exception:
+            return str(date_str)
     
     def _auto_login(self) -> bool:
         """Login automático com credenciais técnicas - VERSÃO CORRIGIDA"""
@@ -40,9 +73,6 @@ class DatabaseHTTP:
                 timeout=10
             )
             
-            print(f"🔑 Tentando login com CPF: {self.TECH_CPF}")
-            print(f"   Endpoint: {self.base_url}/api/login/cpf/")
-            print(f"   Status: {response.status_code}")
             
             if response.status_code == 200:
                 data = response.json()
@@ -290,32 +320,15 @@ class DatabaseHTTP:
         
         return {}
     
-    def get_persons(self, **kwargs) -> List[Dict]:
-        """Busca pessoas - VERSÃO OTIMIZADA"""
-        print(f"🔍 Buscando pessoas...")
-        
-        result = self._make_request("GET", "/api/pessoas/")
-        
-        if not result:
-            print("⚠️  Nenhuma pessoa encontrada")
-            return []
-        
-        # Garantir que seja lista
-        if not isinstance(result, list):
-            result = [result]
-        
-        print(f"✅ {len(result)} pessoa(s) encontrada(s)")
-        
-        pessoas_formatadas = []
-        for pessoa in result:
-            try:
-                # Formatar pessoa
-                pessoa_fmt = self._format_person_for_software(pessoa)
-                pessoas_formatadas.append(pessoa_fmt)
-            except Exception as e:
-                print(f"⚠️  Erro ao formatar pessoa {pessoa.get('id')}: {e}")
-        
-        return pessoas_formatadas
+    def _unwrap_results(self, response):
+        """Extrai lista de resultados do DRF (paginação)"""
+        if isinstance(response, dict) and "results" in response:
+            return response["results"]
+        if isinstance(response, list):
+            return response
+        if response:
+            return [response]
+        return []
     
     # ========== PROPRIEDADES ==========
     
@@ -326,7 +339,7 @@ class DatabaseHTTP:
             
             data = {
                 "nome": property_dict.get("name", ""),
-                "localizacao": property_dict.get("location", ""),
+                "localizacao": property_dict.get("localizacao", ""),
                 "numero_registro": property_dict.get("registration_number"),
                 "cpf_cnpj": property_dict.get("cpf_cnpj", ""),
                 # proprietario é automaticamente o usuário logado (técnico)
@@ -566,7 +579,14 @@ class DatabaseHTTP:
     
     def close_connection(self):
         """Fecha sessão HTTP"""
-        self.session.close()
+        if hasattr(self, 'session'):
+            self.session.close()
+    
+    def get_streets(self, city: str = None) -> List[str]:
+        """Retorna lista de ruas (método estático - não faz requisição HTTP)"""
+        # Retorna lista simplificada, compatível com interface
+        return ["Rua Principal", "Avenida Central", "Travessa da Paz", 
+                "Rua das Flores", "Avenida Brasil"]
     
     def test_connection(self) -> bool:
         """Testa se API está respondendo"""
@@ -617,11 +637,6 @@ class DatabaseHTTP:
         }
         
         return cidades_por_estado.get(sigla, ["Cidade Principal"])
-    
-    def get_streets(self, city: str) -> List[str]:
-        """Ruas - simplificado"""
-        return ["Rua Principal", "Avenida Central", "Travessa da Paz", 
-                "Rua das Flores", "Avenida Brasil"]
     
     # ========== Organizar depois ==========
     def get_companies(self, **kwargs) -> List[Dict]:
@@ -695,7 +710,7 @@ class DatabaseHTTP:
         """Busca pessoas - GARANTINDO FORMATO CORRETO"""
         print(f"👤 Buscando pessoas...")
         
-        params = {}
+        params = {"page_size": 1000}
         if kwargs.get('cpf'):
             cpf_clean = self._clean_cpf_cnpj(kwargs['cpf'])
             params['cpf'] = cpf_clean

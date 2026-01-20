@@ -4,10 +4,10 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from interface.base_windows.register_person import RegisterPersonDialog
 from PySide6.QtCore import Qt
-from backend.classes.DatabaseHTTP import DatabaseHTTP
 from backend.classes.Address import Address
 from backend.classes.Person import Person
 from interface.AlertWindow import AlertWindow
+from backend.classes.Database import Database
 from backend.classes.utils import handle_exception
 
 class RegisterPerson(QDialog, RegisterPersonDialog):
@@ -23,11 +23,31 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
             "images"
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
-        self.create_country_completer()
-        self.country_input.editingFinished.connect(self.country_changed)
-        self.state_input.editingFinished.connect(self.state_changed)
-        self.city_input.editingFinished.connect(self.city_changed)
+        # Autocomplete otimizado - consulta apenas 1 vez ao abrir
+        self.setup_autocomplete()
         self.mode: str = 'register'
+    
+    def setup_autocomplete(self) -> None:
+        """Configura autocomplete com dados estáticos - sem múltiplas conexões"""
+        try:
+            # Lista estática de países
+            countries = ["Brasil"]
+            completer = QCompleter(countries, self)
+            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.country_input.setCompleter(completer)
+            
+            # Listas estáticas de estados brasileiros
+            states = ["Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", 
+                     "Distrito Federal", "Espírito Santo", "Goiás", "Maranhão", 
+                     "Mato Grosso", "Mato Grosso do Sul", "Minas Gerais", "Pará", 
+                     "Paraíba", "Paraná", "Pernambuco", "Piauí", "Rio de Janeiro", 
+                     "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia", "Roraima", 
+                     "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"]
+            state_completer = QCompleter(states, self)
+            state_completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.state_input.setCompleter(state_completer)
+        except Exception as e:
+            print(f"⚠️ Erro ao configurar autocomplete: {e}")
 
     def edit_mode(self, person_data) -> None:
         self.country_input.setText(person_data['country'])
@@ -49,28 +69,28 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
 
 
     def create_country_completer(self) -> None:
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         completer: QCompleter = QCompleter(db.get_countries(), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.country_input.setCompleter(completer)
 
     def country_changed(self) -> None:
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         completer: QCompleter = QCompleter(db.get_states(self.country_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.state_input.setCompleter(completer)
 
     def state_changed(self) -> None:
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         completer: QCompleter = QCompleter(db.get_cities(self.state_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.city_input.setCompleter(completer)
 
     def city_changed(self) -> None:
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         completer: QCompleter = QCompleter(db.get_streets(self.city_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -78,13 +98,23 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
 
 
     def register_action(self) -> None:
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         try:
-
+            # Validação de campos obrigatórios do endereço
+            cep = self.cep_input.text().replace('-', '').strip()
+            street = self.street_input.text().strip()
+            address_number = self.address_number_input.text().strip()
+            
+            if not cep:
+                raise ValueError("O campo 'CEP' deve ser preenchido!")
+            if not street:
+                raise ValueError("O campo 'Rua' deve ser preenchido!")
+            if not address_number:
+                raise ValueError("O campo 'Número' deve ser preenchido!")
 
             address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
-                                       city=self.city_input.text(), street=self.street_input.text(),
-                                       address_number=self.address_number_input.text(), cep=self.cep_input.text().replace('-', ''))
+                                       city=self.city_input.text(), street=street,
+                                       address_number=address_number, cep=cep)
             person: Person = Person(name=self.name_input.text(), email=self.email_input.text(),
                                     cpf=self.cpf_input.text().replace('.', '').replace('-', ''),
                                     birth_date=self.birth_date_input.text(),

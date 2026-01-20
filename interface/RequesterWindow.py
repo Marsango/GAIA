@@ -8,8 +8,8 @@ from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from interface.RegisterCompany import RegisterCompany
 from interface.RegisterPerson import RegisterPerson
-from backend.classes.DatabaseHTTP import DatabaseHTTP
 from interface.PropertyWindow import PropertyWindow
+from backend.classes.Database import Database
 import sqlite3
 
 
@@ -31,25 +31,42 @@ class RequesterWindow(QDialog, RequesterDialog):
         self.requester_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.requester_type.currentTextChanged.connect(self.type_change)
         self.refresh_table()
-        self.search_bar.textEdited.connect(self.search)
+        # Conectar returnPressed para buscar ao pressionar Enter
+        self.search_bar.returnPressed.connect(self.search)
         self.view_properties.clicked.connect(self.register_property_action)
 
-    def search(self) -> None:
-        """Busca solicitantes - VERSÃO CORRIGIDA"""
+        # Evitar que Enter dispare botões do diálogo (como 'Ver propriedades')
         try:
-            db: DatabaseHTTP = DatabaseHTTP()
+            for btn in (self.view_properties, self.add, self.edit, self.delete_2):
+                btn.setAutoDefault(False)
+                btn.setDefault(False)
+        except Exception:
+            pass
+
+    def search(self) -> None:
+        """Busca solicitantes - Apenas ao pressionar Enter"""
+        try:
+            # Se o campo de busca estiver vazio, mostrar todos
+            search_text = self.search_bar.text().strip()
+            if not search_text:
+                self.refresh_table()
+                return
+            
+            db = Database()
             query_result = None
             
             if self.current_table_type == 'person':
                 if self.search_parameter.currentText() == 'CPF/CNPJ':
-                    query_result = db.get_persons(cpf=self.search_bar.text())
+                    cpf = ''.join(ch for ch in search_text if ch.isdigit())
+                    query_result = db.get_persons(cpf=cpf)
                 elif self.search_parameter.currentText() == 'Nome':
-                    query_result = db.get_persons(name=self.search_bar.text())
+                    query_result = db.get_persons(name=search_text)
             elif self.current_table_type == 'company':
                 if self.search_parameter.currentText() == 'CPF/CNPJ':
-                    query_result = db.get_companies(cnpj=self.search_bar.text())
+                    cnpj = ''.join(ch for ch in search_text if ch.isdigit())
+                    query_result = db.get_companies(cnpj=cnpj)
                 elif self.search_parameter.currentText() == 'Nome':
-                    query_result = db.get_companies(company_name=self.search_bar.text())
+                    query_result = db.get_companies(company_name=search_text)
             
             db.close_connection()
             self.refresh_table(query_result=query_result)
@@ -72,7 +89,7 @@ class RequesterWindow(QDialog, RequesterDialog):
                 return
         row: int = selected_items[0].row()
         id: str = self.requester_table.item(row, 0).text()
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         if self.current_table_type == 'person':
             requester_id: int = db.get_persons(id=id)[0]['requester_id']
         else:
@@ -151,7 +168,7 @@ class RequesterWindow(QDialog, RequesterDialog):
                 print(f"⚠️  ID inválido: {id_str}")
                 return
             
-            db = DatabaseHTTP()
+            db = Database()
             
             if self.current_table_type == 'person':
                 # Usar método get_persons com id
@@ -166,7 +183,7 @@ class RequesterWindow(QDialog, RequesterDialog):
                 dialog = RegisterPerson()
                 
             else:  # company
-                # PRECISA IMPLEMENTAR get_companies com id no DatabaseHTTP
+                # Buscar empresa com id
                 companies = db.get_companies(id=requester_id)
                 if not companies:
                     print(f"⚠️  Empresa com ID {requester_id} não encontrada")
@@ -221,7 +238,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             self.refresh_table()
 
     def refresh_table(self, **kwargs) -> None:
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         
         try:
             if self.current_table_type == 'person':
@@ -270,6 +287,9 @@ class RequesterWindow(QDialog, RequesterDialog):
                     for company in companies:
                         row_position = self.requester_table.rowCount()
                         self.requester_table.insertRow(row_position)
+                        
+                        # DEBUG: Verificar dados da empresa
+                        # print(f"DEBUG Empresa: ID={company.get('id')}, nome={company.get('company_name')}, CNPJ={company.get('cnpj')}")
                         
                         self.requester_table.setItem(row_position, 0, QTableWidgetItem(str(company.get('id', ''))))
                         self.requester_table.setItem(row_position, 1, QTableWidgetItem(company.get('company_name', '')))

@@ -6,7 +6,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView, QFileDialog)
 from interface.AlertWindow import AlertWindow
 from interface.base_windows.get_report import GetReportDialog
-from backend.classes.DatabaseHTTP import DatabaseHTTP
+from backend.classes.Database import Database
 import sqlite3
 
 class GetReport(QDialog, GetReportDialog):
@@ -28,7 +28,7 @@ class GetReport(QDialog, GetReportDialog):
         self.refresh_table()
 
     def refresh_table(self) -> None:
-        db: DatabaseHTTP = DatabaseHTTP()
+        db = Database()
         reports: list[sqlite3.Row] = db.get_report_info()
         self.report_table.setRowCount(0)
         for report in reports:

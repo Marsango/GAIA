@@ -66,10 +66,15 @@ class Sample:
 
         else:
             from backend.classes.DatabaseHTTP import DatabaseHTTP
-            db: DatabaseHTTP = DatabaseHTTP()
-            sample_data = db.get_samples(sample_id=sample_id)[0]
+            try:
+                db: DatabaseHTTP = DatabaseHTTP()
+                samples = db.get_samples(sample_id=sample_id)
+                sample_data = samples[0] if samples else {}
+            except Exception as e:
+                print(f"⚠️  Aviso: Falha ao buscar amostra anterior para comparação: {e}")
+                sample_data = {}
 
-            if phosphorus == sample_data['phosphorus']:
+            if phosphorus == sample_data.get('phosphorus'):
                 self.__phosphorus: float | None = phosphorus if phosphorus is not None else None
             else:
                 if phosphorus is None:
@@ -80,7 +85,7 @@ class Sample:
                         round((phosphorus - self.__used_config['phosphorus']['value']['b']) /
                               self.__used_config['phosphorus']['value']['a'], 2))
 
-            if potassium == sample_data['potassium']:
+            if potassium == sample_data.get('potassium'):
                 self.__potassium: float | None = potassium if potassium is not None else None
             else:
                 if potassium is None:
@@ -91,7 +96,7 @@ class Sample:
                         round((potassium - self.__used_config['potassium']['value']['b']) /
                               self.__used_config['potassium']['value']['a'], 2))
 
-            if organic_matter == sample_data['organic_matter']:
+            if organic_matter == sample_data.get('organic_matter'):
                 self.__organic_matter: float = organic_matter if organic_matter is not None else None
             else:
                 if organic_matter is None:
@@ -184,3 +189,6 @@ class Sample:
             return 'AD5'
         else:
             return 'AD6'
+        
+    def get_description(self) -> str:
+        return self.__description

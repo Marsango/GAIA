@@ -4,6 +4,7 @@ from .models import Propriedade, Laudo, Amostra, Empresa, Person, Endereco
 class AmostraSerializer(serializers.ModelSerializer):
     
     propriedade_name = serializers.CharField(source='propriedade.name', read_only=True)
+    propriedade_id = serializers.IntegerField(write_only=True, required=False)
     
     class Meta:
         model = Amostra
@@ -14,6 +15,12 @@ class AmostraSerializer(serializers.ModelSerializer):
         # O campo usuario sera preenchido automaticamente pelo save() do modelo
         # Nao atribuimos o request.user aqui pois ele eh um Usuario, nao uma Person
         return super().create(validated_data)
+    
+    def to_internal_value(self, data):
+        # Mapear propriedade_id para propriedade se fornecido
+        if 'propriedade_id' in data and 'propriedade' not in data:
+            data['propriedade'] = data.pop('propriedade_id')
+        return super().to_internal_value(data)
 
 
 class LaudoSerializer(serializers.ModelSerializer):
@@ -54,6 +61,7 @@ class PropriedadeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
+        print(f"DEBUG PropriedadeSerializer.create: {validated_data}")
         proprietario_id = validated_data.pop('proprietario_id')
 
         # tenta pessoa

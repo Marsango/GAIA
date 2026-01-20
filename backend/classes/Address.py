@@ -15,6 +15,10 @@ class Address:
         self.__address_number: str | None = address_number
 
     def verify_valid_cep(self, cep: str) -> None:
+        # Permitir CEP vazio (para propriedades)
+        if cep == '' or cep is None:
+            self.__cep = None
+            return
         for digit in cep:
             if not digit.isnumeric():
                 raise ValueError("Error with values of 'cep'")

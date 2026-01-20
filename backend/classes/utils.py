@@ -28,6 +28,10 @@ def verify_type(type_hints: dict[str, Any], function_parameters: dict[str, Any])
             raise TypeError(f"Erro de tipo no campo '{key}': Esperado {type_hints[key]}, mas foi recebido {type(function_parameters[key])}.")
         if isinstance(function_parameters[key], str):
             if function_parameters[key] == '':
+                # Permitir campos vazios para: cep, street, address_number (propriedade não precisa)
+                if key in ['cep', 'street', 'address_number']:
+                    logging.debug(f"Campo '{key}' vazio - permitido.")
+                    continue
                 logging.warning(f"Campo vazio detectado para '{key}'.")
                 raise ValueError(f"O campo '{translate_errors(key)}' não pode ser vazio.")
 

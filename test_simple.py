@@ -93,7 +93,7 @@ else:
 print("\nStep 4: Creating amostra...")
 amostra_data = {
     "propriedade_id": prop_id,
-    "numero_amostra": randint(5000, 9999),
+    "numero_amostra": randint(5000, 9999), # numero_amostra (API) -> sample_number (domínio)
     "data_coleta": str(date.today()),
     "ph": 6.5,
     "fosforo": 10.5,
@@ -186,4 +186,41 @@ if r.status_code == 200:
     print("\nALL EDIT TESTS PASSED!")
 else:
     print(f"FAIL: Amostra update error {r.status_code}: {r.text[:100]}")
+    exit(1)
+
+#test 9: delete Amostra
+print("\nStep 9: Deleting amostra...")
+r = requests.delete(f"{BASE_URL}/api/amostras/{amostra_id}/", headers=headers)
+if r.status_code == 204:
+    print(f"OK: Amostra deleted ID {amostra_id}")
+else:
+    print(f"FAIL: Amostra delete error {r.status_code}: {r.text[:100]}")
+    exit(1)
+
+#test 10: delete Propriedade
+print("\nStep 10: Deleting propriedade...")
+r = requests.delete(f"{BASE_URL}/api/propriedades/{prop_id}/", headers=headers)
+if r.status_code == 204:
+    print(f"OK: Propriedade deleted ID {prop_id}")
+else:
+    print(f"FAIL: Propriedade delete error {r.status_code}: {r.text[:100]}")
+    exit(1)
+
+#test 11: delete Person
+print("\nStep 11: Deleting person...")
+r = requests.delete(f"{BASE_URL}/api/pessoas/{person_id}/", headers=headers)
+if r.status_code == 204:
+    print(f"OK: Person deleted ID {person_id}")
+else:
+    print(f"FAIL: Person delete error {r.status_code}: {r.text[:100]}")
+    exit(1)
+
+#test 12: delete Address
+print("\nStep 12: Deleting address...")
+r = requests.delete(f"{BASE_URL}/api/enderecos/{addr_id}/", headers=headers)
+if r.status_code == 204:
+    print(f"OK: Address deleted ID {addr_id}")
+    print("\nALL DELETE TESTS PASSED!")
+else:
+    print(f"FAIL: Address delete error {r.status_code}: {r.text[:100]}")
     exit(1)

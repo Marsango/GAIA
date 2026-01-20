@@ -24,6 +24,14 @@ class SQLiteRow:
     def __getitem__(self, key):
         return self._data.get(key)
     
+    def __contains__(self, key):
+        """Suporta operador 'in' para verificar se uma chave existe"""
+        return key in self._data
+    
+    def get(self, key, default=None):
+        """Método get() compatível com dict"""
+        return self._data.get(key, default)
+    
     def __getattr__(self, name):
         return self._data.get(name)
     
@@ -58,19 +66,33 @@ class DatabaseHTTPWrapper:
         """Converte data para formato YYYY-MM-DD esperado pela API"""
         if not date_str:
             return None
-        
+
         try:
-            # Tenta parse de diferentes formatos
-            for fmt in ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d"]:
+            # Aceita datetime/date diretamente
+            if hasattr(date_str, "strftime"):
+                return date_str.strftime("%Y-%m-%d")
+
+            # Tenta parse de diferentes formatos (inclui ano com 2 dígitos)
+            formats = [
+                "%Y-%m-%d",
+                "%d/%m/%Y",
+                "%d/%m/%y",
+                "%d-%m-%Y",
+                "%d-%m-%y",
+                "%Y/%m/%d",
+            ]
+
+            for fmt in formats:
                 try:
-                    parsed = datetime.strptime(date_str, fmt)
+                    parsed = datetime.strptime(str(date_str), fmt)
                     return parsed.strftime("%Y-%m-%d")
                 except ValueError:
                     continue
-            # Se nenhum formato funcionou, retorna a data original
-            return date_str
+
+            # Se nenhum formato funcionou, retorna original (API validará)
+            return str(date_str)
         except Exception:
-            return date_str
+            return str(date_str)
     
     # ========== AUTENTICAÇÃO ==========
     
@@ -95,35 +117,28 @@ class DatabaseHTTPWrapper:
             return False
         
     def login(self, cpf: str = None, password: str = None) -> bool:
-        """Login automático com credenciais técnicas"""
+        """Login usando o mesmo endpoint do teste simples"""
         try:
-            # Usar credenciais padrão se não fornecidas
             login_cpf = cpf or self.TECH_CPF
             login_password = password or self.TECH_PASSWORD
-            
-            # Tentar login com CPF
+
             response = self.session.post(
-                f"{self.base_url}/api/token/",
-                json={"cpf": login_cpf, "password": login_password}
+                f"{self.base_url}/api/login/cpf/",
+                json={"cpf": login_cpf, "password": login_password},
+                timeout=10,
             )
-            
-            # Se endpoint com CPF não existir, tentar username padrão
-            if response.status_code == 404:
-                response = self.session.post(
-                    f"{self.base_url}/api/token/",
-                    json={"username": "tecnico_lab", "password": login_password}
-                )
-            
+
             if response.status_code == 200:
                 data = response.json()
                 self.token = data.get("access")
-                self.headers["Authorization"] = f"Bearer {self.token}"
-                print(f"✅ Login automático realizado (CPF: {login_cpf})")
-                return True
-            
+                if self.token:
+                    self.headers["Authorization"] = f"Bearer {self.token}"
+                    print(f"✅ Login automático realizado (CPF: {login_cpf})")
+                    return True
+
             print(f"❌ Falha no login: {response.status_code}")
             return False
-            
+
         except Exception as e:
             print(f"❌ Erro no login automático: {e}")
             return False
@@ -142,10 +157,10 @@ class DatabaseHTTPWrapper:
             headers = self.headers.copy()
             headers["Authorization"] = f"Bearer {self.token}"
 
-            # print(f"\n🌐 REQUEST:")
-            # print(f"  {method.upper()} {url}")
-            # if data:
-            #     print(json.dumps(data, indent=2, ensure_ascii=False))
+            print(f"\n REQUEST:")
+            print(f"  {method.upper()} {url}")
+            if data:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
 
             response = self.session.request(
                 method=method.upper(),
@@ -156,18 +171,20 @@ class DatabaseHTTPWrapper:
                 timeout=30
             )
 
-            # print(f"\n📨 RESPONSE:")
-            # print(f"  Status: {response.status_code}")
-            # print(f"  Text: {response.text[:300]}")
+            print(f"\n RESPONSE:")
+            print(f"  Status: {response.status_code}")
+            print(f"  Text: {response.text[:300]}")
 
             if response.status_code == 204:
                 return True
 
             if response.status_code in (200, 201):
-                try:
-                    return response.json()
-                except ValueError:
-                    raise RuntimeError("Resposta não é JSON válido")
+                if response.content:
+                    try:
+                        return response.json()
+                    except ValueError:
+                        raise RuntimeError("Resposta não é JSON válido")
+                return True
 
             if response.status_code == 401 and not _retry:
                 print("🔑 Token expirado, renovando...")
@@ -182,7 +199,7 @@ class DatabaseHTTPWrapper:
             )
 
         except Exception as e:
-            print(f"❌ ERRO em _make_request: {e}")
+            print(f" ERRO em _make_request: {e}")
             raise   
 
     
@@ -259,7 +276,45 @@ class DatabaseHTTPWrapper:
     def edit_person(self, person: Person, address: Address, id: int, requester_id: int) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
-            print(f"⚠️  Editando pessoa ID {id} - Implementar API de edição")
+            person_dict = to_dict(person)
+            address_dict = to_dict(address)
+
+            # Recupera dados atuais para manter campos obrigatórios
+            current = self._make_request("GET", f"/api/pessoas/{id}/") or {}
+            endereco_id = current.get("endereco")
+
+            # Atualiza ou cria endereço
+            endereco_payload = {
+                "cep": address_dict.get("cep", ""),
+                "rua": address_dict.get("street", ""),
+                "numero": address_dict.get("address_number", ""),
+                "cidade": address_dict.get("city", ""),
+                "estado": address_dict.get("state", ""),
+                "pais": address_dict.get("country", "Brasil"),
+            }
+
+            if endereco_id:
+                self._make_request("PUT", f"/api/enderecos/{endereco_id}/", data=endereco_payload)
+            else:
+                endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_payload)
+                endereco_id = endereco_result.get("id") if endereco_result else None
+
+            phone = person_dict.get("phone_number") or person_dict.get("phone") or person_dict.get("telefone")
+
+            pessoa_payload = {
+                "name": person_dict.get("name", current.get("name", "")),
+                "cpf": person_dict.get("cpf", current.get("cpf", "")),
+                "email": person_dict.get("email", current.get("email", "")),
+                "phone_number": phone or current.get("phone_number", ""),
+                "nascimento": self._format_date(person_dict.get("birth_date") or current.get("nascimento")),
+            }
+
+            if endereco_id:
+                pessoa_payload["endereco"] = endereco_id
+
+            self._make_request("PUT", f"/api/pessoas/{id}/", data=pessoa_payload)
+            print(f"✅ Pessoa {id} atualizada")
+
         except Exception as e:
             print(f"❌ Erro ao editar pessoa: {e}")
             raise
@@ -323,7 +378,40 @@ class DatabaseHTTPWrapper:
     def edit_company(self, company: Company, address: Address, id: int, requester_id: int) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
-            print(f"⚠️  Editando empresa ID {id} - Implementar API de edição")
+            company_dict = to_dict(company)
+            address_dict = to_dict(address)
+
+            current = self._make_request("GET", f"/api/empresas/{id}/") or {}
+            endereco_id = current.get("endereco")
+
+            endereco_payload = {
+                "cep": address_dict.get("cep", ""),
+                "rua": address_dict.get("street", ""),
+                "numero": address_dict.get("address_number", ""),
+                "cidade": address_dict.get("city", ""),
+                "estado": address_dict.get("state", ""),
+                "pais": address_dict.get("country", "Brasil"),
+            }
+
+            if endereco_id:
+                self._make_request("PUT", f"/api/enderecos/{endereco_id}/", data=endereco_payload)
+            else:
+                endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_payload)
+                endereco_id = endereco_result.get("id") if endereco_result else None
+
+            empresa_payload = {
+                "name": company_dict.get("company_name", current.get("name", "")),
+                "cnpj": company_dict.get("cnpj", current.get("cnpj", "")),
+                "email": company_dict.get("email", current.get("email", "")),
+                "telefone": company_dict.get("phone_number", current.get("telefone", "")),
+            }
+
+            if endereco_id:
+                empresa_payload["endereco"] = endereco_id
+
+            self._make_request("PUT", f"/api/empresas/{id}/", data=empresa_payload)
+            print(f"✅ Empresa {id} atualizada")
+
         except Exception as e:
             print(f"❌ Erro ao editar empresa: {e}")
             raise
@@ -363,8 +451,10 @@ class DatabaseHTTPWrapper:
             "name": property_dict["name"],
             "endereco": endereco_id,  
             "registration_number": property_dict["registration_number"],
+            "localizacao": property_dict.get("localizacao", ""),
             "proprietario_id": requester_id,
         }
+        print(f"DEBUG DatabaseHTTPWrapper.insert_property - enviando: {data}")
 
         result = self._make_request("POST", "/api/propriedades/", data=data)
 
@@ -375,25 +465,74 @@ class DatabaseHTTPWrapper:
         print(f"   ID: {result['id']}")
         return result
         
-    def edit_property(self, property: Property, property_id: int) -> None:
+    def edit_property(self, property: Property, property_id: int, address: Address = None) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
             property_dict = to_dict(property)
+
+            current = self._make_request("GET", f"/api/propriedades/{property_id}/") or {}
+
+            endereco_id = None
+            endereco = current.get("endereco") or current.get("endereco_id")
+            endereco_id = endereco if isinstance(endereco, int) else None
+
+            # Usar endereço passado como parâmetro, se disponível
+            address_dict = to_dict(address) if address else {}
             
+            # Atualizar endereço só se recebermos novos dados; evita PUT com campos em branco
+            has_new_address = address and any(
+                address_dict.get(field)
+                for field in ("cep", "street", "address_number", "city", "state", "country")
+            )
+
+            if endereco_id and has_new_address:
+                endereco_atual = self._get_complete_address(endereco_id) or {}
+                endereco_payload = {
+                    "cep": address_dict.get("cep") or endereco_atual.get("cep", ""),
+                    "rua": address_dict.get("street") or endereco_atual.get("rua", ""),
+                    "numero": address_dict.get("address_number") or endereco_atual.get("numero", ""),
+                    "cidade": address_dict.get("city") or endereco_atual.get("cidade", ""),
+                    "estado": address_dict.get("state") or endereco_atual.get("estado", ""),
+                    "pais": address_dict.get("country") or endereco_atual.get("pais", "Brasil"),
+                }
+                self._make_request("PUT", f"/api/enderecos/{endereco_id}/", data=endereco_payload)
+
+            # A API exige sempre 'proprietario_id' no PUT. Buscar do payload
+            # ou derivar do recurso atual (proprietario_pessoa/empresa)
+            proprietario_id = (
+                property_dict.get("proprietario_id")
+                or current.get("proprietario_pessoa")
+                or current.get("proprietario_empresa")
+            )
+
+            # Alguns backends podem retornar um objeto em vez do ID (pouco provável
+            # com ModelSerializer padrão). Garantir que se for dict pegue o ID.
+            if isinstance(proprietario_id, dict):
+                proprietario_id = proprietario_id.get("id")
+
+            if not proprietario_id:
+                raise Exception(
+                    "Proprietário da propriedade não identificado para atualização"
+                )
+
             data = {
-                "name": property_dict.get("name", ""),
-                "endereco": property_dict.get("endereco", ""),
-                "registration_number": property_dict.get("registration_number", ""),
-                "cpf_cnpj": property_dict.get("cpf_cnpj", ""),
+                "name": property_dict.get("name", current.get("name", "")),
+                "registration_number": property_dict.get("registration_number", current.get("registration_number", "")),
+                "localizacao": property_dict.get("localizacao", current.get("localizacao", "")),
             }
-            
+
+            # Enviar sempre o proprietario_id para atender o serializer
+            data["proprietario_id"] = proprietario_id
+            if endereco_id:
+                data["endereco"] = endereco_id
+
             result = self._make_request("PUT", f"/api/propriedades/{property_id}/", data=data)
-            
+
             if result:
                 print(f"✅ Propriedade {property_id} atualizada")
             else:
                 raise Exception("Falha ao atualizar propriedade")
-                
+
         except Exception as e:
             print(f"❌ Erro ao editar propriedade: {e}")
             raise
@@ -410,7 +549,7 @@ class DatabaseHTTPWrapper:
             print(f"❌ Erro ao excluir propriedade: {e}")
             raise
     
-    def insert_sample(self, sample: Sample, property_id: int, sample_number: int) -> None:
+    def insert_sample(self, sample: Sample, property_id: int, sample_number: int) -> dict:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
             sample_dict = to_dict(sample)
@@ -444,15 +583,16 @@ class DatabaseHTTPWrapper:
                 "areia": sample_dict.get("sand"),
                 "classificacao": sample_dict.get("classification"),
             }
-
-            # DEBUG: mostrar dados antes de enviar
-            print(f"📤 Dados sendo enviados para a API:")
-            print(json.dumps(data, indent=2, ensure_ascii=False))
             
             result = self._make_request("POST", "/api/amostras/criar_simples/", data=data)
             
             if result and 'id' in result:
                 print(f"✅ Amostra {sample_number} cadastrada (ID: {result['id']})")
+                return result
+            elif isinstance(result, dict):
+                # Pode ter retornado dados mas sem 'id' diretamente - verificar
+                print(f"⚠️ Resposta da API: {result}")
+                raise Exception("Resposta da API sem ID da amostra")
             else:
                 raise Exception("Falha ao criar amostra")
                 
@@ -463,28 +603,35 @@ class DatabaseHTTPWrapper:
     def edit_sample(self, sample: Sample, sample_id: int) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
-            sample_dict = to_dict(sample)
-            
+            sample_dict = to_dict(sample) or {}
+
+            current = self._make_request("GET", f"/api/amostras/{sample_id}/") or {}
+            propriedade_id = current.get("propriedade") or sample_dict.get("fk_property_id")
+            numero_amostra = current.get("numero_amostra") or sample_dict.get("sample_number")
+
+            # Construir payload com fallbacks seguros para todos os campos
             data = {
-                "descricao": sample_dict.get("description", ""),
-                "data_coleta": self._format_date(sample_dict.get("collection_date")),
-                "ph": sample_dict.get("ph"),
-                "fosforo": sample_dict.get("phosphorus"),
-                "potassio": sample_dict.get("potassium"),
-                "materia_organica": sample_dict.get("organic_matter"),
-                "argila": sample_dict.get("clay"),
-                "silte": sample_dict.get("silte"),
-                "areia": sample_dict.get("sand"),
-                "classificacao": sample_dict.get("classification"),
+                "propriedade_id": propriedade_id,
+                "numero_amostra": numero_amostra,
+                "descricao": sample_dict.get("description") or current.get("descricao", ""),
+                "data_coleta": self._format_date(sample_dict.get("collection_date") or current.get("data_coleta")),
+                "ph": sample_dict.get("ph") or current.get("ph"),
+                "fosforo": sample_dict.get("phosphorus") or current.get("fosforo"),
+                "potassio": sample_dict.get("potassium") or current.get("potassio"),
+                "materia_organica": sample_dict.get("organic_matter") or current.get("materia_organica"),
+                "argila": sample_dict.get("clay") or current.get("argila"),
+                "silte": sample_dict.get("silte") or current.get("silte"),
+                "areia": sample_dict.get("sand") or current.get("areia"),
+                "classificacao": sample_dict.get("classification") or current.get("classificacao"),
             }
-            
+
             result = self._make_request("PUT", f"/api/amostras/{sample_id}/", data=data)
-            
+
             if result:
                 print(f"✅ Amostra {sample_id} atualizada")
             else:
                 raise Exception("Falha ao atualizar amostra")
-                
+
         except Exception as e:
             print(f"❌ Erro ao editar amostra: {e}")
             raise
@@ -532,15 +679,23 @@ class DatabaseHTTPWrapper:
         try:
             params = {}
 
+            # Busca por ID (detalhe)
             if kwargs.get('id'):
-                response = self._make_request(
-                    "GET", f"/api/pessoas/{kwargs['id']}/"
-                )
+                response = self._make_request("GET", f"/api/pessoas/{kwargs['id']}/")
             else:
-                if kwargs.get('cpf'):
-                    params['cpf'] = kwargs['cpf']
-                elif kwargs.get('name'):
-                    params['search'] = kwargs['name']
+                # Filtros de lista
+                cpf_in = kwargs.get('cpf')
+                name = kwargs.get('name')
+
+                if cpf_in:
+                    cpf_digits = ''.join(ch for ch in str(cpf_in) if ch.isdigit())
+                    # CPF completo usa filtro exato, parcial usa busca textual
+                    if len(cpf_digits) == 11:
+                        params['cpf'] = cpf_digits
+                    else:
+                        params['search'] = cpf_digits
+                elif name:
+                    params['search'] = name
 
                 response = self._make_request("GET", "/api/pessoas/", params=params)
 
@@ -551,10 +706,17 @@ class DatabaseHTTPWrapper:
             for pessoa in pessoas:
                 endereco = self._get_complete_address(pessoa.get('endereco'))
 
+                # Normaliza 'nascimento' para formato dd/mm/YYYY esperado pela interface
+                nascimento = pessoa.get('nascimento')
+                try:
+                    nascimento_br = datetime.strptime(nascimento, "%Y-%m-%d").strftime("%d/%m/%Y") if nascimento else ''
+                except Exception:
+                    nascimento_br = nascimento or ''
+
                 row_data = {
                     'id': pessoa.get('id'),
                     'name': pessoa.get('name', ''),
-                    'birth_date': pessoa.get('nascimento', ''),
+                    'birth_date': nascimento_br,
                     'cpf': pessoa.get('cpf', ''),
                     'email': pessoa.get('email', ''),
                     'phone_number': pessoa.get('phone_number', ''),
@@ -587,14 +749,29 @@ class DatabaseHTTPWrapper:
             if kwargs.get('id'):
                 response = self._make_request("GET", f"/api/empresas/{kwargs['id']}/")
             else:
-                if kwargs.get('cnpj'):
-                    params['cnpj'] = kwargs['cnpj']
-                elif kwargs.get('company_name'):
-                    params['search'] = kwargs['company_name']
+                cnpj_in = kwargs.get('cnpj')
+                company_name = kwargs.get('company_name')
+
+                if cnpj_in:
+                    cnpj_digits = ''.join(ch for ch in str(cnpj_in) if ch.isdigit())
+                    # CNPJ completo usa filtro exato, parcial usa busca textual
+                    if len(cnpj_digits) == 14:
+                        params['cnpj'] = cnpj_digits
+                    else:
+                        params['search'] = cnpj_digits
+                elif company_name:
+                    params['search'] = company_name
 
                 response = self._make_request("GET", "/api/empresas/", params=params)
 
             empresas = self._unwrap_results(response)
+
+            # Fallback: se filtrou por CNPJ exato e não retornou nada, tenta busca textual
+            if kwargs.get('cnpj') and not empresas:
+                alt_params = {'search': ''.join(ch for ch in str(kwargs.get('cnpj')) if ch.isdigit())}
+                response = self._make_request("GET", "/api/empresas/", params=alt_params)
+                empresas = self._unwrap_results(response)
+
             formatted = []
 
             for empresa in empresas:
@@ -606,9 +783,11 @@ class DatabaseHTTPWrapper:
                 row_data = {
                     'id': empresa.get('id'),
                     'name': empresa.get('name', ''),
+                    'company_name': empresa.get('name', ''),  # Compatibilidade com interface antiga
                     'cnpj': empresa.get('cnpj', ''),
                     'phone_number': empresa.get('telefone', ''),
                     'email': empresa.get('email', ''),
+                    'requester_id': empresa.get('id'),
                     'cep': endereco.get('cep', ''),
                     'address_number': endereco.get('numero', ''),
                     'address_id': endereco.get('id'),
@@ -681,11 +860,25 @@ class DatabaseHTTPWrapper:
             for prop in propriedades:
                 endereco = prop.get("endereco_detalhes") or {}
 
+                # Filtrar por proprietário quando requester_id é informado
+                requester_filter = kwargs.get('requester_id')
+                proprietario = prop.get('proprietario_pessoa') or prop.get('proprietario_empresa')
+                if requester_filter and requester_filter != proprietario:
+                    continue
+
+                location_value = (
+                    prop.get('localizacao')
+                    or f"{endereco.get('rua', '')}, {endereco.get('numero', '')}"
+                ).strip(', ')
+
                 row_data = {
                     'id': prop.get('id'),
                     'name': prop.get('name', ''),
                     'registration_number': prop.get('registration_number', ''),
-                    'localizacao': f"{endereco.get('rua', '')}, {endereco.get('numero', '')}",
+                    # Preferir o campo "localizacao" da API; se vier vazio, cair para rua/numero
+                    'localizacao': location_value,
+                    # Alias usado pela UI (PropertyWindow)
+                    'location': location_value,
                     'city': endereco.get('cidade', ''),
                     'state': endereco.get('estado', ''),
                     'country': endereco.get('pais', 'Brasil'),
@@ -713,7 +906,8 @@ class DatabaseHTTPWrapper:
                 result_list = [result] if result else []
             elif kwargs.get('property_id'):
                 params['propriedade'] = kwargs['property_id']
-                result_list = self._make_request("GET", "/api/amostras/", params=params) or []
+                response = self._make_request("GET", "/api/amostras/", params=params)
+                result_list = self._unwrap_results(response)
             elif kwargs.get('id_list'):
                 result_list = []
                 for sample_id in kwargs['id_list']:
@@ -721,13 +915,20 @@ class DatabaseHTTPWrapper:
                     if result:
                         result_list.append(result)
             else:
-                result_list = self._make_request("GET", "/api/amostras/") or []
+                response = self._make_request("GET", "/api/amostras/")
+                result_list = self._unwrap_results(response)
+            
+            # Garantir que result_list é uma lista
+            if not isinstance(result_list, list):
+                result_list = [result_list] if result_list else []
             
             formatted = []
-            for amostra in result_list if isinstance(result_list, list) else [result_list]:
-                if amostra:
-                    row_data = {
-                        'id': amostra.get('id'),
+            for amostra in result_list:
+                if not amostra:
+                    continue
+                
+                row_data = {
+                    'id': amostra.get('id'),
                         'description': amostra.get('descricao', ''),
                         'sample_number': amostra.get('numero_amostra'),
                         'collection_date': amostra.get('data_coleta'),
@@ -760,7 +961,7 @@ class DatabaseHTTPWrapper:
                         'smp': amostra.get('smp'),
                         'fk_property_id': amostra.get('propriedade'),
                     }
-                    formatted.append(SQLiteRow(row_data))
+                formatted.append(SQLiteRow(row_data))
             
             return formatted
             
@@ -771,14 +972,19 @@ class DatabaseHTTPWrapper:
     def get_sample_info(self, sample_id: int) -> SQLiteRow:
         """RETORNA SQLiteRow COMPATÍVEL"""
         try:
+            
             amostra = self._make_request("GET", f"/api/amostras/{sample_id}/")
             if not amostra:
                 return SQLiteRow({})
             
             propriedade_id = amostra.get('propriedade')
             propriedade = None
+            
             if propriedade_id:
-                propriedade = self._make_request("GET", f"/api/propriedades/{propriedade_id}/")
+                try:
+                    propriedade = self._make_request("GET", f"/api/propriedades/{propriedade_id}/")
+                except Exception as e:
+                    print(f" DEBUG: Erro ao buscar propriedade {propriedade_id}: {e}")
             
             row_data = {
                 'sample_description': amostra.get('descricao', ''),
@@ -794,6 +1000,8 @@ class DatabaseHTTPWrapper:
             
         except Exception as e:
             print(f"❌ Erro ao buscar informações da amostra: {e}")
+            import traceback
+            traceback.print_exc()
             return SQLiteRow({})
     
     def get_report_info(self) -> list:

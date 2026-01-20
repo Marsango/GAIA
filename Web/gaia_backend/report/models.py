@@ -4,15 +4,17 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 class Endereco(models.Model):
-    cep = models.CharField(max_length=10)
-    rua = models.CharField(max_length=255)
-    numero = models.CharField(max_length=10)
+    cep = models.CharField(max_length=10, blank=True, null=True)
+    rua = models.CharField(max_length=255, blank=True, null=True)
+    numero = models.CharField(max_length=10, blank=True, null=True)
     cidade = models.CharField(max_length=255)
     estado = models.CharField(max_length=255)
     pais = models.CharField(max_length=255, default='Brasil')
 
     def __str__(self):
-        return f"{self.rua}, {self.numero} - {self.cidade}/{self.estado}"
+        if self.rua and self.numero:
+            return f"{self.rua}, {self.numero} - {self.cidade}/{self.estado}"
+        return f"{self.cidade}/{self.estado}"
 
 class Person(models.Model):
     name = models.CharField(max_length=255)
@@ -39,6 +41,7 @@ class Empresa(models.Model):
 class Propriedade(models.Model):
     name = models.CharField(max_length=255)
     registration_number = models.IntegerField(blank=True, null=True)
+    localizacao = models.CharField(max_length=500, blank=True, null=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
 
     proprietario_pessoa = models.ForeignKey(
