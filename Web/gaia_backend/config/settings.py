@@ -192,3 +192,17 @@ SYNC_CONFIG = {
     'PG_CONN_STRING': 'postgresql://seu_usuario:sua_senha@localhost:5432/soil_analysis_site'
 }
 
+
+# Configuração de E-mail
+# Para testes imprime no console ao invés de enviar:
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# --- CONFIGURAÇÃO DE ENVIO DE E-MAIL REAL (GMAIL) ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'seu.email@gmail.com'  # <--- COLOQUE SEU EMAIL GMAIL
+EMAIL_HOST_PASSWORD = 'SENHA DE APP QUE O GOOGLE GEROU'   # <--- COLOQUE A SENHA DE APP QUE O GOOGLE GEROU
+DEFAULT_FROM_EMAIL = 'GAIA <seu.email@gmail.com>' # <--- COLOQUE SEU EMAIL GMAIL
+# ----------------------------------------------------

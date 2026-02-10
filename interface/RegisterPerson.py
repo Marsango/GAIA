@@ -24,6 +24,9 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
         self.create_country_completer()
+
+        self.cep_input.setInputMask("99999-999")
+
         self.country_input.editingFinished.connect(self.country_changed)
         self.state_input.editingFinished.connect(self.state_changed)
         self.city_input.editingFinished.connect(self.city_changed)

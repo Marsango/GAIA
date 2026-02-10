@@ -84,17 +84,15 @@ const Login = () => {
       const userData = await getCurrentUser(data.access);
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // testes
-      // console.log("ID:", userData.id);
-      // console.log("CPF:", userData.cpf);
-      // console.log("Nome completo:", userData.nome);
-      // console.log("First name:", userData.first_name);
-      // console.log("Last name:", userData.last_name);
-      // console.log("Email:", userData.email);
-      // console.log("Username:", userData.username);
+      // Verifica se é o primeiro acesso ---
+      if (data.user && data.user.primeiro_acesso) {
+        console.log("Primeiro acesso detectado! Redirecionando para troca de senha...");
+        navigate("/change-password");
+      } else {
+        console.log("Acesso normal. Redirecionando para relatórios...");
+        navigate("/reports");
+      }
 
-      // Redireciona
-      navigate("/reports");
     } catch (err) {
       console.error("Erro completo no login:", err);
 
@@ -155,6 +153,23 @@ const Login = () => {
         <Button type="submit" disabled={loading}>
           {loading ? "Entrando..." : "Login"}
         </Button>
+
+        {/* --- ADIÇÃO: BOTÃO ESQUECI MINHA SENHA --- */}
+        <div style={{ marginTop: "15px", textAlign: "center" }}>
+          <span
+            style={{
+              color: "#333",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontSize: "0.9rem",
+            }}
+            onClick={() => navigate("/forgot-password")}
+          >
+            Esqueci minha senha
+          </span>
+        </div>
+        {/* ----------------------------------------- */}
+
         {error && <ErrorMessage>{error.general}</ErrorMessage>}
       </LoginForm>
     </PageContainer>

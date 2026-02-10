@@ -4,7 +4,7 @@ const API_URL = "http://localhost:8000/api"; // URL base do seu backend
 
 export async function login(cpf, password) {
   try {
-    const response = await axios.post(`${API_URL}/login/`, {
+    const response = await axios.post(`${API_URL}/auth/login/cpf/`, {
       cpf,
       password,
     });
@@ -31,7 +31,7 @@ export async function refreshToken(refresh) {
 
 export async function getCurrentUser(token) {
   try {
-    const response = await axios.get(`${API_URL}/user-info/`, {
+    const response = await axios.get(`${API_URL}/auth/user-info/`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

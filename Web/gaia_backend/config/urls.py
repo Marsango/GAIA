@@ -34,7 +34,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/', include('authentication.urls')),          # Usuários e autenticação
+    path('api/auth/', include('authentication.urls')),          # Usuários e autenticação
     path('api/', include('report.urls')),               # Propriedades e Laudos
 ]
 

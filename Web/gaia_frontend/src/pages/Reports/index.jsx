@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import PropertiesCard from "../../components/PropertiesCard";
 import ReportsCard from "../../components/ReportsCard";
@@ -22,11 +23,36 @@ const CentralLaudos = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
+
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     carregarPropriedades();
   }, []);
+
+  // Verifica se o usuário é Admin ao carregar
+  useEffect(() => {
+    const userStored = localStorage.getItem('user');
+    if (userStored) {
+      try {
+        const user = JSON.parse(userStored);
+        if (user.is_staff) {
+          setIsAdmin(true);
+        }
+      } catch (e) {
+        console.error("Erro ao verificar permissão:", e);
+      }
+    }
+  }, []);
+
+  const btnStyle = {
+    display: 'block', margin: '0 auto 15px auto', padding: '10px 20px',
+    backgroundColor: '#ffc107', color: '#000', border: 'none',
+    borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer'
+  };
+
 
   const carregarPropriedades = async () => {
     try {
@@ -81,6 +107,11 @@ const CentralLaudos = () => {
     <FullPageContainer>
       <Header />
       <PageContainer>
+        {isAdmin && (
+          <button style={btnStyle} onClick={() => navigate('/admin')}>
+            ⚙️ PAINEL DO ADMINISTRADOR
+          </button>
+        )}
         <Title>Central de Laudos</Title>
         <Content>
           <Properties>

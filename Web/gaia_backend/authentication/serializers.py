@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import Usuario
+from .models import Usuario, ConfiguracaoEmail
 
 class LoginSerializer(serializers.Serializer):
     cpf = serializers.CharField()
@@ -30,3 +30,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = ('id', 'username', 'first_name', 'last_name', 'email', 'cpf')
+
+class ConfiguracaoEmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfiguracaoEmail
+        fields = ['id', 'assunto', 'mensagem', 'updated_at']
