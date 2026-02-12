@@ -23,6 +23,7 @@ class PropertyWindow(QDialog, PropertyDialog):
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.requester_list: list[sqlite3.Row] | None = None
         self.property_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.property_table.verticalHeader().setVisible(False) #linha adicionada para esconder os números das linhas, pode ser removida caso queira mostrar
         self.property_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.property_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.current_owner: str = kwargs.get('owner') if kwargs.get('owner') else ''

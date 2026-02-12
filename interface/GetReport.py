@@ -20,11 +20,13 @@ class GetReport(QDialog, GetReportDialog):
             "images"
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.report_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.report_table.verticalHeader().setVisible(False)
         self.report_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.report_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.report_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.report_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         self.copy_button.clicked.connect(self.make_copy)
+        self.close_button.clicked.connect(self.close)
         self.refresh_table()
 
     def refresh_table(self) -> None:
@@ -64,9 +66,16 @@ class GetReport(QDialog, GetReportDialog):
         file_path = self.open_save_dialog()
         script_path: Path = Path(__file__).resolve()
         backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {id_val}.pdf"
-        shutil.copy(backup_path, file_path)
-        widget: AlertWindow = AlertWindow("Cópia feita com sucesso!")
-        widget.exec()
+        try:
+            shutil.copy(backup_path, file_path)
+            widget: AlertWindow = AlertWindow("Cópia feita com sucesso!")
+            widget.exec()
+        except FileNotFoundError:
+            widget: AlertWindow = AlertWindow(f"Arquivo de laudo não encontrado: {backup_path}")
+            widget.exec()
+        except Exception as e:
+            widget: AlertWindow = AlertWindow(f"Erro ao copiar laudo: {str(e)}")
+            widget.exec()
 
     def open_save_dialog(self) -> str:
         filename: QFileDialog.getSaveFileName = QFileDialog.getSaveFileName(filter="*.pdf")

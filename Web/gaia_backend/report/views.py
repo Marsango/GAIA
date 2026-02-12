@@ -41,11 +41,32 @@ class PropriedadeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Propriedade.objects.all()
+        """Filtra propriedades do usuário logado (ou todas se admin)"""
+        from django.db.models import Q
+        user = self.request.user
+        if user.is_staff:  # Admin vê todas as propriedades
+            return Propriedade.objects.all()
+        
+        # Usuário comum vê propriedades que ele tem acesso
+        query = Q(usuario=user)  # Propriedades criadas por ele no site
+        
+        # Propriedades de pessoa física (CPF)
+        if hasattr(user, 'cpf') and user.cpf:
+            query |= Q(proprietario_pessoa__cpf=user.cpf)
+        
+        # Propriedades de pessoa jurídica (CNPJ) - verifica se existe empresa com seu CNPJ
+        if hasattr(user, 'cnpj') and user.cnpj:
+            try:
+                empresa = Empresa.objects.get(cnpj=user.cnpj)
+                query |= Q(proprietario_empresa=empresa)
+            except Empresa.DoesNotExist:
+                pass
+        
+        return Propriedade.objects.filter(query)
     
-    def create(self, request, *args, **kwargs):
-        print(f"DEBUG PropriedadeViewSet.create - request.data: {request.data}")
-        return super().create(request, *args, **kwargs)
+    def perform_create(self, serializer):
+        """Associa automaticamente a propriedade ao usuário logado"""
+        serializer.save(usuario=self.request.user)
 
 class LaudoViewSet(viewsets.ModelViewSet):
     """
@@ -57,20 +78,31 @@ class LaudoViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['propriedade', 'ativo']
     search_fields = ['numero_amostra']
-    
+
     def get_queryset(self):
-        """Filtra laudos pelas propriedades do usuário"""
-        queryset = super().get_queryset()
+        """Filtra laudos das propriedades do usuário (ou todas se admin)"""
+        from django.db.models import Q
+        from report.models import Empresa
+        user = self.request.user
+        if user.is_staff:  # Admin vê todos os laudos
+            return Laudo.objects.all()
         
-        # Nota: O usuário autenticado é um Usuario (autenticação), não uma Person/Empresa
-        # Portanto, não podemos filtrar diretamente por proprietário
-        # Apenas retorna todos os laudos (permissão já controlada via IsAuthenticated)
-        # Filtro por propriedade específica
-        propriedade_id = self.request.query_params.get('propriedade_id')
-        if propriedade_id:
-            queryset = queryset.filter(propriedade_id=propriedade_id)
+        # Usuário comum vê laudos de propriedades que ele tem acesso
+        query = Q(propriedade__usuario=user)  # Propriedades criadas por ele no site
         
-        return queryset
+        # Propriedades de pessoa física (CPF)
+        if hasattr(user, 'cpf') and user.cpf:
+            query |= Q(propriedade__proprietario_pessoa__cpf=user.cpf)
+        
+        # Propriedades de pessoa jurídica (CNPJ) - verifica se existe empresa com seu CNPJ
+        if hasattr(user, 'cnpj') and user.cnpj:
+            try:
+                empresa = Empresa.objects.get(cnpj=user.cnpj)
+                query |= Q(propriedade__proprietario_empresa=empresa)
+            except Empresa.DoesNotExist:
+                pass
+        
+        return Laudo.objects.filter(query)
     
     @action(detail=False, methods=['get'])
     def por_propriedade(self, request):
@@ -164,11 +196,66 @@ class AmostraViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Filtra amostras pelas propriedades do usuário"""
-        queryset = super().get_queryset()
-        # Nota: O usuário autenticado é um Usuario (autenticação), não uma Person
-        # Portanto, não podemos filtrar diretamente por proprietário
-        # Apenas retorna todas as amostras (permissão já controlada via IsAuthenticated)
-        return queryset
+        from django.db.models import Q
+        from report.models import Empresa
+        
+        user = self.request.user
+        if user.is_staff:  # Admin vê todas as amostras
+            return Amostra.objects.all()
+        
+        # Usuário comum vê amostras de propriedades que ele tem acesso
+        query = Q(propriedade__usuario=user)  # Propriedades criadas por ele no site
+        
+        # Propriedades de pessoa física (CPF)
+        if hasattr(user, 'cpf') and user.cpf:
+            query |= Q(propriedade__proprietario_pessoa__cpf=user.cpf)
+        
+        # Propriedades de pessoa jurídica (CNPJ) - verifica se existe empresa com seu CNPJ
+        if hasattr(user, 'cnpj') and user.cnpj:
+            try:
+                empresa = Empresa.objects.get(cnpj=user.cnpj)
+                query |= Q(propriedade__proprietario_empresa=empresa)
+            except Empresa.DoesNotExist:
+                pass
+        
+        return Amostra.objects.filter(query)
+    
+    @action(detail=True, methods=['get', 'post'])
+    def gerar_laudo(self, request, pk=None):
+        """
+        Gera e retorna PDF do laudo para uma amostra
+        URL: GET /api/amostras/{id}/gerar_laudo/?convenio=texto
+        URL: POST /api/amostras/{id}/gerar_laudo/ com {"convenio": "texto"}
+        
+        Parâmetros:
+        - convenio (opcional): Texto do convênio. Default: "Sistema Web GAIA"
+        """
+        amostra = self.get_object()
+        
+        # Pegar convênio do query param (GET) ou do body (POST)
+        convenio = request.query_params.get('convenio') or request.data.get('convenio', 'Sistema Web GAIA')
+        
+        # Gerar PDF
+        pdf_buffer = WebReportGenerator.generate_pdf_for_sample(
+            sample_id=amostra.id,
+            agreement=convenio
+        )
+        
+        if not pdf_buffer:
+            return Response(
+                {'error': 'Erro ao gerar PDF do laudo'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Retornar PDF como download
+        response = FileResponse(
+            pdf_buffer,
+            content_type='application/pdf',
+            as_attachment=True,
+            filename=f'Laudo_Amostra_{amostra.numero_amostra}_{amostra.data_coleta}.pdf'
+        )
+        
+        return response
     
     @action(detail=False, methods=['get'])
     def por_propriedade(self, request):

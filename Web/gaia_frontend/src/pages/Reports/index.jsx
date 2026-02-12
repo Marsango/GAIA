@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import PropertiesCard from "../../components/PropertiesCard";
 import ReportsCard from "../../components/ReportsCard";
@@ -16,6 +17,8 @@ import {
 } from "./styled";
 
 const CentralLaudos = () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [propriedades, setPropriedades] = useState([]);
   const [laudos, setLaudos] = useState([]);
@@ -27,6 +30,33 @@ const CentralLaudos = () => {
   useEffect(() => {
     carregarPropriedades();
   }, []);
+
+  // Verifica se o usuário é Admin ao carregar
+  useEffect(() => {
+    const userStored = localStorage.getItem("user");
+    if (userStored) {
+      try {
+        const user = JSON.parse(userStored);
+        if (user.is_staff) {
+          setIsAdmin(true);
+        }
+      } catch (e) {
+        console.error("Erro ao verificar permissão:", e);
+      }
+    }
+  }, []);
+
+  const btnStyle = {
+    display: "block",
+    margin: "0 auto 15px auto",
+    padding: "10px 20px",
+    backgroundColor: "#ffc107",
+    color: "#000",
+    border: "none",
+    borderRadius: "5px",
+    fontWeight: "bold",
+    cursor: "pointer",
+  };
 
   const carregarPropriedades = async () => {
     try {
@@ -57,7 +87,7 @@ const CentralLaudos = () => {
   const carregarLaudos = async (propriedadeId) => {
     try {
       const response = await api.get(
-        `laudos/por_propriedade/?propriedade_id=${propriedadeId}`
+        `laudos/por_propriedade/?propriedade_id=${propriedadeId}`,
       );
 
       setLaudos(response.data);
@@ -81,6 +111,11 @@ const CentralLaudos = () => {
     <FullPageContainer>
       <Header />
       <PageContainer>
+        {isAdmin && (
+          <button style={btnStyle} onClick={() => navigate("/admin")}>
+            Ir para Admin Panel
+          </button>
+        )}
         <Title>Central de Laudos</Title>
         <Content>
           <Properties>
@@ -89,7 +124,7 @@ const CentralLaudos = () => {
               propriedades.map((propriedade) => (
                 <PropertiesCard
                   key={propriedade.id}
-                  nome={propriedade.nome}
+                  nome={propriedade.name}
                   local={propriedade.localizacao}
                   ativo={propriedade.id === selectedProperty}
                   onClick={() => setSelectedProperty(propriedade.id)}
@@ -114,7 +149,7 @@ const CentralLaudos = () => {
                       arquivoUrl: `${l.arquivo_pdf}`,
                     }))}
                   />
-                )
+                ),
               )}
             </ReportList>
           </Reports>

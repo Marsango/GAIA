@@ -6,8 +6,10 @@ import {
   ProfileIcon,
   ProfileText,
   LogoutButton,
+  ChangePasswordButton,
 } from "./styled.js";
 import { CgProfile, CgLogOut } from "react-icons/cg";
+import { MdVpnKey } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import LogoutModal from "../LogoutModal"; // Certifique-se que o caminho está correto
 
@@ -66,6 +68,12 @@ export default function Header() {
             {user ? `${user.first_name} ${user.last_name}` : "Visitante"}
           </ProfileText>
         </ProfileIcon>
+
+        {/* Botão para alterar senha */}
+        <ChangePasswordButton onClick={() => navigate("/change-password")}>
+          <MdVpnKey size={24} />
+          Alterar Senha
+        </ChangePasswordButton>
 
         {/* Botão abre o modal, não faz logout direto */}
         <LogoutButton onClick={handleLogoutClick}>

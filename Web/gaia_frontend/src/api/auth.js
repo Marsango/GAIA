@@ -16,6 +16,20 @@ export async function login(cpf, password) {
   }
 }
 
+export async function loginWithCNPJ(cnpj, password) {
+  try {
+    const response = await axios.post(`${API_URL}/login/cnpj/`, {
+      cnpj,
+      password,
+    });
+    console.log("Empresa logada:", response.data);
+    return response.data; // Retorna os dados do usuário
+  } catch (error) {
+    console.error("Erro no login com CNPJ:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
 // Função para refresh token (opcional)
 export async function refreshToken(refresh) {
   try {

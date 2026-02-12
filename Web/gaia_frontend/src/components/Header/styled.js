@@ -59,3 +59,30 @@ export const LogoutButton = styled.button`
     transform: scale(0.98);
   }
 `;
+
+export const ChangePasswordButton = styled.button`
+  display: flex;
+  margin-right: 16px;
+  align-items: center;
+  align-self: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #2196f3;
+  border: 2px solid white;
+  color: white;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  justify-content: center;
+  
+  &:hover {
+    background: white;
+    color: #2196f3;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+`;

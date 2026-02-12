@@ -31,6 +31,7 @@ class SampleWindow(QDialog, SampleDialog):
         self.property.setText(_property)
         self.property.setReadOnly(True)
         self.sample_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.sample_table.verticalHeader().setVisible(False)
         self.sample_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.sample_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.sample_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)

@@ -151,10 +151,22 @@ class GenerateReport(QDialog, GenerateReportDialog):
             report_id: int = db.get_next_report_id()
             script_path: Path = Path(__file__).resolve()
             backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
+            # Criar diretório de backup se não existir
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
             report: Report = Report(file_location=str(backup_path), agreement=self.technician_input.text())
             report.generate_pdf(sample_info, file_path, report_id, sample_values, reference)
             shutil.copy(file_path, backup_path)
-            db.insert_report(report, self.sample_id)
+            # Inserir relatório e obter ID real do laudo criado
+            actual_report_id: int = db.insert_report(report, self.sample_id)
+            
+            # Se o ID real for diferente do previsto, renomear o arquivo
+            if actual_report_id and actual_report_id != report_id:
+                actual_backup_path = backup_path.parent / f"Laudo - {actual_report_id}.pdf"
+                try:
+                    shutil.move(str(backup_path), str(actual_backup_path))
+                except Exception as rename_error:
+                    print(f"[AVISO] Não foi possível renomear arquivo de backup: {rename_error}")
+            
             dialog: AlertWindow = AlertWindow("Laudo salvo com sucesso!")
             dialog.exec()
         except Exception as e:

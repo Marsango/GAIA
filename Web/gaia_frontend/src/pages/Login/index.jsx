@@ -9,7 +9,7 @@ import {
   ErrorMessage,
 } from "./styled";
 import Logo_lab_Branco from "../../assets/images/Logo_lab_Branco.svg";
-import { login, getCurrentUser } from "../../api/auth"; // Adicione getUserInfo
+import { login, getCurrentUser, loginWithCNPJ } from "../../api/auth"; // Adicione getUserInfo
 
 const Login = () => {
   const [cpf, setCpf] = useState("");
@@ -18,15 +18,15 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Função para formatar CPF (remove pontos e traço)
+  // Função para formatar CPF/CNPJ (remove pontos, traço e barra)
   const formatCPF = (cpf) => {
     return cpf.replace(/\D/g, "");
   };
 
-  // Valida formato do CPF (11 dígitos)
+  // Valida formato do CPF (11 dígitos) ou CNPJ (14 dígitos)
   const isValidCPF = (cpf) => {
     const cleanedCPF = formatCPF(cpf);
-    return cleanedCPF.length === 11;
+    return cleanedCPF.length === 11 || cleanedCPF.length === 14;
   };
 
   const handleSubmit = async (e) => {
@@ -39,10 +39,10 @@ const Login = () => {
     const newError = { cpf: "", password: "", general: "" };
 
     if (!cpf) {
-      newError.cpf = "O campo CPF é obrigatório.";
+      newError.cpf = "O campo CPF/CNPJ é obrigatório.";
       hasError = true;
     } else if (!isValidCPF(cpf)) {
-      newError.cpf = "CPF inválido. Deve conter 11 dígitos.";
+      newError.cpf = "CPF/CNPJ inválido. CPF: 11 dígitos, CNPJ: 14 dígitos.";
       hasError = true;
     }
 
@@ -60,11 +60,16 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Formata CPF antes de enviar
-      const formattedCPF = formatCPF(cpf);
+      // Formata CPF/CNPJ antes de enviar
+      const formattedDoc = formatCPF(cpf);
 
-      // Chama a API de login
-      const data = await login(formattedCPF, password);
+      // Detecta se é CPF (11 dígitos) ou CNPJ (14 dígitos)
+      const isCNPJ = formattedDoc.length === 14;
+
+      // Chama a API de login apropriada
+      const data = isCNPJ
+        ? await loginWithCNPJ(formattedDoc, password)
+        : await login(formattedDoc, password);
 
       console.log("Dados recebidos do login:", data);
 
@@ -83,23 +88,23 @@ const Login = () => {
 
       const userData = await getCurrentUser(data.access);
       localStorage.setItem("user", JSON.stringify(userData));
-
-      // testes
-      // console.log("ID:", userData.id);
-      // console.log("CPF:", userData.cpf);
-      // console.log("Nome completo:", userData.nome);
-      // console.log("First name:", userData.first_name);
-      // console.log("Last name:", userData.last_name);
-      // console.log("Email:", userData.email);
-      // console.log("Username:", userData.username);
-
-      // Redireciona
-      navigate("/reports");
+      if (data.user && data.user.primeiro_acesso) {
+        console.log(
+          "Primeiro acesso detectado! Redirecionando para troca de senha...",
+        );
+        navigate("/change-password");
+      } else {
+        console.log("Acesso normal. Redirecionando para relatórios...");
+        navigate("/reports");
+      }
     } catch (err) {
       console.error("Erro completo no login:", err);
 
       if (err.response?.status === 401) {
-        setError((prev) => ({ ...prev, general: "CPF ou senha incorretos." }));
+        setError((prev) => ({
+          ...prev,
+          general: "CPF/CNPJ ou senha incorretos.",
+        }));
       } else {
         setError((prev) => ({
           ...prev,
@@ -111,15 +116,23 @@ const Login = () => {
     }
   };
 
-  // Máscara de CPF enquanto digita (opcional)
+  // Máscara de CPF ou CNPJ enquanto digita
   const handleCpfChange = (e) => {
     let value = e.target.value.replace(/\D/g, "");
 
-    // Aplica máscara: 000.000.000-00
+    // Aplica máscara baseado no tamanho
     if (value.length <= 11) {
+      // Máscara CPF: 000.000.000-00
       value = value.replace(/(\d{3})(\d)/, "$1.$2");
       value = value.replace(/(\d{3})(\d)/, "$1.$2");
       value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    } else {
+      // Máscara CNPJ: 00.000.000/0000-00
+      value = value.substring(0, 14); // Limita a 14 dígitos
+      value = value.replace(/(\d{2})(\d)/, "$1.$2");
+      value = value.replace(/(\d{3})(\d)/, "$1.$2");
+      value = value.replace(/(\d{3})(\d)/, "$1/$2");
+      value = value.replace(/(\d{4})(\d{1,2})$/, "$1-$2");
     }
 
     setCpf(value);
@@ -139,7 +152,7 @@ const Login = () => {
           type="text"
           value={cpf}
           onChange={handleCpfChange}
-          placeholder="CPF (somente números)"
+          placeholder="CPF/CNPJ (somente números)"
           disabled={loading}
           error={error.cpf}
         />
@@ -155,6 +168,22 @@ const Login = () => {
         <Button type="submit" disabled={loading}>
           {loading ? "Entrando..." : "Login"}
         </Button>
+        {/* --- ADIÇÃO: BOTÃO ESQUECI MINHA SENHA --- */}
+        <div style={{ marginTop: "15px", textAlign: "center" }}>
+          <span
+            style={{
+              color: "#333",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontSize: "0.9rem",
+              fontFamily: "Poppins, sans-serif",
+            }}
+            onClick={() => navigate("/forgot-password")}
+          >
+            Esqueci minha senha
+          </span>
+        </div>
+        {/* ----------------------------------------- */}
         {error && <ErrorMessage>{error.general}</ErrorMessage>}
       </LoginForm>
     </PageContainer>

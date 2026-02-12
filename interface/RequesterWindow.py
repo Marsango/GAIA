@@ -24,6 +24,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             "images"
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.requester_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.requester_table.verticalHeader().setVisible(False)
         self.add.clicked.connect(self.register_person)
         self.edit.clicked.connect(self.edit_requester)
         self.delete_2.clicked.connect(self.delete_requester)
@@ -252,13 +253,19 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.setRowCount(0)
                 self.requester_table.setColumnCount(7)
                 
+                # Definir headers para tabela de pessoas
+                self.requester_table.setHorizontalHeaderItem(0, QTableWidgetItem("ID"))
+                self.requester_table.setHorizontalHeaderItem(1, QTableWidgetItem("Nome"))
+                self.requester_table.setHorizontalHeaderItem(2, QTableWidgetItem("Nascimento"))
+                self.requester_table.setHorizontalHeaderItem(3, QTableWidgetItem("CPF"))
+                self.requester_table.setHorizontalHeaderItem(4, QTableWidgetItem("Telefone"))
+                self.requester_table.setHorizontalHeaderItem(5, QTableWidgetItem("E-mail"))
+                self.requester_table.setHorizontalHeaderItem(6, QTableWidgetItem("Endereço"))
+                
                 if persons:
                     for person in persons:
                         row_position: int = self.requester_table.rowCount()
                         self.requester_table.insertRow(row_position)
-                        
-                        # DEBUG: Verificar campos
-                        # print(f"DEBUG Pessoa {person.get('id')}: {person}")
                         
                         # Preencher tabela com valores seguros
                         self.requester_table.setItem(row_position, 0, QTableWidgetItem(str(person.get('id', ''))))
@@ -283,13 +290,18 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.setRowCount(0)
                 self.requester_table.setColumnCount(6)
                 
+                # Definir headers para tabela de empresas
+                self.requester_table.setHorizontalHeaderItem(0, QTableWidgetItem("ID"))
+                self.requester_table.setHorizontalHeaderItem(1, QTableWidgetItem("Nome"))
+                self.requester_table.setHorizontalHeaderItem(2, QTableWidgetItem("CNPJ"))
+                self.requester_table.setHorizontalHeaderItem(3, QTableWidgetItem("Telefone"))
+                self.requester_table.setHorizontalHeaderItem(4, QTableWidgetItem("E-mail"))
+                self.requester_table.setHorizontalHeaderItem(5, QTableWidgetItem("Endereço"))
+                
                 if companies:
                     for company in companies:
                         row_position = self.requester_table.rowCount()
                         self.requester_table.insertRow(row_position)
-                        
-                        # DEBUG: Verificar dados da empresa
-                        # print(f"DEBUG Empresa: ID={company.get('id')}, nome={company.get('company_name')}, CNPJ={company.get('cnpj')}")
                         
                         self.requester_table.setItem(row_position, 0, QTableWidgetItem(str(company.get('id', ''))))
                         self.requester_table.setItem(row_position, 1, QTableWidgetItem(company.get('company_name', '')))

@@ -33,6 +33,8 @@ export const ErrorText = styled.span`
   color: red;
   font-size: 0.8rem;
   margin-top: 0.2rem;
+  display: block;
+  text-align: left;
 `;
 
 export const Input = styled.input`

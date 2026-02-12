@@ -4,6 +4,7 @@ DatabaseHTTPWrapper.py - Wrapper 100% compatível com DatabaseSQLite antigo
 from unittest import result
 import requests
 import json
+import os
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
@@ -53,9 +54,8 @@ class DatabaseHTTPWrapper:
         }
         self.session = requests.Session()
         
-        # Credenciais do técnico
-        self.TECH_CPF = "99988877700"
-        self.TECH_PASSWORD = "123456"
+        # Credenciais do tecnico (arquivo local, nao versionado)
+        self.TECH_CPF, self.TECH_PASSWORD = self._load_credentials()
         
         # Auto login
         self._auto_login()
@@ -94,6 +94,23 @@ class DatabaseHTTPWrapper:
             return str(date_str)
         except Exception:
             return str(date_str)
+
+    def _load_credentials(self) -> tuple[str, str]:
+        """Carrega credenciais do arquivo de configuracao local."""
+        config_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'auth_config.json'
+        )
+
+        if not os.path.exists(config_path):
+            raise RuntimeError(
+                "Arquivo auth_config.json nao encontrado. "
+                "Copie auth_config.json.example para auth_config.json e configure suas credenciais."
+            )
+
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            return config.get('admin_cpf', ''), config.get('admin_password', '')
     
     # ========== AUTENTICAÇÃO ==========
     
@@ -165,7 +182,7 @@ class DatabaseHTTPWrapper:
             if response.status_code == 204:
                 return True
 
-            if response.status_code in (200, 201):
+            if response.status_code in (200, 201, 409):
                 if response.content:
                     try:
                         return response.json()
@@ -200,55 +217,110 @@ class DatabaseHTTPWrapper:
     # ========== MÉTODOS COMPATÍVEIS COM SQLite ANTIGO ==========
     
     def insert_person(self, person: Person, address: Address) -> dict:
-        """MESMA ASSINATURA DO SQLITE ANTIGO"""
+        """MESMA ASSINATURA DO SQLITE ANTIGO - Cria Usuário + Pessoa"""
         try:
-            address_dict = to_dict(address)
+            print(f"\n📝 Inserindo nova pessoa...")
             
             name = person.name 
             cpf = person.cpf 
             email = person.email
-            birth_date = person.birth_date
-
+            birth_date = person.birth_date if hasattr(person, 'birth_date') else ''
+            
             if hasattr(person, 'get_phone_number'):
                 phone = person.get_phone_number()
+            else:
+                phone = getattr(person, 'phone_number', '')
             
-            # 1. Criar endereço
-            endereco_data = {
-                "cep": address_dict.get("cep", ""),
-                "rua": address_dict.get("street", ""),
-                "numero": address_dict.get("address_number", ""),
-                "cidade": address_dict.get("city", ""),
-                "estado": address_dict.get("state", ""),
-                "pais": address_dict.get("country", "Brasil"),
+            # Validar dados obrigatórios
+            if not name or not cpf:
+                raise ValueError("Nome e CPF são obrigatórios")
+            
+            if not email:
+                raise ValueError("Email é obrigatório")
+            
+            print(f"   Nome: {name}")
+            print(f"   CPF: {cpf}")
+            print(f"   Email: {email}")
+            print(f"   Telefone: {phone}")
+            print(f"   Data de Nascimento: {birth_date}")
+            
+            # PASSO 1: Criar usuário e enviar email via /api/register/
+            usuario_data = {
+                "first_name": name,
+                "cpf": cpf,
+                "email": email,
+                "phone_number": phone,
             }
             
-            endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_data)
+            print(f"\n🔄 Criando usuário em /api/register/ (com envio de email)...")
+            usuario_result = self._make_request("POST", "/api/register/", data=usuario_data)
             
-            if not endereco_result:
-                endereco_id = None
-            else:
-                endereco_id = endereco_result.get("id")
+            print(f"   Resposta: {usuario_result}")
             
-            # 2. Criar pessoa
-            pessoa_data = {
+            # Verificar se foi criado com sucesso
+            if not (usuario_result and isinstance(usuario_result, dict)):
+                raise Exception(f"Falha ao criar usuário. Resposta: {usuario_result}")
+            
+            if 'error' in usuario_result:
+                raise ValueError(usuario_result.get('error'))
+            
+            print("✅ Usuário criado com sucesso e email enviado!")
+            
+            # PASSO 2: Criar endereço (se fornecido)
+            endereco_id = None
+            if address:
+                endereco_data = to_dict(address)
+                if any(endereco_data.values()):
+                    endereco_payload = {
+                        "cep": endereco_data.get("cep", ""),
+                        "rua": endereco_data.get("street", ""),
+                        "numero": endereco_data.get("address_number", ""),
+                        "cidade": endereco_data.get("city", ""),
+                        "estado": endereco_data.get("state", ""),
+                        "pais": endereco_data.get("country", "Brasil"),
+                    }
+                    
+                    endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_payload)
+                    if endereco_result and 'id' in endereco_result:
+                        endereco_id = endereco_result['id']
+                        print(f"✅ Endereço criado! ID: {endereco_id}")
+            
+            # PASSO 3: Criar registro completo em /api/pessoas/ com nascimento
+            print(f"\n🔄 Criando Pessoa em /api/pessoas/...")
+            
+            pessoa_payload = {
                 "name": name,
                 "cpf": cpf,
                 "email": email,
                 "phone_number": phone,
-                "nascimento": self._format_date(birth_date),
+                "nascimento": self._format_date(birth_date) if birth_date else None,
             }
             
             if endereco_id:
-                pessoa_data["endereco"] = endereco_id
+                pessoa_payload["endereco"] = endereco_id
             
-            pessoa_result = self._make_request("POST", "/api/pessoas/", data=pessoa_data)
+            # Remover None values
+            pessoa_payload = {k: v for k, v in pessoa_payload.items() if v is not None and v != ""}
+            
+            pessoa_result = self._make_request("POST", "/api/pessoas/", data=pessoa_payload)
             
             if pessoa_result and 'id' in pessoa_result:
+                print(f"✅ Pessoa cadastrada com sucesso! ID: {pessoa_result['id']}")
                 return pessoa_result
             else:
-                raise Exception("Falha ao criar pessoa")
+                # Se falhar, tentar buscar se já existe (pode ter CPF duplicado)
+                persons = self._make_request("GET", "/api/pessoas/", params={'cpf': cpf})
+                if persons and isinstance(persons, dict) and 'results' in persons:
+                    if persons['results']:
+                        print(f"✅ Pessoa já existe! ID: {persons['results'][0]['id']}")
+                        return persons['results'][0]
+                
+                raise Exception(f"Falha ao criar Pessoa. Resposta: {pessoa_result}")
                     
         except Exception as e:
+            print(f"❌ Erro ao inserir pessoa: {e}")
+            import traceback
+            traceback.print_exc()
             raise
     
     def edit_person(self, person: Person, address: Address, id: int, requester_id: int) -> None:
@@ -298,17 +370,34 @@ class DatabaseHTTPWrapper:
     def delete_person(self, id: int) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
+            person = self._make_request("GET", f"/api/pessoas/{id}/") or {}
+            cpf = person.get("cpf")
+
             result = self._make_request("DELETE", f"/api/pessoas/{id}/")
             if not result:
                 raise Exception("Falha ao excluir pessoa")
+
+            if cpf:
+                try:
+                    self._make_request("DELETE", "/api/delete/usuario/", params={"cpf": cpf})
+                except Exception as e:
+                    print(f"⚠️  Aviso: falha ao excluir usuario (CPF {cpf}): {e}")
         except Exception as e:
             raise
     
     def insert_company(self, company: Company, address: Address) -> dict:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
         try:
+            print("\n" + "="*60)
+            print("🏢 INSERT_COMPANY - Iniciando inserção de empresa")
+            print("="*60)
+            
             company_dict = to_dict(company)
             address_dict = to_dict(address)
+            
+            print(f"Empresa: {company_dict.get('company_name')}")
+            print(f"CNPJ: {company_dict.get('cnpj')}")
+            print(f"Email: {company_dict.get('email')}")
             
             # 1. Criar endereço
             endereco_data = {
@@ -320,12 +409,14 @@ class DatabaseHTTPWrapper:
                 "pais": address_dict.get("country", "Brasil"),
             }
             
+            print("📍 Criando endereço...")
             endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_data)
             
             if not endereco_result:
                 raise Exception("Falha ao criar endereço")
             
             endereco_id = endereco_result.get("id")
+            print(f"✅ Endereço criado: ID={endereco_id}")
             
             # 2. Criar empresa
             empresa_data = {
@@ -336,14 +427,49 @@ class DatabaseHTTPWrapper:
                 "endereco": endereco_id,
             }
             
+            print("🏢 Criando empresa na API...")
             empresa_result = self._make_request("POST", "/api/empresas/", data=empresa_data)
             
-            if empresa_result and 'id' in empresa_result:
-                return empresa_result
-            else:
+            if not empresa_result or 'id' not in empresa_result:
                 raise Exception("Falha ao criar empresa")
+            
+            print(f"✅ Empresa criada: ID={empresa_result.get('id')}")
+            
+            # 3. Registrar Usuario com CNPJ para permitir login (só se tiver email)
+            if company_dict.get("email"):
+                try:
+                    registro_usuario_data = {
+                        "first_name": company_dict.get("company_name", ""),
+                        "email": company_dict.get("email", ""),
+                        "cnpj": company_dict.get("cnpj", ""),
+                    }
+                    
+                    print("🔐 Registrando usuario/envio de email...")
+                    print(f"   Endpoint: /api/register/empresa/")
+                    print(f"   Dados: {registro_usuario_data}")
+                    
+                    registro_result = self._make_request(
+                        "POST", 
+                        "/api/register/empresa/",
+                        data=registro_usuario_data
+                    )
+                    
+                    print(f"✅ Empresa e Usuario criados com sucesso")
+                    print(f"   Email de acesso enviado para: {company_dict.get('email')}")
+                    print("="*60 + "\n")
+                    
+                except Exception as user_error:
+                    # Se falhar ao criar usuario, a empresa já foi criada
+                    # Informar mas não quebrar o fluxo
+                    print(f"⚠️ Aviso: Empresa criada mas erro ao registrar usuario/enviar email")
+                    print(f"   Erro: {str(user_error)}")
+                    print("="*60 + "\n")
+                    
+            return empresa_result
                 
         except Exception as e:
+            print(f"❌ ERRO em INSERT_COMPANY: {str(e)}")
+            print("="*60 + "\n")
             raise
     
     def edit_company(self, company: Company, address: Address, id: int, requester_id: int) -> None:
@@ -395,9 +521,19 @@ class DatabaseHTTPWrapper:
             raise
     
     def insert_property(self, property: Property, requester_id: int, address: Address) -> dict:
+        """Cadastra propriedade - vinculada a uma Person OU Empresa"""
+        print(f"\n🏠 Cadastrando propriedade...")
+        
+        # VALIDAÇÃO CRÍTICA: Requester é obrigatório
+        if not requester_id:
+            raise ValueError("❌ ERRO CRÍTICO: Propriedade DEVE ter um proprietário (pessoa ou empresa)!")
+        
+        print(f"   Proprietário ID: {requester_id}")
+        
         property_dict = to_dict(property)
         address_dict = to_dict(address)
 
+        # 1. Criar endereço
         endereco_data = {
             "cep": address_dict.get("cep", ""),
             "rua": address_dict.get("street", ""),
@@ -406,26 +542,146 @@ class DatabaseHTTPWrapper:
             "estado": address_dict.get("state", ""),
             "pais": address_dict.get("country", "Brasil"),
         }
-
+        
+        print(f"   Criando endereço: {endereco_data.get('cidade')}/{endereco_data.get('estado')}")
         endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_data)
 
-        if not endereco_result:
-            raise Exception("Falha ao criar endereço")
+        if not endereco_result or 'id' not in endereco_result:
+            raise Exception("❌ Falha ao criar endereço da propriedade")
+        
         endereco_id = endereco_result.get("id")
+        print(f"   ✅ Endereço criado: ID {endereco_id}")
 
-        data = {
-            "name": property_dict["name"],
-            "endereco": endereco_id,  
-            "registration_number": property_dict["registration_number"],
-            "localizacao": property_dict.get("localizacao", ""),
-            "proprietario_id": requester_id,
-        }
-        result = self._make_request("POST", "/api/propriedades/", data=data)
+        try:
+            # 2. DETECTAR TIPO DE PROPRIETÁRIO: Person ou Empresa
+            print(f"   Detectando tipo de proprietário (ID: {requester_id})...")
+            
+            proprietario_pessoa = None
+            proprietario_empresa = None
+            
+            # Tentar primeiro como Person ID direto
+            print(f"   Tentando como Person ID...")
+            try:
+                pessoa_response = self._make_request("GET", f"/api/pessoas/{requester_id}/")
+                if pessoa_response and pessoa_response.get('id'):
+                    print(f"   ✅ Detectado: PERSON (Pessoa) ID {requester_id}")
+                    proprietario_pessoa = requester_id
+            except Exception as e:
+                print(f"   ✗ Não é Person ID: {e}")
+            
+            # Se não for Person, tentar como Empresa ID
+            if proprietario_pessoa is None:
+                print(f"   Tentando como Empresa ID...")
+                try:
+                    empresa_response = self._make_request("GET", f"/api/empresas/{requester_id}/")
+                    if empresa_response and empresa_response.get('id'):
+                        print(f"   ✅ Detectado: EMPRESA (Pessoa Jurídica) ID {requester_id}")
+                        proprietario_empresa = requester_id
+                except Exception as e:
+                    print(f"   ✗ Não é Empresa ID: {e}")
+            
+            # Se não for Person nem Empresa direto, tentar converter Usuario ID
+            if proprietario_pessoa is None and proprietario_empresa is None:
+                print(f"   Tentando converter Usuario ID {requester_id} para Person...")
+                try:
+                    usuario_response = self._make_request("GET", f"/api/list/usuarios/{requester_id}/")
+                    
+                    if not usuario_response:
+                        raise ValueError(
+                            f"❌ ERRO CRÍTICO: Proprietário ID {requester_id} não encontrado "
+                            f"como Person, Empresa ou Usuario! Propriedade NÃO PODE ser cadastrada."
+                        )
+                    
+                    cpf = usuario_response.get('cpf')
+                    if not cpf:
+                        raise ValueError(f"❌ ERRO: Usuário {requester_id} não tem CPF cadastrado!")
+                    
+                    # Buscar Person pelo CPF
+                    persons_response = self._make_request("GET", "/api/pessoas/", params={'cpf': cpf})
+                    persons = self._unwrap_results(persons_response)
+                    
+                    if persons:
+                        proprietario_pessoa = persons[0].get('id')
+                        print(f"   ✅ Person encontrada para Usuario ID {requester_id}: Person ID {proprietario_pessoa}")
+                    else:
+                        # Criar nova Person no modelo report
+                        print(f"   Criando Person no modelo report para Usuario {requester_id} (CPF {cpf})...")
+                        usuario_data = usuario_response
+                        person_payload = {
+                            "name": usuario_data.get('name') or f"{usuario_data.get('first_name', '')} {usuario_data.get('last_name', '')}".strip(),
+                            "cpf": cpf,
+                            "email": usuario_data.get('email', ''),
+                            "phone_number": usuario_data.get('telefone', ''),
+                            "endereco": endereco_id,
+                        }
+                        
+                        try:
+                            person_response = self._make_request("POST", "/api/pessoas/", data=person_payload)
+                            
+                            # VALIDAÇÃO CRÍTICA: Person DEVE ser criada
+                            if not person_response or 'id' not in person_response:
+                                raise Exception("Resposta inválida ao criar Person")
+                            
+                            proprietario_pessoa = person_response.get('id')
+                            print(f"   ✅ Person criada no modelo report: ID {proprietario_pessoa}")
+                            
+                        except Exception as e:
+                            # Se falhar por CPF duplicado, tentar buscar novamente
+                            if 'já está cadastrado' in str(e).lower() or 'cpf' in str(e).lower():
+                                print(f"   ⚠️  CPF já existe, buscando Person existente...")
+                                persons_retry = self._make_request("GET", "/api/pessoas/", params={'cpf': cpf})
+                                persons_list = self._unwrap_results(persons_retry)
+                                
+                                if persons_list:
+                                    proprietario_pessoa = persons_list[0].get('id')
+                                    print(f"   ✅ Person encontrada: ID {proprietario_pessoa}")
+                                else:
+                                    raise Exception(
+                                        f"❌ ERRO: Falha ao criar Person e não foi possível encontrá-la. "
+                                        f"Erro original: {e}"
+                                    )
+                            else:
+                                raise
+                except Exception as e:
+                    raise
+            
+            # VALIDAÇÃO FINAL: Garantir que temos um proprietário (Person OU Empresa)
+            if proprietario_pessoa is None and proprietario_empresa is None:
+                raise Exception(
+                    f"❌ ERRO CRÍTICO: Não foi possível obter um proprietário válido! "
+                    f"Propriedade NÃO PODE ser cadastrada."
+                )
 
-        if not result or "id" not in result:
-            raise Exception("Falha ao criar propriedade")
+            # 3. Criar propriedade COM proprietário obrigatório
+            proprietario_nome = proprietario_pessoa if proprietario_pessoa else proprietario_empresa
+            proprietario_tipo = "Person" if proprietario_pessoa else "Empresa"
+            proprietario_id = proprietario_pessoa if proprietario_pessoa else proprietario_empresa
+            
+            print(f"   Criando propriedade '{property_dict.get('name')}' para {proprietario_tipo} ID {proprietario_nome}...")
+            
+            data = {
+                "name": property_dict["name"],
+                "endereco": endereco_id,  
+                "registration_number": property_dict.get("registration_number"),
+                "localizacao": property_dict.get("localizacao", ""),
+                "proprietario_id": proprietario_id,  # Campo genérico que aceita Person ou Empresa
+            }
+            
+            print(f"   📤 Enviando para API: {data}")
+            result = self._make_request("POST", "/api/propriedades/", data=data)
 
-        return result
+            if not result or "id" not in result:
+                raise Exception("❌ Falha ao criar propriedade no servidor")
+
+            print(f"✅ Propriedade cadastrada com sucesso!")
+            print(f"   - Propriedade ID: {result.get('id')}")
+            print(f"   - Proprietário ({proprietario_tipo}): {proprietario_nome}")
+            return result
+            
+        except Exception as e:
+            # Se falhar após criar endereço, logar o problema
+            print(f"⚠️  AVISO: Endereço ID {endereco_id} foi criado mas propriedade falhou")
+            raise
         
     def edit_property(self, property: Property, property_id: int, address: Address = None) -> None:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
@@ -459,19 +715,19 @@ class DatabaseHTTPWrapper:
                 }
                 self._make_request("PUT", f"/api/enderecos/{endereco_id}/", data=endereco_payload)
 
-            # A API exige sempre 'proprietario_id' no PUT. Buscar do payload
-            # ou derivar do recurso atual (proprietario_pessoa/empresa)
-            proprietario_id = (
-                property_dict.get("proprietario_id")
-                or current.get("proprietario_pessoa")
-                or current.get("proprietario_empresa")
-            )
+            # Manter proprietário atual (Person ou Empresa)
+            proprietario_pessoa = current.get("proprietario_pessoa")
+            proprietario_empresa = current.get("proprietario_empresa")
+            
+            # Se vier dict, extrair ID
+            if isinstance(proprietario_pessoa, dict):
+                proprietario_pessoa = proprietario_pessoa.get("id")
+            if isinstance(proprietario_empresa, dict):
+                proprietario_empresa = proprietario_empresa.get("id")
 
-            # Alguns backends podem retornar um objeto em vez do ID (pouco provável
-            # com ModelSerializer padrão). Garantir que se for dict pegue o ID.
-            if isinstance(proprietario_id, dict):
-                proprietario_id = proprietario_id.get("id")
-
+            # Determinar qual proprietário usar (genérico)
+            proprietario_id = proprietario_pessoa if proprietario_pessoa else proprietario_empresa
+            
             if not proprietario_id:
                 raise Exception(
                     "Proprietário da propriedade não identificado para atualização"
@@ -481,10 +737,9 @@ class DatabaseHTTPWrapper:
                 "name": property_dict.get("name", current.get("name", "")),
                 "registration_number": property_dict.get("registration_number", current.get("registration_number", "")),
                 "localizacao": property_dict.get("localizacao", current.get("localizacao", "")),
+                "proprietario_id": proprietario_id,  # Campo genérico
             }
-
-            # Enviar sempre o proprietario_id para atender o serializer
-            data["proprietario_id"] = proprietario_id
+            
             if endereco_id:
                 data["endereco"] = endereco_id
 
@@ -649,7 +904,9 @@ class DatabaseHTTPWrapper:
             # Fazer upload do arquivo PDF se houver
             file_location = report_dict.get("file_location")
             if file_location:
-                self._upload_report_pdf(result['id'], file_location)
+                upload_success = self._upload_report_pdf(result['id'], file_location)
+                if not upload_success:
+                    print(f"[AVISO] Falha ao fazer upload do PDF para laudo {result['id']}: {file_location}")
             
             return result['id']
         
@@ -660,67 +917,78 @@ class DatabaseHTTPWrapper:
     def get_persons(self, **kwargs) -> list:
         """RETORNA LISTA DE SQLiteRow COMPATÍVEL"""
         try:
+            print(f"\n👤 Buscando pessoas...")
+            
             params = {}
 
             # Busca por ID (detalhe)
             if kwargs.get('id'):
+                print(f"   Filtro: ID = {kwargs['id']}")
                 response = self._make_request("GET", f"/api/pessoas/{kwargs['id']}/")
+                pessoas = [response] if response else []
             else:
                 # Filtros de lista
                 cpf_in = kwargs.get('cpf')
                 name = kwargs.get('name')
 
                 if cpf_in:
+                    print(f"   Filtro: CPF = {cpf_in}")
                     cpf_digits = ''.join(ch for ch in str(cpf_in) if ch.isdigit())
-                    # CPF completo usa filtro exato, parcial usa busca textual
-                    if len(cpf_digits) == 11:
-                        params['cpf'] = cpf_digits
-                    else:
-                        params['search'] = cpf_digits
+                    params['cpf'] = cpf_digits
                 elif name:
+                    print(f"   Filtro: Nome = {name}")
                     params['search'] = name
 
-                # Lista decrescente por ID (mais recentes primeiro)
-                params['ordering'] = '-id'
-
+                # Buscar pessoas do endpoint /api/pessoas/
                 response = self._make_request("GET", "/api/pessoas/", params=params)
-
-            pessoas = self._unwrap_results(response)
+                
+                # Se vier paginado (dict com 'results'), usa a lista interna
+                if isinstance(response, dict):
+                    if 'results' in response:
+                        pessoas = response.get('results', [])
+                    else:
+                        pessoas = [response] if response else []
+                else:
+                    pessoas = response if isinstance(response, list) else []
 
             formatted = []
 
             for pessoa in pessoas:
-                endereco = self._get_complete_address(pessoa.get('endereco'))
-
-                # Normaliza 'nascimento' para formato dd/mm/YYYY esperado pela interface
-                nascimento = pessoa.get('nascimento')
-                try:
-                    nascimento_br = datetime.strptime(nascimento, "%Y-%m-%d").strftime("%d/%m/%Y") if nascimento else ''
-                except Exception:
-                    nascimento_br = nascimento or ''
-
+                if not pessoa:
+                    continue
+                
+                # Buscar endereço se houver referência
+                endereco_data = {}
+                endereco_ref = pessoa.get('endereco')
+                if endereco_ref:
+                    endereco_data = self._get_complete_address(endereco_ref) or {}
+                
                 row_data = {
                     'id': pessoa.get('id'),
                     'name': pessoa.get('name', ''),
-                    'birth_date': nascimento_br,
+                    'birth_date': pessoa.get('nascimento', ''),
                     'cpf': pessoa.get('cpf', ''),
                     'email': pessoa.get('email', ''),
                     'phone_number': pessoa.get('phone_number', ''),
                     'requester_id': pessoa.get('id'),
-                    'cep': endereco.get('cep', ''),
-                    'address_number': endereco.get('numero', ''),
-                    'address_id': endereco.get('id'),
-                    'street': endereco.get('rua', ''),
-                    'city': endereco.get('cidade', ''),
-                    'state': endereco.get('estado', ''),
-                    'country': endereco.get('pais', 'Brasil'),
+                    'cep': endereco_data.get('cep', ''),
+                    'address_number': endereco_data.get('numero', ''),
+                    'address_id': endereco_ref,
+                    'street': endereco_data.get('rua', ''),
+                    'city': endereco_data.get('cidade', ''),
+                    'state': endereco_data.get('estado', ''),
+                    'country': endereco_data.get('pais', 'Brasil'),
                 }
 
                 formatted.append(SQLiteRow(row_data))
 
+            print(f"✅ {len(formatted)} pessoa(s) encontrada(s)")
             return formatted
 
         except Exception as e:
+            print(f"❌ Erro ao buscar pessoas: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     
@@ -833,6 +1101,7 @@ class DatabaseHTTPWrapper:
     def get_properties(self, **kwargs) -> list:
         """RETORNA LISTA DE SQLiteRow COMPATÍVEL"""
         try:
+            # Buscar propriedades
             if kwargs.get('id'):
                 result = self._make_request("GET", f"/api/propriedades/{kwargs['id']}/")
                 propriedades = [result] if result else []
@@ -840,39 +1109,77 @@ class DatabaseHTTPWrapper:
                 result = self._make_request("GET", "/api/propriedades/", params={'ordering': '-id'})
                 propriedades = self._unwrap_results(result)
 
+            # Se não pedir filtro de requester, retorna todas
+            if not kwargs.get('requester_id'):
+                formatted = []
+                for prop in propriedades:
+                    endereco = prop.get("endereco_detalhes") or {}
+                    location_value = (
+                        prop.get('localizacao')
+                        or f"{endereco.get('rua', '')}, {endereco.get('numero', '')}"
+                    ).strip(', ')
+                    
+                    row_data = {
+                        'id': prop.get('id'),
+                        'name': prop.get('name', ''),
+                        'registration_number': prop.get('registration_number', ''),
+                        'localizacao': location_value,
+                        'location': location_value,
+                        'city': endereco.get('cidade', ''),
+                        'state': endereco.get('estado', ''),
+                        'country': endereco.get('pais', 'Brasil'),
+                    }
+                    formatted.append(SQLiteRow(row_data))
+                
+                print(f"   📋 {len(formatted)} propriedade(s) encontrada(s)")
+                return formatted
+
+            # ESTRATÉGIA: Filtrar em Python comparando proprietários
+            requester_id = kwargs['requester_id']
+            print(f"🔍 Filtrando propriedades para requester_id {requester_id} (em Python)...")
+            
             formatted = []
             for prop in propriedades:
-                endereco = prop.get("endereco_detalhes") or {}
-
-                # Filtrar por proprietário quando requester_id é informado
-                requester_filter = kwargs.get('requester_id')
-                proprietario = prop.get('proprietario_pessoa') or prop.get('proprietario_empresa')
-                if requester_filter and requester_filter != proprietario:
-                    continue
-
-                location_value = (
-                    prop.get('localizacao')
-                    or f"{endereco.get('rua', '')}, {endereco.get('numero', '')}"
-                ).strip(', ')
-
-                row_data = {
-                    'id': prop.get('id'),
-                    'name': prop.get('name', ''),
-                    'registration_number': prop.get('registration_number', ''),
-                    # Preferir o campo "localizacao" da API; se vier vazio, cair para rua/numero
-                    'localizacao': location_value,
-                    # Alias usado pela UI (PropertyWindow)
-                    'location': location_value,
-                    'city': endereco.get('cidade', ''),
-                    'state': endereco.get('estado', ''),
-                    'country': endereco.get('pais', 'Brasil'),
-                }
-
-                formatted.append(SQLiteRow(row_data))
-
+                # Extrair IDs de proprietário (pode vir como dict ou int)
+                prop_pessoa = prop.get('proprietario_pessoa')
+                prop_empresa = prop.get('proprietario_empresa')
+                
+                # Converter para int se for dict
+                pessoa_id = None
+                if prop_pessoa:
+                    pessoa_id = prop_pessoa.get('id') if isinstance(prop_pessoa, dict) else prop_pessoa
+                
+                empresa_id = None
+                if prop_empresa:
+                    empresa_id = prop_empresa.get('id') if isinstance(prop_empresa, dict) else prop_empresa
+                
+                # Verificar se essa propriedade pertence ao requester
+                if pessoa_id == requester_id or empresa_id == requester_id:
+                    print(f"   ✅ Propriedade ID {prop.get('id')}: proprietario_pessoa={pessoa_id}, proprietario_empresa={empresa_id}")
+                    
+                    endereco = prop.get("endereco_detalhes") or {}
+                    location_value = (
+                        prop.get('localizacao')
+                        or f"{endereco.get('rua', '')}, {endereco.get('numero', '')}"
+                    ).strip(', ')
+                    
+                    row_data = {
+                        'id': prop.get('id'),
+                        'name': prop.get('name', ''),
+                        'registration_number': prop.get('registration_number', ''),
+                        'localizacao': location_value,
+                        'location': location_value,
+                        'city': endereco.get('cidade', ''),
+                        'state': endereco.get('estado', ''),
+                        'country': endereco.get('pais', 'Brasil'),
+                    }
+                    formatted.append(SQLiteRow(row_data))
+            
+            print(f"   📋 {len(formatted)} propriedade(s) encontrada(s) para requester_id {requester_id}")
             return formatted
 
         except Exception as e:
+            print(f"❌ Erro ao buscar propriedades: {e}")
             return []
         
     def _get_property_from_sample(self, sample_id: int) -> Optional[int]:
@@ -954,12 +1261,17 @@ class DatabaseHTTPWrapper:
     def get_sample_info(self, sample_id: int) -> SQLiteRow:
         """RETORNA SQLiteRow COMPATÍVEL para geração de laudo"""
         try:
+            print(f"\n🔍 [get_sample_info] Buscando amostra ID {sample_id}...")
             amostra = self._make_request("GET", f"/api/amostras/{sample_id}/")
             if not amostra:
+                print(f"❌ [get_sample_info] Amostra não encontrada")
                 return SQLiteRow({})
+            
+            print(f"✅ [get_sample_info] Amostra encontrada: {amostra.get('numero_amostra')}")
 
             # Propriedade e endereço
             propriedade_id = amostra.get("propriedade")
+            print(f"   Propriedade ID: {propriedade_id}")
             propriedade = None
             endereco = {}
             proprietario_id = None
@@ -967,17 +1279,20 @@ class DatabaseHTTPWrapper:
             if propriedade_id:
                 try:
                     propriedade = self._make_request("GET", f"/api/propriedades/{propriedade_id}/") or {}
+                    print(f"   ✅ Propriedade: {propriedade.get('name')}")
                     
                     # Buscar endereço
                     endereco_ref = propriedade.get("endereco")
                     if endereco_ref:
                         endereco = self._get_complete_address(endereco_ref) or {}
+                        print(f"   ✅ Endereço: {endereco.get('cidade')}/{endereco.get('estado')}")
                     
                     # Identificar proprietário ID
                     proprietario_id = propriedade.get("proprietario_pessoa") or propriedade.get("proprietario_empresa")
+                    print(f"   Proprietário ID: {proprietario_id}")
                     
                 except Exception as e:
-                    print(f"Erro ao buscar propriedade: {e}")
+                    print(f"❌ Erro ao buscar propriedade: {e}")
                     propriedade = {}
 
             # Proprietário (pessoa ou empresa)
@@ -993,6 +1308,7 @@ class DatabaseHTTPWrapper:
                         requester_name = pessoa.get("name", "")
                         document_number = pessoa.get("cpf", "")
                         document_type = "cpf"
+                        print(f"   ✅ Proprietário (Pessoa): {requester_name} - CPF {document_number}")
                 except Exception:
                     # Se não for pessoa, tentar como empresa
                     try:
@@ -1001,8 +1317,9 @@ class DatabaseHTTPWrapper:
                             requester_name = empresa.get("name", "")
                             document_number = empresa.get("cnpj", "")
                             document_type = "cnpj"
+                            print(f"   ✅ Proprietário (Empresa): {requester_name} - CNPJ {document_number}")
                     except Exception as e:
-                        print(f"Erro ao buscar proprietário: {e}")
+                        print(f"❌ Erro ao buscar proprietário: {e}")
 
             row_data = {
                 'sample_description': amostra.get('descricao', ''),
@@ -1019,11 +1336,19 @@ class DatabaseHTTPWrapper:
                 'document_number': document_number,
                 'document_type': document_type,
             }
+            
+            print(f"\n📋 [get_sample_info] Dados compilados:")
+            print(f"   Solicitante: {requester_name} ({document_type.upper()}: {document_number})")
+            print(f"   Propriedade: {row_data['property_name']} - {row_data['city']}/{row_data['state']}")
+            print(f"   Amostra: {row_data['sample_number']} - Prof: {row_data['depth']}cm - Área: {row_data['total_area']}m²")
+            print(f"✅ [get_sample_info] Row data retornado com sucesso\n")
 
             return SQLiteRow(row_data)
 
         except Exception as e:
-            print(f"Erro geral em get_sample_info: {e}")
+            print(f"❌ [get_sample_info] Erro geral: {e}")
+            import traceback
+            traceback.print_exc()
             return SQLiteRow({})
     
     def get_report_info(self) -> list:

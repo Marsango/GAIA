@@ -1,6 +1,6 @@
 class CPFAlreadyExistsError(Exception):
     def __init__(self, cpf: str):
-        super().__init__(f"O CPF '{cpf}' já está cadastrado no sistema.")
+        super().__init__(f"O CPF '{cpf}'  cadastrado no sistema.")
 
 class CNPJAlreadyExistsError(Exception):
     def __init__(self, cnpj: str):

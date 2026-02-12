@@ -1,8 +1,30 @@
-.env
-/.idea
-backend/classes/__pycache__/Requester.cpython-312.pyc
-backend/classes/__pycache__/utils.cpython-312.pyc
-*.pyc
-venv/
+# --- PYTHON / DJANGO ---
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+venv/
+.env
+db.sqlite3
+.DS_Store
+
+# --- BUILD / DISTRIBUICAO ---
+build/
+dist/
+*.spec
+
+# --- CONFIGURACOES SENSIVEIS ---
+backend/classes/auth_config.json
+
+# --- FRONTEND / NODE ---
+node_modules/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json # Opcional: Alguns times gostam de subir, mas se der conflito, pode ignorar
+yarn.lock         # Idem
+
+# --- IDEs (VS Code, Pycharm, etc) ---
+.idea/
+.vscode/
+*.swp

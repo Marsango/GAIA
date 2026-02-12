@@ -36,7 +36,7 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
         self.tableWidget.setRowCount(len(available_parameters) + 1)
         self.tableWidget.setColumnCount(1)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.tableWidget.verticalHeader().setVisible(False)
+        self.tableWidget.verticalHeader().setVisible(False) #linha adicionada para esconder os números das linhas, pode ser removida caso queira mostrar
         self.tableWidget.horizontalHeader().setVisible(False)
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         first_item: QTableWidgetItem = QTableWidgetItem('Parâmetros')

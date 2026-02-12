@@ -50,6 +50,7 @@ class Propriedade(models.Model):
     proprietario_empresa = models.ForeignKey(
         Empresa, null=True, blank=True, on_delete=models.CASCADE
     )
+    usuario = models.ForeignKey('authentication.Usuario', on_delete=models.CASCADE, null=True, blank=True)
     ativo = models.BooleanField(default=True)
     data_cadastro = models.DateTimeField(auto_now_add=True)
 

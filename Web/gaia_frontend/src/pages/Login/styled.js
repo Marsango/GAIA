@@ -14,7 +14,8 @@ export const LoginForm = styled.form`
     display: flex;
     flex-direction: column;
     width: 400px;
-    height: 520px;
+    min-height: 520px;
+    height: auto;
     gap: 12px;
     padding: 16px;
     padding-top: 30px;
@@ -22,6 +23,7 @@ export const LoginForm = styled.form`
     background: ${white};
     box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.10);
     align-items: center;
+    transition: min-height 0.2s ease, padding 0.2s ease;
 `;
 
 export const Button = styled.button`

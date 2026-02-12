@@ -12,6 +12,25 @@ from backend.classes.utils import handle_exception
 
 
 class RegisterProperty(QDialog, RegisterPropertyDialog):
+    # Cidades próximas a Pato Branco por estado
+    CIDADES_PROXIMAS = {
+        "Paraná": [
+            "Pato Branco", "Marmeleiro", "Coronel Vivida", "Sulina", "Enéas Marques",
+            "Renascença", "Pranchita", "Crespo", "Santo Antônio do Sudoeste", 
+            "Capanema", "Ampére", "Neves", "Clevelândia", "Realeza"
+        ],
+        "Santa Catarina": [
+            "Chapecó", "Xanxerê", "Caxambu do Sul", "Tapejara", "Santa Cecília",
+            "Lebon Régis", "Bom Jesus do Oeste", "Anita Garibaldi", "Vargem",
+            "Iomerê", "Tigrinhos", "Cambará do Sul", "Maravilha"
+        ],
+        "Rio Grande do Sul": [
+            "Alegrete", "Rosário do Sul", "Maçambá", "Lavras do Sul", "Uruguaiana",
+            "São Gabriel", "Bagé", "Santana do Livramento", "Dom Pedrito",
+            "Caçapava do Sul", "Pinheiro Machado", "Encruzilhada do Sul"
+        ]
+    }
+
     def __init__(self, requester_id: int) -> None:
         super(RegisterProperty, self).__init__()
         self.current_property_id: int | None = None
@@ -23,6 +42,8 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
             "images"
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
+        # Conectar eventos de mudança
+        self.state_input.editingFinished.connect(self.state_changed)
         # Autocomplete otimizado - consulta apenas 1 vez ao abrir
         self.setup_autocomplete()
         self.requester_id: int = requester_id
@@ -50,19 +71,30 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
             completer.setCaseSensitivity(Qt.CaseInsensitive)
             self.country_input.setCompleter(completer)
             
-            # Listas estáticas de estados brasileiros
-            states = ["Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", 
-                     "Distrito Federal", "Espírito Santo", "Goiás", "Maranhão", 
-                     "Mato Grosso", "Mato Grosso do Sul", "Minas Gerais", "Pará", 
-                     "Paraíba", "Paraná", "Pernambuco", "Piauí", "Rio de Janeiro", 
-                     "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia", "Roraima", 
-                     "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"]
+            # Apenas estados próximos a Pato Branco
+            states = ["Paraná", "Santa Catarina", "Rio Grande do Sul"]
             state_completer = QCompleter(states, self)
             state_completer.setCaseSensitivity(Qt.CaseInsensitive)
             self.state_input.setCompleter(state_completer)
         except Exception as e:
             print(f"⚠️ Erro ao configurar autocomplete: {e}")
 
+
+    def state_changed(self) -> None:
+        state = self.state_input.text()
+        
+        # Usar lista de cidades próximas se existir
+        if state in self.CIDADES_PROXIMAS:
+            cities = self.CIDADES_PROXIMAS[state]
+        else:
+            # Fallback: tentar carregar do banco de dados
+            db = Database()
+            cities = db.get_cities(state)
+            db.close_connection()
+        
+        completer = QCompleter(cities, self)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.city_input.setCompleter(completer)
 
     def register_action(self) -> None:
         db = Database()
