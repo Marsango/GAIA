@@ -9,6 +9,7 @@ from backend.classes.Person import Person
 from interface.AlertWindow import AlertWindow
 from backend.classes.Database import Database
 from backend.classes.utils import handle_exception
+from datetime import datetime
 
 class RegisterPerson(QDialog, RegisterPersonDialog):
     # Cidades próximas a Pato Branco por estado
@@ -76,7 +77,11 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         self.name_input.setText(person_data['name'])
         self.email_input.setText(person_data['email'])
         self.cpf_input.setText(person_data['cpf'])
-        self.birth_date_input.setText(person_data['birth_date'])
+        # Converter data de YYYY-MM-DD para DD/MM/YYYY
+        birth_date = person_data['birth_date']
+        if birth_date:
+            birth_date_formatted = self._convert_date_to_display(birth_date)
+            self.birth_date_input.setText(birth_date_formatted)
         self.phone_number_input.setText(person_data['phone_number'])
         self.register_button.setText("Salvar alterações")
         self.setWindowTitle('Edição de registro de Pessoa Física')
@@ -84,6 +89,56 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         self.current_person_id = int(person_data['id'])
         self.requester_id = int(person_data['requester_id'])
 
+    def _convert_date_to_display(self, date_str: str) -> str:
+        """Converte data de YYYY-MM-DD para DD/MM/YYYY"""
+        if not date_str:
+            return ""
+        
+        try:
+            date_str = date_str.strip()
+            
+            # Se já está em DD/MM/YYYY, retorna como está
+            if len(date_str) == 10 and date_str[2] == '/' and date_str[5] == '/':
+                return date_str
+            
+            # Converter de YYYY-MM-DD para DD/MM/YYYY
+            if len(date_str) == 10 and date_str[4] == '-' and date_str[7] == '-':
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                converted = date_obj.strftime("%d/%m/%Y")
+                print(f"✓ Data exibida: {date_str} → {converted}")
+                return converted
+            
+            print(f"⚠️ Formato de data não reconhecido na exibição: {date_str}")
+            return date_str
+        except Exception as e:
+            print(f"⚠️ Erro ao converter data para exibição: {e}")
+            return date_str
+
+    def _convert_date_to_iso(self, date_str: str) -> str:
+        """Converte data de DD/MM/YYYY para YYYY-MM-DD"""
+        if not date_str:
+            return ""
+        
+        try:
+            date_str = date_str.strip()
+            
+            # Se já está em YYYY-MM-DD, retorna como está
+            if len(date_str) == 10 and date_str[4] == '-' and date_str[7] == '-':
+                return date_str
+            
+            # Converter de DD/MM/YYYY para YYYY-MM-DD
+            if len(date_str) == 10 and date_str[2] == '/' and date_str[5] == '/':
+                date_obj = datetime.strptime(date_str, "%d/%m/%Y")
+                converted = date_obj.strftime("%Y-%m-%d")
+                print(f"✓ Data convertida: {date_str} → {converted}")
+                return converted
+            
+            # Formato não reconhecido
+            print(f"⚠️ Formato de data não reconhecido: {date_str}")
+            return ""
+        except Exception as e:
+            print(f"⚠️ Erro ao converter data {date_str}: {e}")
+            return ""
 
     def create_country_completer(self) -> None:
         db = Database()
@@ -154,21 +209,56 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
             cpf = self.cpf_input.text().replace('.', '').replace('-', '').strip()
             if not cpf or len(cpf) != 11:
                 raise ValueError("CPF inválido! Deve ter 11 dígitos")
+            
+            # Validação de data de nascimento
+            birth_date_raw = self.birth_date_input.text().strip()
+            if not birth_date_raw:
+                raise ValueError("O campo 'Data de Nascimento' deve ser preenchido!")
+            
+            # NÃO converter aqui! A classe Person espera DD/MM/YYYY
+            # Apenas validar o formato
+            if len(birth_date_raw) != 10 or birth_date_raw[2] != '/' or birth_date_raw[5] != '/':
+                raise ValueError("Data de nascimento inválida! Use o formato DD/MM/YYYY")
+            
+            # Tentar fazer parse para validar a data
+            try:
+                from datetime import datetime
+                datetime.strptime(birth_date_raw, "%d/%m/%Y")
+            except ValueError:
+                raise ValueError("Data de nascimento inválida! Verifique se a data existe")
 
             address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
                                        city=self.city_input.text(), street=street,
                                        address_number=address_number, cep=cep)
             person: Person = Person(name=name, email=email,
                                     cpf=cpf,
-                                    birth_date=self.birth_date_input.text(),
+                                    birth_date=birth_date_raw,
                                     phone_number=self.phone_number_input.text()
                                     .replace('-', '').replace('(', '').replace(')', ''), address=address)
             if self.mode == 'register':
                 db.insert_person(person, address)
                 success_text: str = "Solicitante registrado com sucesso!"
             elif self.mode == 'edit':
-                db.edit_person(person, address, self.current_person_id, self.requester_id)
-                success_text: str = "Alterações salvas com sucesso!"
+                print(f"\n🔧 Chamando edit_person...")
+                print(f"   person_id: {self.current_person_id}")
+                print(f"   requester_id: {self.requester_id}")
+                
+                try:
+                    result = db.edit_person(person, address, self.current_person_id, self.requester_id)
+                    print(f"\n📊 Resultado de edit_person: {result}")
+                    
+                    if result:
+                        success_text: str = "Alterações salvas com sucesso!"
+                    else:
+                        raise ValueError("Falha ao salvar alterações - verifique o console para detalhes")
+                except Exception as edit_error:
+                    print(f"\n❌ ERRO CAPTURADO no RegisterPerson:")
+                    print(f"   Tipo: {type(edit_error).__name__}")
+                    print(f"   Mensagem: {str(edit_error)}")
+                    import traceback
+                    traceback.print_exc()
+                    raise  # Re-throw para ser pego pelo handler externo
+                    
             widget: AlertWindow = AlertWindow(success_text)
             widget.exec()
             if self.mode == 'register':

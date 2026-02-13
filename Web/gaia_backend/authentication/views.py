@@ -9,6 +9,7 @@ from .models import Usuario
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
+from django_ratelimit.decorators import ratelimit
 
 from django.core.mail import send_mail
 from django.conf import settings
@@ -16,6 +17,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.utils.crypto import get_random_string
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 from .models import Usuario, ConfiguracaoEmail
 from .serializers import LoginSerializer, UsuarioSerializer, ConfiguracaoEmailSerializer, CustomTokenObtainPairSerializer
@@ -34,6 +37,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@ratelimit(key='ip', rate='20/m', method='POST', block=True)
 def login_with_cpf(request):
     """Login usando CPF (para site e software)"""
     cpf = request.data.get('cpf')
@@ -74,17 +78,18 @@ def login_with_cpf(request):
                     }
                 })
             else:
-                return Response({'error': 'Conta desativada'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
         else:
-            return Response({'error': 'Senha incorreta'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
             
     except User.DoesNotExist:
-        return Response({'error': 'CPF não cadastrado'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@ratelimit(key='ip', rate='20/m', method='POST', block=True)
 def login_with_cnpj(request):
     """Login usando CNPJ (para empresas)"""
     cnpj = request.data.get('cnpj')
@@ -121,12 +126,12 @@ def login_with_cnpj(request):
                     }
                 })
             else:
-                return Response({'error': 'Conta desativada'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
         else:
-            return Response({'error': 'Senha incorreta'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
             
     except User.DoesNotExist:
-        return Response({'error': 'CNPJ não cadastrado'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -166,6 +171,7 @@ def register_client_email(request):
         )
         user.set_password(temp_password)
         user.save()
+        # Senha gerada com sucesso (não registrar em logs por segurança)
 
         # 1. Pega o template do banco (ou cria se não existir)
         config_email, _ = ConfiguracaoEmail.objects.get_or_create(id=1)
@@ -241,7 +247,7 @@ def register_company_email(request):
     try:
         # Gera uma senha aleatória
         temp_password = get_random_string(length=12)
-        print(f"🔐 Senha gerada: {temp_password}")
+        # Senha gerada com sucesso (não registrar em logs por segurança)
 
         # Cria o usuário com CNPJ
         user = Usuario.objects.create(
@@ -342,6 +348,40 @@ def change_password(request):
 
         if not old_password:
             return Response({'error': 'Senha atual é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validar força da nova senha
+        try:
+            validate_password(new_password, user=user)
+        except ValidationError as e:
+            # Formatar mensagens de validação de senha para serem mais específicas
+            error_messages = []
+            
+            for message in e.messages:
+                message_str = str(message)
+                
+                # Traduzir e melhorar mensagens específicas do Django
+                if 'too short' in message_str.lower() or 'must contain at least' in message_str.lower():
+                    error_messages.append('❌ Senha muito curta - deve ter pelo menos 8 caracteres')
+                elif 'entirely numeric' in message_str.lower():
+                    error_messages.append('❌ Senha não pode conter apenas números')
+                elif 'too similar' in message_str.lower():
+                    error_messages.append('❌ Senha é muito similar ao nome de usuário ou email')
+                elif 'common password' in message_str.lower():
+                    error_messages.append('❌ Senha é muito comum - escolha uma senha mais segura (ex: MinhaSe9ha!)')
+                else:
+                    # Se não for mensagem conhecida, incluir a mensagem original
+                    error_messages.append(f'❌ {message_str}')
+            
+            return Response({
+                'error': 'Senha fraca - não atende aos requisitos de segurança',
+                'motivos': error_messages,
+                'requisitos': [
+                    'Mínimo 8 caracteres',
+                    'Não pode ser apenas números',
+                    'Não pode ser similar ao nome de usuário',
+                    'Não pode ser uma senha comum (ex: 12345678, password)'
+                ]
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         # Verifica a senha antiga
         print(f"  Testando check_password...")

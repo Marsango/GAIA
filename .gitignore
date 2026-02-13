@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 venv/
 .env
+.env.example
 db.sqlite3
 .DS_Store
 
@@ -30,3 +31,7 @@ yarn.lock         # Idem
 *.swp
 
 reports/
+
+DEPLOY.md
+SECURITY_AUDIT.md
+SECURITY_FIXES.md

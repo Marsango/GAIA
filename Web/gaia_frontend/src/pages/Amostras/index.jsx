@@ -1,14 +1,23 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import "./styles.css";
 
 export default function Amostras() {
+  const navigate = useNavigate();
   const [amostras, setAmostras] = useState([]);
   const [loading, setLoading] = useState(false);
   const [convenio, setConvenio] = useState("UTFPR");
   const [error, setError] = useState(null);
 
+  // Verifica autenticação ao carregar
   useEffect(() => {
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("access_token");
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
     carregarAmostras();
   }, []);
 

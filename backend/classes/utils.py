@@ -41,10 +41,13 @@ def to_dict(_object: Any) -> dict[str, Any]:
     try:
         # Se não é objeto, retorna como está
         if not hasattr(_object, '__dict__'):
+            print(f"   ℹ️  to_dict: objeto não tem __dict__, retornando vazio ou como dict")
             return _object if isinstance(_object, dict) else {}
         
         result = {}
         obj_dict = _object.__dict__
+        
+        print(f"   ℹ️  to_dict: processando {type(_object).__name__} com {len(obj_dict)} atributos")
         
         for key, value in obj_dict.items():
             # Lidar com diferentes formatos de atributos:
@@ -62,10 +65,15 @@ def to_dict(_object: Any) -> dict[str, Any]:
             # Só adiciona se não for vazio
             if clean_key:
                 result[clean_key] = value
+                print(f"      {key} → {clean_key}: {value}")
         
+        print(f"   ✓ to_dict: resultado com {len(result)} campos")
         return result
         
     except Exception as e:
+        print(f"   ❌ ERRO em to_dict: {e}")
+        import traceback
+        traceback.print_exc()
         logging.error(f"Erro ao converter objeto para dicionário: {e}")
         return {}  # Retorna dict vazio em vez de crashar
 

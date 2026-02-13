@@ -9,6 +9,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ChangePassword from "./pages/ChangePassword";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import AdminPanel from "./pages/AdminPanel";
+import PrivateRoute from "./components/PrivateRoute";
 
 // rotas da aplicação
 function App() {
@@ -18,11 +19,39 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/amostras" element={<Amostras />} />
+          <Route
+            path="/reports"
+            element={
+              <PrivateRoute>
+                <Reports />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/amostras"
+            element={
+              <PrivateRoute>
+                <Amostras />
+              </PrivateRoute>
+            }
+          />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/change-password" element={<ChangePassword />} />
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route
+            path="/change-password"
+            element={
+              <PrivateRoute>
+                <ChangePassword />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <AdminPanel />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </div>
     </Router>

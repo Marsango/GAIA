@@ -27,7 +27,12 @@ const CentralLaudos = () => {
 
   const token = localStorage.getItem("token");
 
+  // Verifica autenticação ao carregar a página
   useEffect(() => {
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
     carregarPropriedades();
   }, []);
 
@@ -64,8 +69,9 @@ const CentralLaudos = () => {
 
       const response = await api.get("propriedades/");
 
-      const lista = response.data.results || [];
-      setPropriedades(lista);
+      // Trata resposta paginada ou direta
+      const lista = response.data.results || response.data;
+      setPropriedades(Array.isArray(lista) ? lista : []);
 
       if (lista.length > 0) {
         setSelectedProperty(lista[0].id);
@@ -90,9 +96,12 @@ const CentralLaudos = () => {
         `laudos/por_propriedade/?propriedade_id=${propriedadeId}`,
       );
 
-      setLaudos(response.data);
+      // Trata resposta paginada ou direta
+      const data = response.data.results || response.data;
+      setLaudos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao carregar laudos:", error);
+      setLaudos([]);
     }
   };
 

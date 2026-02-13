@@ -19,7 +19,7 @@ class Endereco(models.Model):
 class Person(models.Model):
     name = models.CharField(max_length=255)
     cpf = models.CharField(max_length=14, unique=True)
-    email = models.EmailField(blank=True, null=True)
+    email = models.EmailField(blank=True, null=True, unique=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     nascimento = models.DateField(blank=True, null=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
@@ -31,7 +31,7 @@ class Person(models.Model):
 class Empresa(models.Model):
     name = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=20, unique=True)
-    email = models.EmailField(blank=True, null=True)
+    email = models.EmailField(blank=True, null=True, unique=True)
     telefone = models.CharField(max_length=15, blank=True, null=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
 
@@ -139,6 +139,8 @@ class Laudo(models.Model):
     arquivo_pdf = models.FileField(upload_to='laudos/pdf/', blank=True, null=True)
     propriedade = models.ForeignKey(Propriedade, on_delete=models.CASCADE)
     ativo = models.BooleanField(default=True)
+    publicado = models.BooleanField(default=False)  # Novo: controla se laudo foi revisado e enviado
+    data_publicacao = models.DateTimeField(null=True, blank=True)  # Quando foi publicado
     data_criacao = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -24,9 +24,21 @@ class AmostraSerializer(serializers.ModelSerializer):
 
 
 class LaudoSerializer(serializers.ModelSerializer):
+    solicitante_nome = serializers.SerializerMethodField()
+    propriedade_nome = serializers.CharField(source='propriedade.name', read_only=True)
+    arquivo_url = serializers.SerializerMethodField()
+    
     class Meta:
         model = Laudo
         fields = '__all__'
+    
+    def get_solicitante_nome(self, obj):
+        """Retorna o nome do solicitante (proprietário da propriedade)"""
+        if obj.propriedade:
+            proprietario = obj.propriedade.proprietario
+            if proprietario:
+                return proprietario.name
+        return 'Não informado'
     
     def get_arquivo_url(self, obj):
         """Gera a URL completa para baixar o PDF"""
@@ -40,6 +52,73 @@ class EmpresaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Empresa
         fields = '__all__'
+    
+    def validate_cnpj(self, value):
+        """Valida CNPJ único"""
+        # Remover formatação
+        cnpj_limpo = ''.join(filter(str.isdigit, str(value)))
+        
+        instance = self.instance
+        if instance:
+            # Atualização - verificar se mudou
+            if Empresa.objects.filter(cnpj=cnpj_limpo).exclude(id=instance.id).exists():
+                raise serializers.ValidationError(
+                    f'CNPJ {value} já está cadastrado para outra empresa.'
+                )
+        else:
+            # Criação - verificar se já existe
+            if Empresa.objects.filter(cnpj=cnpj_limpo).exists():
+                raise serializers.ValidationError(
+                    f'CNPJ {value} já está cadastrado.'
+                )
+        
+        return cnpj_limpo
+    
+    def validate_email(self, value):
+        """Valida email único"""
+        if not value:  # Email é opcional
+            return value
+        
+        instance = self.instance
+        if instance:
+            # Atualização - verificar se mudou
+            if Empresa.objects.filter(email=value).exclude(id=instance.id).exists():
+                raise serializers.ValidationError(
+                    f'Email {value} já está cadastrado para outra empresa.'
+                )
+        else:
+            # Criação - verificar se já existe
+            if Empresa.objects.filter(email=value).exists():
+                raise serializers.ValidationError(
+                    f'Email {value} já está cadastrado.'
+                )
+        
+        return value
+    
+    def update(self, instance, validated_data):
+        """
+        Método explícito para UPDATE - FORÇA a persistência dos dados
+        """
+        print(f"\n🔵 EmpresaSerializer.update() CHAMADO", flush=True)
+        print(f"   Instance ID: {instance.id}", flush=True)
+        print(f"   Validated data: {validated_data}", flush=True)
+        
+        # Atualizar cada campo
+        for attr, value in validated_data.items():
+            print(f"   Atualizando {attr}: {getattr(instance, attr, 'N/A')} → {value}", flush=True)
+            setattr(instance, attr, value)
+        
+        # SALVAR EXPLICITAMENTE
+        print(f"   💾 Salvando no banco de dados...", flush=True)
+        instance.save()
+        
+        # Verificar que foi salvo
+        instance.refresh_from_db()
+        print(f"   ✅ Salvo! Verificação pós-save:", flush=True)
+        for attr in validated_data.keys():
+            print(f"      {attr}: {getattr(instance, attr)}", flush=True)
+        
+        return instance
 
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
@@ -67,6 +146,55 @@ class PersonSerializer(serializers.ModelSerializer):
                 )
         
         return cpf_limpo
+    
+    def validate_email(self, value):
+        """Valida email único no modelo Person"""
+        if not value:  # Email é opcional
+            return value
+        
+        instance = self.instance
+        if instance:
+            # Atualização - verificar se mudou
+            if Person.objects.filter(email=value).exclude(id=instance.id).exists():
+                raise serializers.ValidationError(
+                    f'Email {value} já está cadastrado para outra pessoa.'
+                )
+        else:
+            # Criação - verificar se já existe
+            if Person.objects.filter(email=value).exists():
+                raise serializers.ValidationError(
+                    f'Email {value} já está cadastrado.'
+                )
+        
+        return value
+    
+    def update(self, instance, validated_data):
+        """
+        Método explícito para UPDATE - FORÇA a persistência dos dados
+        
+        O genérico do ModelSerializer às vezes não atualiza corretamente
+        Este método garante que TODOS os campos são atualizados
+        """
+        print(f"\n🔵 PersonSerializer.update() CHAMADO", flush=True)
+        print(f"   Instance ID: {instance.id}", flush=True)
+        print(f"   Validated data: {validated_data}", flush=True)
+        
+        # Atualizar cada campo
+        for attr, value in validated_data.items():
+            print(f"   Atualizando {attr}: {getattr(instance, attr, 'N/A')} → {value}", flush=True)
+            setattr(instance, attr, value)
+        
+        # SALVAR EXPLICITAMENTE
+        print(f"   💾 Salvando no banco de dados...", flush=True)
+        instance.save()
+        
+        # Verificar que foi salvo
+        instance.refresh_from_db()
+        print(f"   ✅ Salvo! Verificação pós-save:", flush=True)
+        for attr in validated_data.keys():
+            print(f"      {attr}: {getattr(instance, attr)}", flush=True)
+        
+        return instance
 
 class EnderecoSerializer(serializers.ModelSerializer):
     class Meta:

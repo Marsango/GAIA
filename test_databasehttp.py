@@ -36,8 +36,8 @@ class DatabaseTester:
         
         if verbose:
             mode = "API Django" if use_api else "SQLite Local"
-            print(f"[ROCKET] Iniciando testes em modo: {mode}")
-            print("=" * 60)
+            # print(f"[ROCKET] Iniciando testes em modo: {mode}")
+            # print("=" * 60)
     
     def log_test(self, test_name, result, message=""):
         """Registra resultado de um teste"""

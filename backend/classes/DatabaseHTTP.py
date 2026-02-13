@@ -13,8 +13,11 @@ from backend.classes.Property import Property
 from backend.classes.exceptions import CNPJAlreadyExistsError
 from backend.classes.utils import to_dict  # Assumindo que existe
 
+print("📦 Módulo DatabaseHTTP.py sendo importado/recarregado", flush=True)
+
 class DatabaseHTTP:
     def __init__(self, base_url: str = "http://localhost:8000"):
+        print(f"\n🏗️  Inicializando DatabaseHTTP com base_url={base_url}", flush=True)
         self.base_url = base_url.rstrip('/')
         self.token: Optional[str] = None
         self.headers = {
@@ -29,6 +32,21 @@ class DatabaseHTTP:
         
         # Auto login ao iniciar
         self._auto_login()
+        print(f"✅ DatabaseHTTP inicializado. Token: {'OK' if self.token else 'FALHOU'}", flush=True)
+    
+    def _normalize_cpf(self, cpf: str) -> str:
+        """Remove formatação do CPF, deixando apenas 11 dígitos"""
+        if not cpf:
+            return ""
+        cpf_limpo = ''.join(filter(str.isdigit, str(cpf)))
+        return cpf_limpo
+    
+    def _normalize_cnpj(self, cnpj: str) -> str:
+        """Remove formatação do CNPJ, deixando apenas 14 dígitos"""
+        if not cnpj:
+            return ""
+        cnpj_limpo = ''.join(filter(str.isdigit, str(cnpj)))
+        return cnpj_limpo
     
     def _format_date(self, date_str: str) -> str:
         """Converte data para formato YYYY-MM-DD esperado pela API"""
@@ -40,27 +58,36 @@ class DatabaseHTTP:
             if hasattr(date_str, "strftime"):
                 return date_str.strftime("%Y-%m-%d")
 
+            date_str = str(date_str).strip()
+            if not date_str:
+                return None
+
             # Tenta parse de diferentes formatos (inclui ano com 2 dígitos)
             formats = [
-                "%Y-%m-%d",
-                "%d/%m/%Y",
-                "%d/%m/%y",
-                "%d-%m-%Y",
-                "%d-%m-%y",
-                "%Y/%m/%d",
+                "%Y-%m-%d",      # Já está no formato correto
+                "%d/%m/%Y",      # DD/MM/YYYY (formato brasileiro)
+                "%d/%m/%y",      # DD/MM/YY
+                "%d-%m-%Y",      # DD-MM-YYYY
+                "%d-%m-%y",      # DD-MM-YY
+                "%Y/%m/%d",      # YYYY/MM/DD
             ]
 
             for fmt in formats:
                 try:
-                    parsed = datetime.strptime(str(date_str), fmt)
-                    return parsed.strftime("%Y-%m-%d")
+                    parsed = datetime.strptime(date_str, fmt)
+                    result = parsed.strftime("%Y-%m-%d")
+                    print(f"   ✓ Formato reconhecido: {fmt} → {result}")
+                    return result
                 except ValueError:
                     continue
 
-            # Se nenhum formato funcionou, retorna original (API validará)
-            return str(date_str)
-        except Exception:
-            return str(date_str)
+            # Se nenhum formato funcionou, print debug e retorna None
+            print(f"   ⚠️  Nenhum formato de data reconhecido: {date_str}")
+            print(f"      Formatos suportados: DD/MM/YYYY, DD/MM/YY, YYYY-MM-DD")
+            return None
+        except Exception as e:
+            print(f"   ⚠️  Erro ao converter data {date_str}: {e}")
+            return None
     
     def _auto_login(self) -> bool:
         """Login automático com credenciais técnicas - VERSÃO CORRIGIDA"""
@@ -137,7 +164,7 @@ class DatabaseHTTP:
             return False
     
     def _make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None) -> Any:
-        """Método genérico para requisições HTTP - VERSÃO CORRIGIDA"""
+        """Método genérico para requisições HTTP - VERSÃO MELHORADA COM DEBUG"""
         try:
             url = f"{self.base_url}{endpoint}"
             
@@ -146,6 +173,10 @@ class DatabaseHTTP:
                 print("⚠️  Sem token, tentando login...")
                 if not self._auto_login():
                     return None
+            
+            print(f"\n[HTTP {method.upper()} {endpoint}]")
+            if data:
+                print(f"   Enviando dados: {json.dumps(data, indent=4)[:200]}...")  # Primeiros 200 chars
             
             response = self.session.request(
                 method=method.upper(),
@@ -156,35 +187,60 @@ class DatabaseHTTP:
                 timeout=30
             )
             
-            print(f"[HTTP {method} {endpoint}] Status: {response.status_code}")
+            print(f"   Status: {response.status_code}")
             
             if response.status_code == 401:
-                print("🔑 Token expirado ou inválido, tentando relogin...")
+                print("   🔑 Token expirado ou inválido, tentando relogin...")
                 if self._auto_login():
                     # Repetir requisição com novo token
                     return self._make_request(method, endpoint, data, params)
                 return None
             
             if response.status_code in [200, 201]:
-                return response.json() if response.content else True
+                try:
+                    result = response.json() if response.content else True
+                    print(f"   ✅ Sucesso!")
+                    return result
+                except Exception as e:
+                    print(f"   ⚠️  Erro ao parsear JSON: {e}")
+                    return True
             
             if response.status_code == 204:  # No Content
+                print(f"   ✅ Sucesso (sem conteúdo)")
                 return True
             
             # Erros
             if response.status_code == 404:
-                print(f"❌ Endpoint não encontrado: {endpoint}")
+                print(f"   ❌ Endpoint não encontrado: {endpoint}")
+            elif response.status_code == 400:
+                # Erro de validação - mostrar detalhes COMPLETOS
+                try:
+                    error_data = response.json()
+                    print(f"   ❌ Erro de validação {response.status_code}:")
+                    print(f"      Dados enviados: {json.dumps(data, indent=2)}")
+                    print(f"      Erros retornados:")
+                    for field, errors in error_data.items():
+                        if isinstance(errors, list):
+                            for error in errors:
+                                print(f"         - {field}: {error}")
+                        else:
+                            print(f"         - {field}: {errors}")
+                except Exception as e:
+                    print(f"   ❌ Erro {response.status_code}: {response.text[:500]}")
             elif response.status_code >= 400:
                 try:
                     error_data = response.json()
-                    print(f"❌ Erro {response.status_code}: {json.dumps(error_data, indent=2)}")
+                    print(f"   ❌ Erro HTTP {response.status_code}:")
+                    print(f"      {json.dumps(error_data, indent=2)[:200]}")
                 except:
-                    print(f"❌ Erro {response.status_code}: {response.text[:200]}")
+                    print(f"   ❌ Erro {response.status_code}: {response.text[:200]}")
             
             return None
             
         except Exception as e:
             print(f"❌ Erro na requisição {method} {endpoint}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     # ========== PESSOAS (CLIENTES) ==========
@@ -243,7 +299,7 @@ class DatabaseHTTP:
             
             pessoa_data = {
                 "name": person_dict.get("name", ""),           # Campo deve ser "name"
-                "cpf": person_dict.get("cpf", ""),            # Campo obrigatório
+                "cpf": self._normalize_cpf(person_dict.get("cpf", "")),            # Campo obrigatório
                 "email": person_dict.get("email", ""),
                 "phone_number": person_dict.get("phone_number", ""),
                 "nascimento": self._format_date(person_dict.get("birth_date")),
@@ -555,7 +611,7 @@ class DatabaseHTTP:
             # Criar empresa
             empresa_data = {
                 "nome": company_dict.get("company_name", ""),
-                "cnpj": company_dict.get("cnpj", ""),
+                "cnpj": self._normalize_cnpj(company_dict.get("cnpj", "")),
                 "email": company_dict.get("email", ""),
                 "telefone": company_dict.get("phone_number", ""),
                 "endereco": endereco_result.get("id"),
@@ -572,6 +628,266 @@ class DatabaseHTTP:
         except Exception as e:
             print(f"❌ Erro ao cadastrar empresa: {e}")
             return None
+    
+    # ========== EDIÇÕES ==========
+    
+    def edit_person(self, person: Person, address: Address, person_id: int, requester_id: int) -> bool:
+        """Edita dados de uma pessoa existente"""
+        import sys
+        
+        # PRIMEIRO PRINT ABSOLUTO - ANTES DE TUDO
+        print("\n" + "="*80, flush=True)
+        print("🔴 edit_person() CHAMADO - PRIMEIRA LINHA DO MÉTODO", flush=True)
+        print(f"   Args: person_id={person_id}, requester_id={requester_id}", flush=True)
+        print("="*80 + "\n", flush=True)
+        sys.stdout.flush()
+        
+        print(f"\n{'='*60}", flush=True)
+        print(f"🔵 DENTRO DE edit_person() - INÍCIO", flush=True)
+        print(f"{'='*60}", flush=True)
+        sys.stdout.flush()
+        
+        try:
+            print(f"✏️  EDITANDO PESSOA ID: {person_id}", flush=True)
+            print(f"Objeto Person recebido: {person}", flush=True)
+            print(f"Objeto Address recebido: {address}", flush=True)
+            sys.stdout.flush()
+            
+            person_dict = to_dict(person)
+            address_dict = to_dict(address) if address else {}
+            
+            print(f"\n📋 CONVERSÃO TO_DICT:")
+            print(f"   person_dict keys = {list(person_dict.keys())}")
+            print(f"   address_dict keys = {list(address_dict.keys())}")
+            
+            # Remover objeto address de person_dict se existir (não é usado na API)
+            if 'address' in person_dict:
+                del person_dict['address']
+            
+            print(f"   person_dict cleaned = {person_dict}")
+            print(f"   address_dict = {address_dict}")
+            
+            # 1. Atualizar endereço (se fornecido)
+            if address_dict and any(address_dict.values()):
+                endereco_data = {
+                    "cep": address_dict.get("cep", ""),
+                    "rua": address_dict.get("street", ""),
+                    "numero": address_dict.get("address_number", ""),
+                    "cidade": address_dict.get("city", ""),
+                    "estado": address_dict.get("state", ""),
+                    "pais": address_dict.get("country", "Brasil"),
+                }
+                
+                # Remover campos vazios
+                endereco_data = {k: v for k, v in endereco_data.items() if v}
+                
+                print(f"DEBUG Dados do endereço a atualizar: {endereco_data}")
+                
+                # Buscar ID do endereço atual
+                pessoa_atual = self._make_request("GET", f"/api/pessoas/{person_id}/")
+                if pessoa_atual and pessoa_atual.get('endereco'):
+                    endereco_id = pessoa_atual['endereco']
+                    print(f"   Atualizando endereço ID: {endereco_id}")
+                    endereco_result = self._make_request("PATCH", f"/api/enderecos/{endereco_id}/", data=endereco_data)
+                    if endereco_result:
+                        print(f"   ✅ Endereço atualizado")
+                    else:
+                        print(f"   ⚠️  Falha ao atualizar endereço")
+            
+            # 2. Atualizar pessoa
+            print(f"\n   Preparando dados de pessoa para atualizar...")
+            
+            birth_date_raw = person_dict.get("birth_date")
+            birth_date_validated = None
+            
+            if birth_date_raw:
+                # Tentar validar a data
+                birth_date_formatted = self._format_date(birth_date_raw)
+                if birth_date_formatted:
+                    # Validação adicional: verificar se é uma data válida
+                    try:
+                        date_obj = datetime.strptime(birth_date_formatted, "%Y-%m-%d")
+                        birth_date_validated = birth_date_formatted
+                        print(f"   ✓ Data de nascimento validada: {birth_date_raw} → {birth_date_validated}")
+                    except ValueError as e:
+                        print(f"   ❌ Erro ao validar data: {e}")
+                        print(f"      Valor após formatação: {birth_date_formatted}")
+                else:
+                    print(f"   ⚠️  Falha na conversão de data: {birth_date_raw}")
+            
+            pessoa_data = {
+                "name": person_dict.get("name", ""),
+                "cpf": self._normalize_cpf(person_dict.get("cpf", "")),
+                "email": person_dict.get("email", ""),
+                "phone_number": person_dict.get("phone_number", ""),
+            }
+            
+            # Adicionar data apenas se foi validada com sucesso
+            if birth_date_validated:
+                pessoa_data["nascimento"] = birth_date_validated
+            
+            # Remover campos vazios
+            pessoa_data = {k: v for k, v in pessoa_data.items() if v is not None and v != ""}
+            
+            print(f"DEBUG Dados para PATCH: {pessoa_data}")
+            print(f"DEBUG Enviando PATCH para /api/pessoas/{person_id}/ com dados: {json.dumps(pessoa_data, indent=2)}")
+            
+            result = self._make_request("PATCH", f"/api/pessoas/{person_id}/", data=pessoa_data)
+            
+            if result:
+                print(f"✅ Pessoa editada com sucesso (ID: {person_id})")
+                print(f"   Resposta da API: {result}")
+                
+                # Verificar se os dados foram realmente salvos
+                print(f"\n   Verificando se os dados foram salvos no banco...")
+                pessoa_verificacao = self._make_request("GET", f"/api/pessoas/{person_id}/")
+                if pessoa_verificacao:
+                    print(f"   Dados salvos no banco:")
+                    print(f"      Name: {pessoa_verificacao.get('name')}")
+                    print(f"      CPF: {pessoa_verificacao.get('cpf')}")
+                    print(f"      Email: {pessoa_verificacao.get('email')}")
+                    print(f"      Phone: {pessoa_verificacao.get('phone_number')}")
+                    print(f"      Nascimento: {pessoa_verificacao.get('nascimento')}")
+                
+                return True
+            
+            print(f"❌ Falha ao editar pessoa - verifique os erros acima")
+            print(f"   Dica: Se o erro for sobre 'Nascimento', verifique o formato DD/MM/YYYY")
+            return False
+            
+        except Exception as e:
+            print(f"\n{'='*60}")
+            print(f"❌ ERRO CRÍTICO AO EDITAR PESSOA")
+            print(f"{'='*60}")
+            print(f"Tipo do erro: {type(e).__name__}")
+            print(f"Mensagem: {str(e)}")
+            print(f"\n📍 Stack trace completo:")
+            import traceback
+            traceback.print_exc()
+            print(f"{'='*60}\n")
+            return False
+    
+    def edit_company(self, company: Company, address: Address, company_id: int) -> bool:
+        """Edita dados de uma empresa existente"""
+        try:
+            print(f"\n✏️  Editando empresa ID: {company_id}...")
+            
+            company_dict = to_dict(company)
+            address_dict = to_dict(address) if address else {}
+            
+            # 1. Atualizar endereço (se fornecido)
+            if address_dict and any(address_dict.values()):
+                endereco_data = {
+                    "cep": address_dict.get("cep", ""),
+                    "rua": address_dict.get("street", ""),
+                    "numero": address_dict.get("address_number", ""),
+                    "cidade": address_dict.get("city", ""),
+                    "estado": address_dict.get("state", ""),
+                    "pais": address_dict.get("country", "Brasil"),
+                }
+                
+                # Remover campos vazios
+                endereco_data = {k: v for k, v in endereco_data.items() if v}
+                
+                # Buscar ID do endereço atual
+                empresa_atual = self._make_request("GET", f"/api/empresas/{company_id}/")
+                if empresa_atual and empresa_atual.get('endereco'):
+                    endereco_id = empresa_atual['endereco']
+                    self._make_request("PATCH", f"/api/enderecos/{endereco_id}/", data=endereco_data)
+                    print(f"✅ Endereço atualizado")
+            
+            # 2. Atualizar empresa
+            empresa_data = {
+                "nome": company_dict.get("company_name", ""),
+                "cnpj": self._normalize_cnpj(company_dict.get("cnpj", "")),
+                "email": company_dict.get("email", ""),
+                "telefone": company_dict.get("phone_number", ""),
+            }
+            
+            # Remover campos vazios
+            empresa_data = {k: v for k, v in empresa_data.items() if v is not None and v != ""}
+            
+            print(f"DEBUG Atualizando empresa: {empresa_data}")
+            
+            result = self._make_request("PATCH", f"/api/empresas/{company_id}/", data=empresa_data)
+            
+            if result:
+                print(f"✅ Empresa editada com sucesso (ID: {company_id})")
+                return True
+            
+            print(f"❌ Falha ao editar empresa")
+            return False
+            
+        except Exception as e:
+            print(f"❌ Erro ao editar empresa: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def edit_property(self, property: Property, property_id: int) -> bool:
+        """Edita dados de uma propriedade existente"""
+        try:
+            print(f"\n✏️  Editando propriedade ID: {property_id}...")
+            
+            property_dict = to_dict(property)
+            
+            data = {
+                "nome": property_dict.get("name", ""),
+                "localizacao": property_dict.get("localizacao", ""),
+                "numero_registro": property_dict.get("registration_number"),
+                "cpf_cnpj": property_dict.get("cpf_cnpj", ""),
+            }
+            
+            # Remover campos vazios
+            data = {k: v for k, v in data.items() if v is not None and v != ""}
+            
+            result = self._make_request("PATCH", f"/api/propriedades/{property_id}/", data=data)
+            
+            if result:
+                print(f"✅ Propriedade editada com sucesso (ID: {property_id})")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            print(f"❌ Erro ao editar propriedade: {e}")
+            return False
+    
+    def edit_sample(self, sample: Sample, sample_id: int) -> bool:
+        """Edita dados de uma amostra existente"""
+        try:
+            print(f"\n✏️  Editando amostra ID: {sample_id}...")
+            
+            sample_dict = to_dict(sample)
+            
+            data = {
+                "numero_amostra": sample_dict.get("sample_number"),
+                "data_coleta": self._format_date(sample_dict.get("collection_date")),
+                "descricao": sample_dict.get("description", ""),
+                "ph": sample_dict.get("ph"),
+                "fosforo": sample_dict.get("phosphorus"),
+                "potassio": sample_dict.get("potassium"),
+                "materia_organica": sample_dict.get("organic_matter"),
+                "argila": sample_dict.get("clay"),
+                "silte": sample_dict.get("silte"),
+                "areia": sample_dict.get("sand"),
+                "classificacao": sample_dict.get("classification"),
+            }
+            
+            # Remover campos vazios
+            data = {k: v for k, v in data.items() if v is not None and v != ""}
+            
+            result = self._make_request("PATCH", f"/api/amostras/{sample_id}/", data=data)
+            
+            if result:
+                print(f"✅ Amostra editada com sucesso (ID: {sample_id})")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            print(f"❌ Erro ao editar amostra: {e}")
+            return False
     
     # ========== MÉTODOS AUXILIARES ==========
     
@@ -868,6 +1184,15 @@ class Database:
     
     def __getattr__(self, name):
         """Delega métodos para o backend atual"""
-        return getattr(self.db, name)
+        import sys
+        print(f"\n🔍 Database.__getattr__ chamado com: {name}", flush=True)
+        print(f"   self.db type: {type(self.db)}", flush=True)
+        print(f"   hasattr(self.db, '{name}'): {hasattr(self.db, name)}", flush=True)
+        sys.stdout.flush()
+        
+        attr = getattr(self.db, name)
+        print(f"   Retornando: {attr}", flush=True)
+        sys.stdout.flush()
+        return attr
     
     

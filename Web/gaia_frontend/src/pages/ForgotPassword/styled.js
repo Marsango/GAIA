@@ -23,8 +23,6 @@ export const styles = {
     width: "100%",
     padding: "10px",
     marginBottom: "20px",
-    borderRadius: "4px",
-    border: `1px solid ${lightGray}`,
     fontFamily: "Poppins, sans-serif",
   },
   button: {

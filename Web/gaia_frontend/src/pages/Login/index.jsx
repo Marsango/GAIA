@@ -71,8 +71,6 @@ const Login = () => {
         ? await loginWithCNPJ(formattedDoc, password)
         : await login(formattedDoc, password);
 
-      console.log("Dados recebidos do login:", data);
-
       // Verifica se os dados esperados estão presentes
       if (!data.access || !data.refresh) {
         throw new Error("Dados incompletos recebidos do servidor");
@@ -82,19 +80,11 @@ const Login = () => {
       localStorage.setItem("token", data.access);
       localStorage.setItem("refresh", data.refresh);
 
-      // Para debug: verifique no console
-      // console.log("Token salvo:", data.access);
-      // console.log("Usuário salvo:", data.user);
-
       const userData = await getCurrentUser(data.access);
       localStorage.setItem("user", JSON.stringify(userData));
       if (data.user && data.user.primeiro_acesso) {
-        console.log(
-          "Primeiro acesso detectado! Redirecionando para troca de senha...",
-        );
         navigate("/change-password");
       } else {
-        console.log("Acesso normal. Redirecionando para relatórios...");
         navigate("/reports");
       }
     } catch (err) {

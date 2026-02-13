@@ -10,6 +10,7 @@ from .models import Propriedade, Laudo, Amostra, Empresa, Person, Endereco
 from .serializers import PropriedadeSerializer, LaudoSerializer, AmostraSerializer, EmpresaSerializer, PersonSerializer, EnderecoSerializer
 from django.utils import timezone
 from .pdf_generator import WebReportGenerator
+from authentication.models import Usuario
 
 class PersonViewSet(viewsets.ModelViewSet):
     """
@@ -22,6 +23,58 @@ class PersonViewSet(viewsets.ModelViewSet):
     filterset_fields = ['cpf', 'email']
     search_fields = ['name', 'cpf', 'email', 'phone_number']
     ordering_fields = ['name', 'nascimento']
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Deleta a pessoa E o usuario associado a dela
+        """
+        print(f"\n🔵 PersonViewSet.destroy() CHAMADO", flush=True)
+        
+        pessoa = self.get_object()
+        print(f"   Deletando Person ID: {pessoa.id} - {pessoa.name}", flush=True)
+        print(f"   CPF: {pessoa.cpf}", flush=True)
+        
+        # Limpar CPF e procurar Usuario associado
+        cpf_originl = pessoa.cpf
+        cpf_limpo = pessoa.cpf.replace('.', '').replace('-', '')
+        
+        # Tentar deletar usuario associado
+        usuario_deletado = False
+        try:
+            usuario = Usuario.objects.filter(cpf=cpf_limpo).first()
+            if usuario:
+                print(f"   🗑️ Encontrado Usuario ID {usuario.id} com CPF {cpf_limpo}")
+                print(f"      Deletando usuario...", flush=True)
+                usuario_id = usuario.id
+                usuario.delete()
+                print(f"      ✅ Usuario {usuario_id} deletado", flush=True)
+                usuario_deletado = True
+            else:
+                print(f"   ⚠️ Usuario com CPF {cpf_limpo} não encontrado", flush=True)
+        except Exception as e:
+            print(f"   ⚠️ Erro ao deletar usuario: {e}", flush=True)
+            # NÃO bloqueia a deleção da pessoa
+        
+        # DELETAR PESSOA - OBRIGATÓRIO
+        print(f"   💾 Deletando Person do banco de dados...", flush=True)
+        try:
+            pessoa_id = pessoa.id
+            pessoa.delete()
+            print(f"   ✅ Person {pessoa_id} deletada com sucesso", flush=True)
+            
+            # Retornar resposta de sucesso
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+            print(f"   ✅ Retornando status 204 No Content", flush=True)
+            return response
+            
+        except Exception as e:
+            print(f"   ❌ ERRO ao deletar Person: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Falha ao deletar pessoa: {str(e)}'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class EnderecoViewSet(viewsets.ModelViewSet):
     """
@@ -39,6 +92,7 @@ class PropriedadeViewSet(viewsets.ModelViewSet):
     queryset = Propriedade.objects.all()
     serializer_class = PropriedadeSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None  # Desabilita paginação (usuários geralmente têm poucas propriedades)
 
     def get_queryset(self):
         """Filtra propriedades do usuário logado (ou todas se admin)"""
@@ -78,16 +132,17 @@ class LaudoViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['propriedade', 'ativo']
     search_fields = ['numero_amostra']
+    pagination_class = None  # Desabilita paginação para laudos (geralmente poucos por propriedade)
 
     def get_queryset(self):
         """Filtra laudos das propriedades do usuário (ou todas se admin)"""
         from django.db.models import Q
         from report.models import Empresa
         user = self.request.user
-        if user.is_staff:  # Admin vê todos os laudos
+        if user.is_staff:  # Admin vê todos os laudos (publicados ou não)
             return Laudo.objects.all()
         
-        # Usuário comum vê laudos de propriedades que ele tem acesso
+        # Usuário comum vê APENAS laudos PUBLICADOS de propriedades que ele tem acesso
         query = Q(propriedade__usuario=user)  # Propriedades criadas por ele no site
         
         # Propriedades de pessoa física (CPF)
@@ -102,7 +157,8 @@ class LaudoViewSet(viewsets.ModelViewSet):
             except Empresa.DoesNotExist:
                 pass
         
-        return Laudo.objects.filter(query)
+        # FILTRO CRÍTICO: Apenas laudos PUBLICADOS para usuários comuns
+        return Laudo.objects.filter(query, publicado=True)
     
     @action(detail=False, methods=['get'])
     def por_propriedade(self, request):
@@ -144,13 +200,72 @@ class LaudoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        laudo.arquivo_pdf = request.FILES['arquivo_pdf']
+        arquivo = request.FILES['arquivo_pdf']
+        
+        # Validação 1: Verificar extensão do arquivo
+        if not arquivo.name.lower().endswith('.pdf'):
+            return Response(
+                {'error': 'Apenas arquivos PDF são permitidos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validação 2: Verificar MIME type
+        if arquivo.content_type != 'application/pdf':
+            return Response(
+                {'error': 'Tipo de arquivo inválido. Apenas PDF é aceito'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validação 3: Verificar tamanho (máximo 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB em bytes
+        if arquivo.size > max_size:
+            return Response(
+                {'error': f'Arquivo muito grande. Tamanho máximo: 10MB'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        laudo.arquivo_pdf = arquivo
         laudo.save()
         
         return Response({
             'success': True,
             'message': 'Arquivo enviado com sucesso',
             'url': laudo.arquivo_pdf.url
+        })
+    
+    @action(detail=True, methods=['post'])
+    def publicar(self, request, pk=None):
+        """
+        Publica um laudo (marca como revisado e disponível para o produtor)
+        URL: POST /api/laudos/{id}/publicar/
+        Apenas admins podem publicar laudos
+        """
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Apenas administradores podem publicar laudos'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        laudo = self.get_object()
+        
+        if laudo.publicado:
+            return Response(
+                {'message': 'Este laudo já foi publicado anteriormente'},
+                status=status.HTTP_200_OK
+            )
+        
+        # Marca como publicado
+        from django.utils import timezone
+        laudo.publicado = True
+        laudo.data_publicacao = timezone.now()
+        laudo.save()
+        
+        # TODO: Enviar email para o proprietário notificando que o laudo está disponível
+        
+        return Response({
+            'success': True,
+            'message': 'Laudo publicado com sucesso',
+            'data_publicacao': laudo.data_publicacao
         })
     
     # Método create adaptado para software desktop
@@ -193,6 +308,7 @@ class AmostraViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['propriedade', 'ativo', 'classificacao']
     search_fields = ['numero_amostra', 'descricao']
+    pagination_class = None  # Desabilita paginação (amostras geralmente filtradas por propriedade)
     
     def get_queryset(self):
         """Filtra amostras pelas propriedades do usuário"""
@@ -477,3 +593,54 @@ class EmpresaViewSet(viewsets.ModelViewSet):
     filterset_fields = ['cnpj', 'email']
     search_fields = ['name', 'cnpj', 'email', 'telefone']
     ordering_fields = ['name']
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Deleta a empresa E o usuario associado a ela
+        """
+        print(f"\n🔵 EmpresaViewSet.destroy() CHAMADO", flush=True)
+        
+        empresa = self.get_object()
+        print(f"   Deletando Empresa ID: {empresa.id} - {empresa.name}", flush=True)
+        print(f"   CNPJ: {empresa.cnpj}", flush=True)
+        
+        # Limpar CNPJ e procurar Usuario associado
+        cnpj_limpo = empresa.cnpj.replace('.', '').replace('/', '').replace('-', '')
+        
+        # Tentar deletar usuario associado
+        usuario_deletado = False
+        try:
+            usuario = Usuario.objects.filter(cnpj=cnpj_limpo).first()
+            if usuario:
+                print(f"   🗑️ Encontrado Usuario ID {usuario.id} com CNPJ {cnpj_limpo}", flush=True)
+                print(f"      Deletando usuario...", flush=True)
+                usuario_id = usuario.id
+                usuario.delete()
+                print(f"      ✅ Usuario {usuario_id} deletado", flush=True)
+                usuario_deletado = True
+            else:
+                print(f"   ⚠️ Usuario com CNPJ {cnpj_limpo} não encontrado", flush=True)
+        except Exception as e:
+            print(f"   ⚠️ Erro ao deletar usuario: {e}", flush=True)
+            # NÃO bloqueia a deleção da empresa
+        
+        # DELETAR EMPRESA - OBRIGATÓRIO
+        print(f"   💾 Deletando Empresa do banco de dados...", flush=True)
+        try:
+            empresa_id = empresa.id
+            empresa.delete()
+            print(f"   ✅ Empresa {empresa_id} deletada com sucesso", flush=True)
+            
+            # Retornar resposta de sucesso
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+            print(f"   ✅ Retornando status 204 No Content", flush=True)
+            return response
+            
+        except Exception as e:
+            print(f"   ❌ ERRO ao deletar Empresa: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Falha ao deletar empresa: {str(e)}'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )

@@ -75,6 +75,16 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="publish_button">
+           <property name="text">
+            <string>Publicar Laudo</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #4CAF50; color: white; font-weight: bold;</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>

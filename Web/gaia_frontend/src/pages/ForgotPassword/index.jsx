@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api"; // Sua configuração do axios
 import logo from "../../assets/images/Logo_lab_Branco.svg";
 import { styles } from "./styled";
+import InputLogin from "../../components/InputLogin";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -52,12 +53,13 @@ export default function ForgotPassword() {
         </p>
 
         <form onSubmit={handleReset} noValidate>
-          <input
+          <InputLogin
             type="email"
             placeholder="Digite seu e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
+            disabled={loading}
+            error={message}
           />
           <button
             type="button"
@@ -68,10 +70,6 @@ export default function ForgotPassword() {
             {loading ? "ENVIANDO..." : "ENVIAR NOVA SENHA"}
           </button>
         </form>
-
-        {message && (
-          <p style={{ marginTop: "15px", color: "#00ff00" }}>{message}</p>
-        )}
 
         <span style={styles.link} onClick={() => navigate("/login")}>
           Voltar para o Login

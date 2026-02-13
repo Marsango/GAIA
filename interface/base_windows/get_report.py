@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'get_report.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.3
+## Created by: Qt User Interface Compiler version 6.9.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -67,6 +67,24 @@ class GetReportDialog(object):
 
         self.horizontalLayout_3.addWidget(self.copy_button)
 
+        self.upload_button = QPushButton(self.frame_4)
+        self.upload_button.setObjectName(u"upload_button")
+        self.upload_button.setStyleSheet(u"background-color: #2196F3; color: white; font-weight: bold;")
+
+        self.horizontalLayout_3.addWidget(self.upload_button)
+
+        self.publish_button = QPushButton(self.frame_4)
+        self.publish_button.setObjectName(u"publish_button")
+        self.publish_button.setStyleSheet(u"background-color: #4CAF50; color: white; font-weight: bold;")
+
+        self.horizontalLayout_3.addWidget(self.publish_button)
+
+        self.remove_button = QPushButton(self.frame_4)
+        self.remove_button.setObjectName(u"remove_button")
+        self.remove_button.setStyleSheet(u"background-color: #f44336; color: white; font-weight: bold;")
+
+        self.horizontalLayout_3.addWidget(self.remove_button)
+
 
         self.horizontalLayout_2.addWidget(self.frame_4)
 
@@ -95,6 +113,9 @@ class GetReportDialog(object):
         ___qtablewidgetitem3 = self.report_table.horizontalHeaderItem(3)
         ___qtablewidgetitem3.setText(QCoreApplication.translate("Dialog", u"Propriedade", None));
         self.copy_button.setText(QCoreApplication.translate("Dialog", u"Fazer c\u00f3pia", None))
+        self.upload_button.setText(QCoreApplication.translate("Dialog", u"Upload PDF Assinado", None))
+        self.publish_button.setText(QCoreApplication.translate("Dialog", u"Publicar Laudo", None))
+        self.remove_button.setText(QCoreApplication.translate("Dialog", u"Remover Laudo", None))
         self.close_button.setText(QCoreApplication.translate("Dialog", u"Sair", None))
     # retranslateUi
 

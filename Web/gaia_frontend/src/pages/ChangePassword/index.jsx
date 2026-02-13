@@ -28,7 +28,6 @@ export default function ChangePassword() {
       try {
         const userData = JSON.parse(user);
         setIsFirstAccess(userData.primeiro_acesso === true);
-        console.log("É primeiro acesso?", userData.primeiro_acesso);
       } catch (e) {
         console.error("Erro ao parsear dados do usuário:", e);
       }
@@ -74,18 +73,6 @@ export default function ChangePassword() {
       return;
     }
 
-    console.log("[DEBUG] Enviando mudança de senha:");
-    console.log(
-      "  Senha atual:",
-      oldPassword,
-      `(${oldPassword.length} caracteres)`,
-    );
-    console.log(
-      "  Nova senha:",
-      newPassword,
-      `(${newPassword.length} caracteres)`,
-    );
-
     // Chama a função que conecta com a API
     await sendChangePasswordRequest(oldPassword, newPassword);
   };
@@ -126,18 +113,31 @@ export default function ChangePassword() {
       }, 2000);
     } catch (err) {
       console.error("Erro ao mudar senha:", err);
-      console.error("Resposta do servidor:", err.response?.data);
 
-      const errorMessage =
-        err.response?.data?.error || "Erro ao processar. Tente novamente.";
+      const responseData = err.response?.data;
+      let errorMessage = "Erro ao processar. Tente novamente.";
 
       if (err.response?.status === 400) {
+        // Tratamento específico para erro de senha fraca
+        if (responseData?.motivos && Array.isArray(responseData.motivos)) {
+          // Exibir motivos específicos de rejeição
+          const motivos = responseData.motivos.join("\n");
+          const requisitos = responseData.requisitos
+            ? "\n\nRequisitos de segurança:\n" +
+              responseData.requisitos.map((r) => `• ${r}`).join("\n")
+            : "";
+
+          errorMessage = responseData.error + "\n" + motivos + requisitos;
+        } else {
+          errorMessage = responseData?.error || "Erro ao mudar a senha.";
+        }
+
         setError(errorMessage);
       } else if (err.response?.status === 401) {
         setError("Sessão expirada. Faça login novamente.");
         setTimeout(() => navigate("/login"), 2000);
       } else {
-        setError(errorMessage);
+        setError(responseData?.error || errorMessage);
       }
     } finally {
       setLoading(false);
@@ -221,7 +221,16 @@ export default function ChangePassword() {
           </p>
         )}
         {error && (
-          <p style={{ ...styles.message, ...styles.messageError }}> {error}</p>
+          <div
+            style={{
+              ...styles.message,
+              ...styles.messageError,
+              whiteSpace: "pre-wrap",
+              textAlign: "left",
+            }}
+          >
+            {error}
+          </div>
         )}
       </div>
     </div>
