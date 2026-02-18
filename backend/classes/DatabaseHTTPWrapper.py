@@ -418,6 +418,10 @@ class DatabaseHTTPWrapper:
             current = self._make_request("GET", f"/api/pessoas/{id}/") or {}
             print(f"📊 Dados atuais: {current}", flush=True)
             endereco_id = current.get("endereco")
+            
+            # Salva CPF antigo ANTES de normalizar o novo (para sync)
+            cpf_antigo = current.get("cpf", "")
+            print(f"🔖 CPF antigo no banco: '{cpf_antigo}'", flush=True)
 
             # Atualiza ou cria endereço
             endereco_payload = {
@@ -533,13 +537,16 @@ class DatabaseHTTPWrapper:
                             else:
                                 print(f"   ❌ {campo}: solicitado '{valor_solicitado}' mas é '{valor_agora}'", flush=True)
                 
-                # NOVO: Sincronizar Usuario com mesmo CPF (após confirmação de persistência)
-                self._sync_usuario_by_cpf(
-                    cpf=cpf_normalized,
-                    email=person_dict.get("email"),
-                    name=person_dict.get("name"),
-                    phone=phone
-                )
+                # NOVO: Sincronizar Usuario (usa CPF ANTIGO para encontrar o Usuario)
+                # Se CPF mudou, primeiro atualiza o Usuario com CPF antigo, depois atualiza o CPF dele também
+                if cpf_antigo:
+                    self._sync_usuario_by_cpf(
+                        cpf=cpf_antigo,  # ← USA CPF ANTIGO para encontrar!
+                        email=person_dict.get("email"),
+                        name=person_dict.get("name"),
+                        phone=phone,
+                        new_cpf=cpf_normalized if cpf_normalized != cpf_antigo else None  # ← Se mudou, passa o novo
+                    )
                 
                 return len(mudancas_nao_confirmadas) == 0
             else:
@@ -552,10 +559,17 @@ class DatabaseHTTPWrapper:
             traceback.print_exc()
             raise
     
-    def _sync_usuario_by_cpf(self, cpf: str, email: str = None, name: str = None, phone: str = None) -> bool:
+    def _sync_usuario_by_cpf(self, cpf: str, email: str = None, name: str = None, phone: str = None, new_cpf: str = None) -> bool:
         """
         Sincroniza dados do Usuario quando Person é editada
         Atualiza name, email, phone do Usuario que tem o mesmo CPF
+        
+        Args:
+            cpf: CPF ANTIGO para encontrar o Usuario no banco
+            email: Novo email (opcional)
+            name: Novo nome (opcional)
+            phone: Novo telefone (opcional)
+            new_cpf: Novo CPF se foi alterado (opcional)
         """
         if not cpf:
             print(f"⚠️ CPF vazio, não sincronizando Usuario", flush=True)
@@ -570,7 +584,9 @@ class DatabaseHTTPWrapper:
         
         try:
             print(f"📤 Enviando PATCH /api/sync/usuario/cpf/", flush=True)
-            print(f"   CPF: {cpf_normalized}", flush=True)
+            print(f"   CPF (antigo): {cpf_normalized}", flush=True)
+            if new_cpf:
+                print(f"   CPF (novo): {new_cpf}", flush=True)
             if email:
                 print(f"   Email: {email}", flush=True)
             if name:
@@ -585,6 +601,8 @@ class DatabaseHTTPWrapper:
                 sync_data["first_name"] = name
             if phone:
                 sync_data["telefone"] = phone
+            if new_cpf:
+                sync_data["new_cpf"] = new_cpf  # ← Novo campo para atualizar CPF
             
             result = self._make_request("PATCH", "/api/sync/usuario/cpf/", data=sync_data)
             
@@ -757,6 +775,10 @@ class DatabaseHTTPWrapper:
             current = self._make_request("GET", f"/api/empresas/{id}/") or {}
             print(f"📊 Dados atuais: {current}", flush=True)
             endereco_id = current.get("endereco")
+            
+            # Salva CNPJ antigo ANTES de normalizar o novo (para sync)
+            cnpj_antigo = current.get("cnpj", "")
+            print(f"🔖 CNPJ antigo no banco: '{cnpj_antigo}'", flush=True)
 
             # Atualiza ou cria endereço
             endereco_payload = {
@@ -809,13 +831,16 @@ class DatabaseHTTPWrapper:
                 updated = self._make_request("GET", f"/api/empresas/{id}/")
                 print(f"📊 Dados após edição: {updated}", flush=True)
                 
-                # NOVO: Sincronizar Usuario com mesmo CNPJ
-                self._sync_usuario_by_cnpj(
-                    cnpj=cnpj_normalized,
-                    email=company_dict.get("email"),
-                    name=company_dict.get("company_name"),
-                    phone=company_dict.get("phone_number")
-                )
+                # NOVO: Sincronizar Usuario (usa CNPJ ANTIGO para encontrar o Usuario)
+                # Se CNPJ mudou, primeiro atualiza o Usuario com CNPJ antigo, depois atualiza o CNPJ dele também
+                if cnpj_antigo:
+                    self._sync_usuario_by_cnpj(
+                        cnpj=cnpj_antigo,  # ← USA CNPJ ANTIGO para encontrar!
+                        email=company_dict.get("email"),
+                        name=company_dict.get("company_name"),
+                        phone=company_dict.get("phone_number"),
+                        new_cnpj=cnpj_normalized if cnpj_normalized != cnpj_antigo else None  # ← Se mudou, passa o novo
+                    )
                 
                 return True
             else:
@@ -870,10 +895,17 @@ class DatabaseHTTPWrapper:
             traceback.print_exc()
             raise
     
-    def _sync_usuario_by_cnpj(self, cnpj: str, email: str = None, name: str = None, phone: str = None) -> bool:
+    def _sync_usuario_by_cnpj(self, cnpj: str, email: str = None, name: str = None, phone: str = None, new_cnpj: str = None) -> bool:
         """
         Sincroniza dados do Usuario quando Empresa é editada
         Atualiza name, email, phone do Usuario que tem o mesmo CNPJ
+        
+        Args:
+            cnpj: CNPJ ANTIGO para encontrar o Usuario no banco
+            email: Novo email (opcional)
+            name: Novo nome (opcional) 
+            phone: Novo telefone (opcional)
+            new_cnpj: Novo CNPJ se foi alterado (opcional)
         """
         if not cnpj:
             print(f"⚠️ CNPJ vazio, não sincronizando Usuario", flush=True)
@@ -888,7 +920,9 @@ class DatabaseHTTPWrapper:
         
         try:
             print(f"📤 Enviando PATCH /api/sync/usuario/cnpj/", flush=True)
-            print(f"   CNPJ: {cnpj_normalized}", flush=True)
+            print(f"   CNPJ (antigo): {cnpj_normalized}", flush=True)
+            if new_cnpj:
+                print(f"   CNPJ (novo): {new_cnpj}", flush=True)
             if email:
                 print(f"   Email: {email}", flush=True)
             if name:
@@ -903,6 +937,8 @@ class DatabaseHTTPWrapper:
                 sync_data["first_name"] = name
             if phone:
                 sync_data["telefone"] = phone
+            if new_cnpj:
+                sync_data["new_cnpj"] = new_cnpj  # ← Novo campo para atualizar CNPJ
             
             result = self._make_request("PATCH", "/api/sync/usuario/cnpj/", data=sync_data)
             

@@ -796,6 +796,18 @@ def sync_usuario_by_cpf(request):
         
         # Atualizar campos fornecidos
         alteracoes = []
+        
+        # Se forneceu NEW_CPF, atualizar o CPF do Usuario também
+        if 'new_cpf' in request.data and request.data['new_cpf']:
+            new_cpf = request.data['new_cpf'].replace('.', '').replace('-', '')
+            print(f"   🔄 Atualizando CPF: '{usuario.cpf}' → '{new_cpf}'", flush=True)
+            usuario.cpf = new_cpf
+            # Atualizar username também (se for baseado em CPF)
+            if usuario.username and usuario.username.replace('.', '').replace('-', '') == cpf_limpo:
+                print(f"   🔄 Atualizando username: '{usuario.username}' → '{new_cpf}'", flush=True)
+                usuario.username = new_cpf
+            alteracoes.append(f"cpf")
+        
         if 'email' in request.data:
             print(f"   Atualizando email: '{usuario.email}' → '{request.data['email']}'", flush=True)
             usuario.email = request.data['email']
@@ -871,6 +883,18 @@ def sync_usuario_by_cnpj(request):
         
         # Atualizar campos fornecidos
         alteracoes = []
+        
+        # Se forneceu NEW_CNPJ, atualizar o CNPJ do Usuario também
+        if 'new_cnpj' in request.data and request.data['new_cnpj']:
+            new_cnpj = request.data['new_cnpj'].replace('.', '').replace('/', '').replace('-', '')
+            print(f"   🔄 Atualizando CNPJ: '{usuario.cnpj}' → '{new_cnpj}'", flush=True)
+            usuario.cnpj = new_cnpj
+            # Atualizar username também (se for baseado em CNPJ)
+            if usuario.username and usuario.username.replace('.', '').replace('/', '').replace('-', '') == cnpj_limpo:
+                print(f"   🔄 Atualizando username: '{usuario.username}' → '{new_cnpj}'", flush=True)
+                usuario.username = new_cnpj
+            alteracoes.append(f"cnpj")
+        
         if 'email' in request.data:
             print(f"   Atualizando email: '{usuario.email}' → '{request.data['email']}'", flush=True)
             usuario.email = request.data['email']
