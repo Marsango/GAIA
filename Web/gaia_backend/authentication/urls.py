@@ -19,6 +19,10 @@ urlpatterns = [
 
     path('delete/usuario/', views.delete_usuario, name='delete-usuario'),
 
+    # Sincronização de dados
+    path('sync/usuario/cpf/', views.sync_usuario_by_cpf, name='sync-usuario-cpf'),
+    path('sync/usuario/cnpj/', views.sync_usuario_by_cnpj, name='sync-usuario-cnpj'),
+
     path('admin/email-config/', views.manage_email_template, name='email-config'),
     path('test-email/', views.test_send_email, name='test-email'),
 ]

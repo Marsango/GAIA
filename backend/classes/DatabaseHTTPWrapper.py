@@ -533,6 +533,14 @@ class DatabaseHTTPWrapper:
                             else:
                                 print(f"   ❌ {campo}: solicitado '{valor_solicitado}' mas é '{valor_agora}'", flush=True)
                 
+                # NOVO: Sincronizar Usuario com mesmo CPF (após confirmação de persistência)
+                self._sync_usuario_by_cpf(
+                    cpf=cpf_normalized,
+                    email=person_dict.get("email"),
+                    name=person_dict.get("name"),
+                    phone=phone
+                )
+                
                 return len(mudancas_nao_confirmadas) == 0
             else:
                 print(f"❌ Falha ao editar pessoa - resultado vazio", flush=True)
@@ -543,6 +551,43 @@ class DatabaseHTTPWrapper:
             import traceback
             traceback.print_exc()
             raise
+    
+    def _sync_usuario_by_cpf(self, cpf: str, email: str = None, name: str = None, phone: str = None) -> bool:
+        """
+        Sincroniza dados do Usuario quando Person é editada
+        Atualiza name, email, phone do Usuario que tem o mesmo CPF
+        """
+        if not cpf:
+            return False
+        
+        cpf_normalized = self._normalize_cpf(cpf)
+        if not cpf_normalized or len(cpf_normalized) != 11:
+            return False
+        
+        try:
+            print(f"\n🔄 Sincronizando Usuario com CPF {cpf_normalized}...", flush=True)
+            
+            sync_data = {"cpf": cpf_normalized}
+            if email:
+                sync_data["email"] = email
+            if name:
+                sync_data["first_name"] = name
+            if phone:
+                sync_data["telefone"] = phone
+            
+            result = self._make_request("PATCH", "/api/sync/usuario/cpf/", data=sync_data)
+            
+            if result and 'id' in result:
+                print(f"✅ Usuario ID {result['id']} sincronizado com sucesso", flush=True)
+                return True
+            else:
+                print(f"⚠️ Aviso ao sincronizar Usuario: resposta vazia", flush=True)
+                return False
+        
+        except Exception as e:
+            print(f"⚠️ Aviso: Não conseguiu sincronizar Usuario (CPF): {str(e)[:100]}", flush=True)
+            # NÃO bloqueia a edição se sync falhar
+            return False
     
     def delete_person(self, id: int) -> bool:
         """MESMA ASSINATURA DO SQLITE ANTIGO - Deleta Pessoa"""
@@ -753,6 +798,14 @@ class DatabaseHTTPWrapper:
                 updated = self._make_request("GET", f"/api/empresas/{id}/")
                 print(f"📊 Dados após edição: {updated}", flush=True)
                 
+                # NOVO: Sincronizar Usuario com mesmo CNPJ
+                self._sync_usuario_by_cnpj(
+                    cnpj=cnpj_normalized,
+                    email=company_dict.get("email"),
+                    name=company_dict.get("company_name"),
+                    phone=company_dict.get("phone_number")
+                )
+                
                 return True
             else:
                 print(f"❌ Falha ao editar empresa - resultado vazio", flush=True)
@@ -805,6 +858,43 @@ class DatabaseHTTPWrapper:
             import traceback
             traceback.print_exc()
             raise
+    
+    def _sync_usuario_by_cnpj(self, cnpj: str, email: str = None, name: str = None, phone: str = None) -> bool:
+        """
+        Sincroniza dados do Usuario quando Empresa é editada
+        Atualiza name, email, phone do Usuario que tem o mesmo CNPJ
+        """
+        if not cnpj:
+            return False
+        
+        cnpj_normalized = self._normalize_cnpj(cnpj)
+        if not cnpj_normalized or len(cnpj_normalized) != 14:
+            return False
+        
+        try:
+            print(f"\n🔄 Sincronizando Usuario com CNPJ {cnpj_normalized}...", flush=True)
+            
+            sync_data = {"cnpj": cnpj_normalized}
+            if email:
+                sync_data["email"] = email
+            if name:
+                sync_data["first_name"] = name
+            if phone:
+                sync_data["telefone"] = phone
+            
+            result = self._make_request("PATCH", "/api/sync/usuario/cnpj/", data=sync_data)
+            
+            if result and 'id' in result:
+                print(f"✅ Usuario ID {result['id']} sincronizado com sucesso", flush=True)
+                return True
+            else:
+                print(f"⚠️ Aviso ao sincronizar Usuario: resposta vazia", flush=True)
+                return False
+        
+        except Exception as e:
+            print(f"⚠️ Aviso: Não conseguiu sincronizar Usuario (CNPJ): {str(e)[:100]}", flush=True)
+            # NÃO bloqueia a edição se sync falhar
+            return False
     
     def insert_property(self, property: Property, requester_id: int, address: Address) -> dict:
         """Cadastra propriedade - vinculada a uma Person OU Empresa"""

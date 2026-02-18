@@ -760,3 +760,115 @@ Laboratório de Solos - UTFPR
         traceback.print_exc()
         print("="*60 + "\n")
         return Response({'error': f'Erro ao enviar email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ========== SINCRONIZAÇÃO DE DADOS EMPRESA/PERSON ↔ USUARIO ==========
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def sync_usuario_by_cpf(request):
+    """
+    Sincroniza dados do Usuario quando Person é editada
+    PATCH /api/sync/usuario/cpf/
+    Body: {
+        "cpf": "12345678900",
+        "email": "novo@email.com",
+        "first_name": "Nome Novo",
+        "telefone": "11987654321"
+    }
+    """
+    cpf = request.data.get('cpf')
+    
+    if not cpf:
+        return Response({'error': 'CPF é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Normalizar CPF
+    cpf_limpo = cpf.replace('.', '').replace('-', '')
+    
+    try:
+        usuario = Usuario.objects.get(cpf=cpf_limpo)
+        
+        # Atualizar campos fornecidos
+        if 'email' in request.data:
+            usuario.email = request.data['email']
+        if 'first_name' in request.data:
+            usuario.first_name = request.data['first_name']
+        if 'telefone' in request.data:
+            usuario.telefone = request.data['telefone']
+        
+        usuario.save()
+        
+        print(f"✅ Usuario ID {usuario.id} sincronizado (CPF: {cpf_limpo})", flush=True)
+        
+        return Response({
+            'id': usuario.id,
+            'username': usuario.username,
+            'email': usuario.email,
+            'first_name': usuario.first_name,
+            'telefone': usuario.telefone
+        }, status=status.HTTP_200_OK)
+        
+    except Usuario.DoesNotExist:
+        print(f"⚠️ Usuario com CPF {cpf_limpo} não encontrado", flush=True)
+        return Response(
+            {'warning': 'Usuario não encontrado para sincronização'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        print(f"❌ Erro ao sincronizar Usuario (CPF): {e}", flush=True)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def sync_usuario_by_cnpj(request):
+    """
+    Sincroniza dados do Usuario quando Empresa é editada
+    PATCH /api/sync/usuario/cnpj/
+    Body: {
+        "cnpj": "12345678000190",
+        "email": "novo@empresa.com",
+        "first_name": "Nome Empresa Novo",
+        "telefone": "1133334444"
+    }
+    """
+    cnpj = request.data.get('cnpj')
+    
+    if not cnpj:
+        return Response({'error': 'CNPJ é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Normalizar CNPJ
+    cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
+    
+    try:
+        usuario = Usuario.objects.get(cnpj=cnpj_limpo)
+        
+        # Atualizar campos fornecidos
+        if 'email' in request.data:
+            usuario.email = request.data['email']
+        if 'first_name' in request.data:
+            usuario.first_name = request.data['first_name']
+        if 'telefone' in request.data:
+            usuario.telefone = request.data['telefone']
+        
+        usuario.save()
+        
+        print(f"✅ Usuario ID {usuario.id} sincronizado (CNPJ: {cnpj_limpo})", flush=True)
+        
+        return Response({
+            'id': usuario.id,
+            'username': usuario.username,
+            'email': usuario.email,
+            'first_name': usuario.first_name,
+            'telefone': usuario.telefone
+        }, status=status.HTTP_200_OK)
+        
+    except Usuario.DoesNotExist:
+        print(f"⚠️ Usuario com CNPJ {cnpj_limpo} não encontrado", flush=True)
+        return Response(
+            {'warning': 'Usuario não encontrado para sincronização'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        print(f"❌ Erro ao sincronizar Usuario (CNPJ): {e}", flush=True)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
