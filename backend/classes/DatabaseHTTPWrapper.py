@@ -558,14 +558,25 @@ class DatabaseHTTPWrapper:
         Atualiza name, email, phone do Usuario que tem o mesmo CPF
         """
         if not cpf:
+            print(f"⚠️ CPF vazio, não sincronizando Usuario", flush=True)
             return False
         
         cpf_normalized = self._normalize_cpf(cpf)
+        print(f"\n🔄 SYNC Usuario (CPF) - Original: '{cpf}' → Normalizado: '{cpf_normalized}'", flush=True)
+        
         if not cpf_normalized or len(cpf_normalized) != 11:
+            print(f"⚠️ CPF normalizado inválido (tem {len(cpf_normalized) if cpf_normalized else 0} dígitos, esperado 11)", flush=True)
             return False
         
         try:
-            print(f"\n🔄 Sincronizando Usuario com CPF {cpf_normalized}...", flush=True)
+            print(f"📤 Enviando PATCH /api/sync/usuario/cpf/", flush=True)
+            print(f"   CPF: {cpf_normalized}", flush=True)
+            if email:
+                print(f"   Email: {email}", flush=True)
+            if name:
+                print(f"   Nome: {name}", flush=True)
+            if phone:
+                print(f"   Telefone: {phone}", flush=True)
             
             sync_data = {"cpf": cpf_normalized}
             if email:
@@ -581,11 +592,11 @@ class DatabaseHTTPWrapper:
                 print(f"✅ Usuario ID {result['id']} sincronizado com sucesso", flush=True)
                 return True
             else:
-                print(f"⚠️ Aviso ao sincronizar Usuario: resposta vazia", flush=True)
+                print(f"⚠️ Sincronização retornou: {result}", flush=True)
                 return False
         
         except Exception as e:
-            print(f"⚠️ Aviso: Não conseguiu sincronizar Usuario (CPF): {str(e)[:100]}", flush=True)
+            print(f"⚠️ Erro ao sincronizar Usuario (CPF): {str(e)[:150]}", flush=True)
             # NÃO bloqueia a edição se sync falhar
             return False
     
@@ -616,7 +627,7 @@ class DatabaseHTTPWrapper:
                 cpf_limpo = ''.join(filter(str.isdigit, cpf))
                 try:
                     print(f"🗑️ Tentando deletar Usuario com CPF {cpf_limpo}...", flush=True)
-                    usuario_result = self._make_request("DELETE", "/api/delete/usuario/", params={"cpf": cpf_limpo})
+                    usuario_result = self._make_request("DELETE", "/api/delete/usuario/cpf/", params={"cpf": cpf_limpo})
                     if usuario_result:
                         print(f"✅ Usuario deletado", flush=True)
                 except Exception as e:
@@ -844,7 +855,7 @@ class DatabaseHTTPWrapper:
                 cnpj_limpo = ''.join(filter(str.isdigit, cnpj))
                 try:
                     print(f"🗑️ Tentando deletar Usuario com CNPJ {cnpj_limpo}...", flush=True)
-                    usuario_result = self._make_request("DELETE", "/api/delete/usuario/", params={"cnpj": cnpj_limpo})
+                    usuario_result = self._make_request("DELETE", "/api/delete/usuario/cnpj/", params={"cnpj": cnpj_limpo})
                     if usuario_result:
                         print(f"✅ Usuario deletado", flush=True)
                 except Exception as e:
@@ -865,14 +876,25 @@ class DatabaseHTTPWrapper:
         Atualiza name, email, phone do Usuario que tem o mesmo CNPJ
         """
         if not cnpj:
+            print(f"⚠️ CNPJ vazio, não sincronizando Usuario", flush=True)
             return False
         
         cnpj_normalized = self._normalize_cnpj(cnpj)
+        print(f"\n🔄 SYNC Usuario (CNPJ) - Original: '{cnpj}' → Normalizado: '{cnpj_normalized}'", flush=True)
+        
         if not cnpj_normalized or len(cnpj_normalized) != 14:
+            print(f"⚠️ CNPJ normalizado inválido (tem {len(cnpj_normalized) if cnpj_normalized else 0} dígitos, esperado 14)", flush=True)
             return False
         
         try:
-            print(f"\n🔄 Sincronizando Usuario com CNPJ {cnpj_normalized}...", flush=True)
+            print(f"📤 Enviando PATCH /api/sync/usuario/cnpj/", flush=True)
+            print(f"   CNPJ: {cnpj_normalized}", flush=True)
+            if email:
+                print(f"   Email: {email}", flush=True)
+            if name:
+                print(f"   Nome: {name}", flush=True)
+            if phone:
+                print(f"   Telefone: {phone}", flush=True)
             
             sync_data = {"cnpj": cnpj_normalized}
             if email:
@@ -888,11 +910,11 @@ class DatabaseHTTPWrapper:
                 print(f"✅ Usuario ID {result['id']} sincronizado com sucesso", flush=True)
                 return True
             else:
-                print(f"⚠️ Aviso ao sincronizar Usuario: resposta vazia", flush=True)
+                print(f"⚠️ Sincronização retornou: {result}", flush=True)
                 return False
         
         except Exception as e:
-            print(f"⚠️ Aviso: Não conseguiu sincronizar Usuario (CNPJ): {str(e)[:100]}", flush=True)
+            print(f"⚠️ Erro ao sincronizar Usuario (CNPJ): {str(e)[:150]}", flush=True)
             # NÃO bloqueia a edição se sync falhar
             return False
     

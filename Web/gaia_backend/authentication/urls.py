@@ -18,6 +18,8 @@ urlpatterns = [
     path('forgot-password/', views.forgot_password, name='forgot-password'),
 
     path('delete/usuario/', views.delete_usuario, name='delete-usuario'),
+    path('delete/usuario/cpf/', views.delete_usuario_by_cpf, name='delete-usuario-cpf'),
+    path('delete/usuario/cnpj/', views.delete_usuario_by_cnpj, name='delete-usuario-cnpj'),
 
     # Sincronização de dados
     path('sync/usuario/cpf/', views.sync_usuario_by_cpf, name='sync-usuario-cpf'),

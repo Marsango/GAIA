@@ -777,45 +777,65 @@ def sync_usuario_by_cpf(request):
         "telefone": "11987654321"
     }
     """
+    print(f"\n🔵 sync_usuario_by_cpf CHAMADO", flush=True)
+    print(f"   Request data: {request.data}", flush=True)
+    
     cpf = request.data.get('cpf')
     
     if not cpf:
+        print(f"❌ CPF não fornecido", flush=True)
         return Response({'error': 'CPF é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Normalizar CPF
     cpf_limpo = cpf.replace('.', '').replace('-', '')
+    print(f"   CPF normalizado: {cpf_limpo}", flush=True)
     
     try:
         usuario = Usuario.objects.get(cpf=cpf_limpo)
+        print(f"✅ Usuario encontrado: ID={usuario.id}, username={usuario.username}", flush=True)
         
         # Atualizar campos fornecidos
+        alteracoes = []
         if 'email' in request.data:
+            print(f"   Atualizando email: '{usuario.email}' → '{request.data['email']}'", flush=True)
             usuario.email = request.data['email']
+            alteracoes.append(f"email")
         if 'first_name' in request.data:
+            print(f"   Atualizando first_name: '{usuario.first_name}' → '{request.data['first_name']}'", flush=True)
             usuario.first_name = request.data['first_name']
+            alteracoes.append(f"first_name")
         if 'telefone' in request.data:
+            print(f"   Atualizando telefone: '{usuario.telefone}' → '{request.data['telefone']}'", flush=True)
             usuario.telefone = request.data['telefone']
+            alteracoes.append(f"telefone")
+        
+        if not alteracoes:
+            print(f"⚠️ Nenhum campo foi enviado para atualizar", flush=True)
+            return Response({'warning': 'Nenhum campo para atualizar'}, status=status.HTTP_200_OK)
         
         usuario.save()
-        
-        print(f"✅ Usuario ID {usuario.id} sincronizado (CPF: {cpf_limpo})", flush=True)
+        print(f"💾 Usuario salvo com sucesso", flush=True)
+        print(f"✅ Campos atualizados: {', '.join(alteracoes)}", flush=True)
         
         return Response({
             'id': usuario.id,
             'username': usuario.username,
             'email': usuario.email,
             'first_name': usuario.first_name,
-            'telefone': usuario.telefone
+            'telefone': usuario.telefone,
+            'updated_fields': alteracoes
         }, status=status.HTTP_200_OK)
         
     except Usuario.DoesNotExist:
-        print(f"⚠️ Usuario com CPF {cpf_limpo} não encontrado", flush=True)
+        print(f"❌ Usuario com CPF {cpf_limpo} NÃO ENCONTRADO", flush=True)
         return Response(
-            {'warning': 'Usuario não encontrado para sincronização'},
+            {'error': f'Usuario com CPF {cpf_limpo} não encontrado no banco'},
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
         print(f"❌ Erro ao sincronizar Usuario (CPF): {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -832,43 +852,155 @@ def sync_usuario_by_cnpj(request):
         "telefone": "1133334444"
     }
     """
+    print(f"\n🔵 sync_usuario_by_cnpj CHAMADO", flush=True)
+    print(f"   Request data: {request.data}", flush=True)
+    
     cnpj = request.data.get('cnpj')
     
     if not cnpj:
+        print(f"❌ CNPJ não fornecido", flush=True)
         return Response({'error': 'CNPJ é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Normalizar CNPJ
     cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
+    print(f"   CNPJ normalizado: {cnpj_limpo}", flush=True)
     
     try:
         usuario = Usuario.objects.get(cnpj=cnpj_limpo)
+        print(f"✅ Usuario encontrado: ID={usuario.id}, username={usuario.username}", flush=True)
         
         # Atualizar campos fornecidos
+        alteracoes = []
         if 'email' in request.data:
+            print(f"   Atualizando email: '{usuario.email}' → '{request.data['email']}'", flush=True)
             usuario.email = request.data['email']
+            alteracoes.append(f"email")
         if 'first_name' in request.data:
+            print(f"   Atualizando first_name: '{usuario.first_name}' → '{request.data['first_name']}'", flush=True)
             usuario.first_name = request.data['first_name']
+            alteracoes.append(f"first_name")
         if 'telefone' in request.data:
+            print(f"   Atualizando telefone: '{usuario.telefone}' → '{request.data['telefone']}'", flush=True)
             usuario.telefone = request.data['telefone']
+            alteracoes.append(f"telefone")
+        
+        if not alteracoes:
+            print(f"⚠️ Nenhum campo foi enviado para atualizar", flush=True)
+            return Response({'warning': 'Nenhum campo para atualizar'}, status=status.HTTP_200_OK)
         
         usuario.save()
-        
-        print(f"✅ Usuario ID {usuario.id} sincronizado (CNPJ: {cnpj_limpo})", flush=True)
+        print(f"💾 Usuario salvo com sucesso", flush=True)
+        print(f"✅ Campos atualizados: {', '.join(alteracoes)}", flush=True)
         
         return Response({
             'id': usuario.id,
             'username': usuario.username,
             'email': usuario.email,
             'first_name': usuario.first_name,
-            'telefone': usuario.telefone
+            'telefone': usuario.telefone,
+            'updated_fields': alteracoes
         }, status=status.HTTP_200_OK)
         
     except Usuario.DoesNotExist:
-        print(f"⚠️ Usuario com CNPJ {cnpj_limpo} não encontrado", flush=True)
+        print(f"❌ Usuario com CNPJ {cnpj_limpo} NÃO ENCONTRADO", flush=True)
         return Response(
-            {'warning': 'Usuario não encontrado para sincronização'},
+            {'error': f'Usuario com CNPJ {cnpj_limpo} não encontrado no banco'},
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
         print(f"❌ Erro ao sincronizar Usuario (CNPJ): {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_usuario_by_cpf(request):
+    """
+    Deleta Usuario por CPF (usado internamente quando Person é excluída)
+    DELETE /api/delete/usuario/cpf/
+    Params: cpf=12345678900
+    """
+    print(f"\n🔵 delete_usuario_by_cpf CHAMADO", flush=True)
+    
+    cpf = request.query_params.get('cpf') or request.data.get('cpf')
+    
+    if not cpf:
+        print(f"❌ CPF não fornecido", flush=True)
+        return Response({'error': 'CPF é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Normalizar CPF
+    cpf_limpo = cpf.replace('.', '').replace('-', '')
+    print(f"   CPF normalizado: {cpf_limpo}", flush=True)
+    
+    try:
+        usuario = Usuario.objects.get(cpf=cpf_limpo)
+        print(f"✅ Usuario encontrado: ID={usuario.id}, username={usuario.username}, cpf={cpf_limpo}", flush=True)
+        
+        usuario_id = usuario.id
+        usuario.delete()
+        print(f"💾 Usuario ID {usuario_id} deletado com sucesso", flush=True)
+        
+        return Response({
+            'message': f'Usuario com CPF {cpf_limpo} deletado com sucesso',
+            'id': usuario_id
+        }, status=status.HTTP_200_OK)
+        
+    except Usuario.DoesNotExist:
+        print(f"❌ Usuario com CPF {cpf_limpo} NÃO ENCONTRADO", flush=True)
+        return Response(
+            {'warning': f'Usuario com CPF {cpf_limpo} não encontrado no banco'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        print(f"❌ Erro ao deletar Usuario (CPF): {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_usuario_by_cnpj(request):
+    """
+    Deleta Usuario por CNPJ (usado internamente quando Empresa é excluída)
+    DELETE /api/delete/usuario/cnpj/
+    Params: cnpj=12345678000190
+    """
+    print(f"\n🔵 delete_usuario_by_cnpj CHAMADO", flush=True)
+    
+    cnpj = request.query_params.get('cnpj') or request.data.get('cnpj')
+    
+    if not cnpj:
+        print(f"❌ CNPJ não fornecido", flush=True)
+        return Response({'error': 'CNPJ é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Normalizar CNPJ
+    cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
+    print(f"   CNPJ normalizado: {cnpj_limpo}", flush=True)
+    
+    try:
+        usuario = Usuario.objects.get(cnpj=cnpj_limpo)
+        print(f"✅ Usuario encontrado: ID={usuario.id}, username={usuario.username}, cnpj={cnpj_limpo}", flush=True)
+        
+        usuario_id = usuario.id
+        usuario.delete()
+        print(f"💾 Usuario ID {usuario_id} deletado com sucesso", flush=True)
+        
+        return Response({
+            'message': f'Usuario com CNPJ {cnpj_limpo} deletado com sucesso',
+            'id': usuario_id
+        }, status=status.HTTP_200_OK)
+        
+    except Usuario.DoesNotExist:
+        print(f"❌ Usuario com CNPJ {cnpj_limpo} NÃO ENCONTRADO", flush=True)
+        return Response(
+            {'warning': f'Usuario com CNPJ {cnpj_limpo} não encontrado no banco'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        print(f"❌ Erro ao deletar Usuario (CNPJ): {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
