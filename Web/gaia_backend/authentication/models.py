@@ -24,7 +24,7 @@ class ConfiguracaoEmail(models.Model):
     Seu cadastro no sistema GAIA foi realizado com sucesso.
 
     Suas credenciais de acesso são:
-    Login (CPF/CNPJ): {cpf}
+    Login: Seu CPF ou CNPJ
     Senha Temporária: {senha}
 
     Por favor, altere sua senha no primeiro acesso.

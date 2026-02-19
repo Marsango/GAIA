@@ -31,7 +31,7 @@ Informamos que o login para acessar o sistema GAIA foi atualizado.
 Seu novo login é:
 {novo_login}
 
-Se você não realizou esta alteração, entre em contato imediatamente com nosso suporte.
+Em caso de dúvidas, entre em contato com nosso suporte.
 
 Att,
 Equipe GAIA"""
