@@ -167,6 +167,7 @@ def register_client_email(request):
             email=email,
             first_name=nome,
             last_name=data.get('last_name', ''),
+            telefone=data.get('phone_number', '') or data.get('telefone', ''),  # ← Adiciona telefone!
             primeiro_acesso=True # Marca para trocar a senha depois
         )
         user.set_password(temp_password)
@@ -256,6 +257,7 @@ def register_company_email(request):
             email=email,
             first_name=nome,
             last_name=data.get('last_name', ''),
+            telefone=data.get('phone_number', '') or data.get('telefone', ''),  # ← Adiciona telefone!
             primeiro_acesso=True  # Marca para trocar a senha depois
         )
         user.set_password(temp_password)

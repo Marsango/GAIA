@@ -717,6 +717,7 @@ class DatabaseHTTPWrapper:
                         "first_name": company_dict.get("company_name", ""),
                         "email": company_dict.get("email", ""),
                         "cnpj": company_dict.get("cnpj", ""),
+                        "phone_number": company_dict.get("phone_number", ""),  # ← Adiciona telefone!
                     }
                     
                     # print("🔐 Registrando usuario/envio de email...")
