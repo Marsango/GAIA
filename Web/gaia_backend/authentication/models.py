@@ -27,7 +27,50 @@ class ConfiguracaoEmail(models.Model):
     Login (CPF/CNPJ): {cpf}
     Senha Temporária: {senha}
 
-    Por favor, altere sua senha no primeiro acesso.""")
+    Por favor, altere sua senha no primeiro acesso.
+                                
+    Em caso de dúvidas, entre em contato com nosso suporte (46) 999XX-XXXX.""")
+    
+    # Templates para notificações de mudança
+    assunto_mudanca_login = models.CharField(
+        max_length=200, 
+        default='GAIA - Seu Login foi Atualizado',
+        blank=True
+    )
+    mensagem_mudanca_login = models.TextField(
+        default="""Olá {nome},
+
+Informamos que o login para acessar o sistema GAIA foi atualizado.
+
+Seu novo login é:
+{novo_login}
+
+Se você não realizou esta alteração, entre em contato imediatamente com nosso suporte.
+
+Att,
+Equipe GAIA""",
+        blank=True
+    )
+    
+    assunto_mudanca_email = models.CharField(
+        max_length=200,
+        default='GAIA - Seu E-mail foi Atualizado',
+        blank=True
+    )
+    mensagem_mudanca_email = models.TextField(
+        default="""Olá {nome},
+
+Confirmamos que o e-mail da sua conta no sistema GAIA foi atualizado com sucesso.
+
+Seu novo e-mail de acesso é:
+{novo_email}
+
+Se você não realizou esta alteração, entre em contato imediatamente com nosso suporte.
+
+Att,
+Equipe GAIA""",
+        blank=True
+    )
     
     updated_at = models.DateTimeField(auto_now=True)
 
