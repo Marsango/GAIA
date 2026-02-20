@@ -2034,23 +2034,67 @@ class DatabaseHTTPWrapper:
         
     def _upload_report_pdf(self, laudo_id: int, file_path: str) -> bool:
         """Faz upload do arquivo PDF para o laudo"""
+        print(f"\n{'='*60}")
+        print(f"📤 [_upload_report_pdf] Iniciando upload para laudo ID={laudo_id}")
+        print(f"{'='*60}")
+        
         try:
+            # Validações locais antes de enviar
+            import os
+            if not os.path.exists(file_path):
+                print(f"❌ Arquivo não existe: {file_path}")
+                return False
+            
+            file_size = os.path.getsize(file_path)
+            print(f"📁 Arquivo: {file_path}")
+            print(f"💾 Tamanho: {file_size} bytes ({file_size / (1024*1024):.2f} MB)")
+            
+            # Verificar extensão
+            if not file_path.lower().endswith('.pdf'):
+                print(f"❌ Arquivo não é PDF")
+                return False
+            print(f"✅ Extensão .pdf confirmada")
+            
             with open(file_path, 'rb') as f:
                 files = {'arquivo_pdf': f}
                 
+                # Remover Content-Type do headers pois requests vai definir automaticamente para multipart
                 headers = {k: v for k, v in self.headers.items() if k != 'Content-Type'}
                 
+                url = f"{self.base_url}/api/laudos/{laudo_id}/upload_pdf/"
+                print(f"📤 URL: {url}")
+                print(f"🔐 Headers: {headers}")
+                
                 response = self.session.post(
-                    f"{self.base_url}/api/laudos/{laudo_id}/upload_pdf/",
+                    url,
                     files=files,
-                    headers=headers
+                    headers=headers,
+                    timeout=30  # 30 segundos de timeout
                 )
                 
-                if response.status_code == 200:
+                print(f"📊 Status code: {response.status_code}")
+                print(f"📝 Response text: {response.text[:500]}")
+                
+                if response.status_code in [200, 201]:  # 200 OK ou 201 Created
+                    print(f"✅ Upload realizado com sucesso!")
+                    print(f"{'='*60}\n")
                     return True
                 else:
+                    print(f"❌ Erro no upload - Status: {response.status_code}")
+                    print(f"   Resposta: {response.text}")
+                    print(f"{'='*60}\n")
                     return False
+                    
+        except FileNotFoundError as e:
+            print(f"❌ Arquivo não encontrado: {file_path}")
+            print(f"   Erro: {e}")
+            print(f"{'='*60}\n")
+            return False
         except Exception as e:
+            print(f"❌ Erro ao fazer upload: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            print(f"{'='*60}\n")
             return False
         
     def _unwrap_results(self, response):

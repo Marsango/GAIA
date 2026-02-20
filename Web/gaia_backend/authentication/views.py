@@ -180,14 +180,14 @@ def register_client_email(request):
         assunto_email = config_email.assunto
         mensagem_template = config_email.mensagem
 
-        # 2. Substitui os placeholders ({nome}, {senha}) pelos dados reais
+        # 2. Substitui os placeholders ({nome}, {senha}, {tipo_documento}) pelos dados reais
         # Usamos .format() de forma segura. Se o ADM apagou a tag {senha}, o Python não quebra, mas a senha não vai.
         try:
             mensagem_final = mensagem_template.format(
                 nome=nome,
-                cpf=cpf,
                 senha=temp_password,
-                email=email
+                email=email,
+                tipo_documento="CPF"  # ← PESSOA FÍSICA = CPF
             )
         except KeyError:
             # Fallback: Se o ADM bagunçou as tags (ex: colocou {telefone} que não existe),
@@ -272,14 +272,12 @@ def register_company_email(request):
         print(f"📧 Assunto: {assunto_email}")
 
         # 2. Substitui os placeholders pelos dados reais
-        # Template pode ter {cpf} ou {cnpj}, então passamos ambos
         try:
             mensagem_final = mensagem_template.format(
                 nome=nome,
-                cpf=cnpj_limpo,  # Compatibilidade: se template usar {cpf}, recebe o CNPJ
-                cnpj=cnpj_limpo,  # Se template usar {cnpj}, também funciona
                 senha=temp_password,
-                email=email
+                email=email,
+                tipo_documento="CNPJ"  # ← PESSOA JURÍDICA = CNPJ
             )
         except KeyError as e:
             # Fallback: template com placeholder desconhecido
@@ -288,11 +286,12 @@ def register_company_email(request):
 
 Seu cadastro no sistema GAIA foi realizado com sucesso.
 
-Suas credenciais de acesso são:
-Login (CNPJ): {cnpj_limpo}
+Login: Seu CNPJ
 Senha Temporária: {temp_password}
 
-Por favor, altere sua senha no primeiro acesso."""
+Por favor, altere sua senha no primeiro acesso.
+
+Em caso de dúvidas, entre em contato com nosso suporte (46) 999XX-XXXX."""
         
         print(f"📝 Mensagem preparada, tamanho: {len(mensagem_final)} caracteres")
 

@@ -21,56 +21,15 @@ class ConfiguracaoEmail(models.Model):
     assunto = models.CharField(max_length=200, default='Bem-vindo ao GAIA - Suas Credenciais')
     mensagem = models.TextField(default="""Olá {nome},
 
-    Seu cadastro no sistema GAIA foi realizado com sucesso.
+Seu cadastro no sistema GAIA foi realizado com sucesso.
 
-    Suas credenciais de acesso são:
-    Login: Seu CPF ou CNPJ
-    Senha Temporária: {senha}
+Login: Seu {tipo_documento}
+Sua senha temporária é:
+{senha}
 
-    Por favor, altere sua senha no primeiro acesso.
-                                
-    Em caso de dúvidas, entre em contato com nosso suporte (46) 999XX-XXXX.""")
-    
-    # Templates para notificações de mudança
-    assunto_mudanca_login = models.CharField(
-        max_length=200, 
-        default='GAIA - Seu Login foi Atualizado',
-        blank=True
-    )
-    mensagem_mudanca_login = models.TextField(
-        default="""Olá {nome},
+Por favor, altere sua senha no primeiro acesso.
 
-Informamos que o login para acessar o sistema GAIA foi atualizado.
-
-Seu novo login é:
-{novo_login}
-
-Se você não realizou esta alteração, entre em contato imediatamente com nosso suporte.
-
-Att,
-Equipe GAIA""",
-        blank=True
-    )
-    
-    assunto_mudanca_email = models.CharField(
-        max_length=200,
-        default='GAIA - Seu E-mail foi Atualizado',
-        blank=True
-    )
-    mensagem_mudanca_email = models.TextField(
-        default="""Olá {nome},
-
-Confirmamos que o e-mail da sua conta no sistema GAIA foi atualizado com sucesso.
-
-Seu novo e-mail de acesso é:
-{novo_email}
-
-Se você não realizou esta alteração, entre em contato imediatamente com nosso suporte.
-
-Att,
-Equipe GAIA""",
-        blank=True
-    )
+Em caso de dúvidas, entre em contato com nosso suporte pelo numero (46)99999-9999 ou pelo email labsolos@gmail.com""")
     
     updated_at = models.DateTimeField(auto_now=True)
 

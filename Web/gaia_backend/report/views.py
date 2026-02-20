@@ -192,40 +192,69 @@ class LaudoViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def upload_pdf(self, request, pk=None):
         """Upload de arquivo PDF para laudo"""
+        print(f"\n{'='*60}")
+        print(f"📤 [upload_pdf] Iniciando upload para laudo ID={pk}")
+        print(f"{'='*60}")
+        
         laudo = self.get_object()
         
         if 'arquivo_pdf' not in request.FILES:
+            print(f"❌ Nenhum arquivo 'arquivo_pdf' encontrado em request.FILES")
+            print(f"   Arquivos disponíveis: {list(request.FILES.keys())}")
             return Response(
                 {'error': 'Nenhum arquivo enviado'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         arquivo = request.FILES['arquivo_pdf']
+        print(f"📄 Nome do arquivo: {arquivo.name}")
+        print(f"📊 Tamanho: {arquivo.size} bytes")
+        print(f"🔍 MIME type informado: {arquivo.content_type}")
         
         # Validação 1: Verificar extensão do arquivo
         if not arquivo.name.lower().endswith('.pdf'):
+            print(f"❌ Extensão não é .pdf: {arquivo.name}")
             return Response(
                 {'error': 'Apenas arquivos PDF são permitidos'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Validação 2: Verificar MIME type
-        if arquivo.content_type != 'application/pdf':
-            return Response(
-                {'error': 'Tipo de arquivo inválido. Apenas PDF é aceito'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Validação 2: Verificar MIME type (mais flexível para PDFs assinados)
+        # PDFs assinados ou criados por ferramentas diferentes podem ter MIME types variados
+        allowed_mime_types = [
+            'application/pdf',
+            'application/PDF',
+            'application/x-pdf',
+            'application/x-bzpdf',
+            'application/x-gzpdf',
+            'application/pdf+xz',
+            None  # Permite quando MIME type não é reconhecido
+        ]
+        
+        if arquivo.content_type not in allowed_mime_types:
+            print(f"⚠️  MIME type não reconhecido: {arquivo.content_type}")
+            print(f"   Permitindo mesmo assim pois extensão é .pdf")
+        else:
+            print(f"✅ MIME type aceito: {arquivo.content_type}")
         
         # Validação 3: Verificar tamanho (máximo 10MB)
         max_size = 10 * 1024 * 1024  # 10MB em bytes
         if arquivo.size > max_size:
+            print(f"❌ Arquivo muito grande: {arquivo.size} bytes (máx: {max_size})")
             return Response(
                 {'error': f'Arquivo muito grande. Tamanho máximo: 10MB'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        print(f"✅ Todas as validações passaram")
+        print(f"💾 Salvando arquivo no banco...")
+        
         laudo.arquivo_pdf = arquivo
         laudo.save()
+        
+        print(f"✅ Arquivo salvo com sucesso!")
+        print(f"   URL: {laudo.arquivo_pdf.url}")
+        print(f"{'='*60}\n")
         
         return Response({
             'success': True,

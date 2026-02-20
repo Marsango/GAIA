@@ -155,7 +155,7 @@ const CentralLaudos = () => {
                     amostras={laudosDoDia.map((l) => ({
                       id: l.id,
                       numero: l.numero_amostra,
-                      arquivoUrl: `${l.arquivo_pdf}`,
+                      arquivoUrl: l.arquivo_url || null,
                     }))}
                   />
                 ),

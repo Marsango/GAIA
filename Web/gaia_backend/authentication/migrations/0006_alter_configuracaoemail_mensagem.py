@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='configuracaoemail',
             name='mensagem',
-            field=models.TextField(default='Olá {nome},\n\n    Seu cadastro no sistema GAIA foi realizado com sucesso.\n\n    Suas credenciais de acesso são:\n    Login (CPF/CNPJ): {cpf}\n    Senha Temporária: {senha}\n\n    Por favor, altere sua senha no primeiro acesso.'),
+            field=models.TextField(default='Olá {nome},\n\n    Seu cadastro no sistema GAIA foi realizado com sucesso.\n\n    Suas credenciais de acesso são:\n    Login: Seu CPF\n    Senha Temporária: {senha}\n\n    Por favor, altere sua senha no primeiro acesso.\n\n    Em caso de dúvidas, entre em contato com nosso suporte (46) 999XX-XXXX.'),
         ),
     ]
