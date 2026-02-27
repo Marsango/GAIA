@@ -36,7 +36,7 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
         self.tableWidget.setRowCount(len(available_parameters) + 1)
         self.tableWidget.setColumnCount(1)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.tableWidget.verticalHeader().setVisible(False)
+        self.tableWidget.verticalHeader().setVisible(False) #linha adicionada para esconder os números das linhas, pode ser removida caso queira mostrar
         self.tableWidget.horizontalHeader().setVisible(False)
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         first_item: QTableWidgetItem = QTableWidgetItem('Parâmetros')
@@ -56,8 +56,11 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
             item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def open_dialog(self) -> None:
-        filename: QFileDialog.getOpenFileName = QFileDialog.getSaveFileName(filter="*.csv")[0]
-        self.file_path.setText(filename)
+        # Deixa o usuário escolher apenas a pasta e propõe um nome padrão para o CSV.
+        directory = QFileDialog.getExistingDirectory(self, "Selecionar pasta para salvar")
+        if directory:
+            default_name = "export.csv"
+            self.file_path.setText(os.path.join(directory, default_name))
 
     def translate_params(self, params) -> str:
         translate_dict = {
@@ -94,7 +97,7 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
             writer = csv.writer(file)
             columns = self.get_selected_parameters()
             writer.writerow(columns)
-            db: Database() = Database()
+            db = Database()
             not_numeric_columns: list[str] = ['Data', 'Descrição', 'Número']
             samples_info: list[sqlite3.Row] = db.get_samples(id_list = self.selected_ids)
             for sample_info in samples_info:

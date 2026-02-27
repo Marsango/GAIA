@@ -9,11 +9,11 @@ from itertools import pairwise
 from pathlib import Path
 from PySide6.QtGui import QPixmap, QColor
 from backend.classes.GraphParameters import GraphParameters
-from backend.classes.Database import Database
 from interface.base_windows.generate_report import GenerateReportDialog
 from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from backend.classes.Report import Report
+from backend.classes.Database import Database
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QHeaderView, QFileDialog)
 
 
@@ -95,8 +95,16 @@ class GenerateReport(QDialog, GenerateReportDialog):
             self.parameters_table.setItem(row, 0, check_box_item)
         self.get_graph_values()
         self.parameters_table.itemChanged.connect(self.update_graph_values)
+        self.parameters_table.itemDoubleClicked.connect(self.clear_cell_on_edit)
         self.generate_report.clicked.connect(self.create_report)
 
+
+    def clear_cell_on_edit(self, item: QTableWidgetItem) -> None:
+        """Limpa o texto da célula ao clicar duas vezes para evitar sobreposição visual"""
+        if item.column() != 0:  # Não limpar a primeira coluna (nome do parâmetro)
+            self.parameters_table.blockSignals(True)
+            item.setText("")
+            self.parameters_table.blockSignals(False)
 
     def update_graph_values(self, item: QTableWidgetItem) -> None:
         if item.column() != 0:
@@ -129,7 +137,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
             self.parameters_table.setItem(row, 5, QTableWidgetItem(str(parameters["very high"])))
 
     def create_report(self):
-        db: Database = Database()
+        db = Database()
         if self.technician_input.text() == '':
             error_message = "Erro: O campo de convênio está vazio. Por favor, insira um convênio."
             widget: AlertWindow = AlertWindow(error_message)
@@ -143,10 +151,22 @@ class GenerateReport(QDialog, GenerateReportDialog):
             report_id: int = db.get_next_report_id()
             script_path: Path = Path(__file__).resolve()
             backup_path: Path = script_path.parent.parent / "reports" / f"Laudo - {report_id}.pdf"
+            # Criar diretório de backup se não existir
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
             report: Report = Report(file_location=str(backup_path), agreement=self.technician_input.text())
             report.generate_pdf(sample_info, file_path, report_id, sample_values, reference)
             shutil.copy(file_path, backup_path)
-            db.insert_report(report, self.sample_id)
+            # Inserir relatório e obter ID real do laudo criado
+            actual_report_id: int = db.insert_report(report, self.sample_id)
+            
+            # Se o ID real for diferente do previsto, renomear o arquivo
+            if actual_report_id and actual_report_id != report_id:
+                actual_backup_path = backup_path.parent / f"Laudo - {actual_report_id}.pdf"
+                try:
+                    shutil.move(str(backup_path), str(actual_backup_path))
+                except Exception as rename_error:
+                    print(f"[AVISO] Não foi possível renomear arquivo de backup: {rename_error}")
+            
             dialog: AlertWindow = AlertWindow("Laudo salvo com sucesso!")
             dialog.exec()
         except Exception as e:
@@ -170,7 +190,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
 
 
     def get_selected_parameters(self) -> dict[str, dict[str, float]]:
-        db: Database = Database()
+        db = Database()
         sample_info: sqlite3.Row = db.get_samples(sample_id=self.sample_id)[0]
         selected_parameters: dict[str, dict[str, float]] = {}
         for row in range(self.parameters_table.rowCount()):

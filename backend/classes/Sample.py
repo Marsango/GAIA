@@ -55,7 +55,7 @@ class Sample:
             else:
                 self.__potassium: float | None = round(potassium * self.__used_config['potassium']['value'], 2)\
                     if self.__used_config['potassium']['selected'] == 'factors' else (
-                    round((phosphorus - self.__used_config['potassium']['value']['b'])/self.__used_config['potassium']['value']['a'], 2))
+                    round((potassium - self.__used_config['potassium']['value']['b'])/self.__used_config['potassium']['value']['a'], 2))
 
             if organic_matter is None:
                 self.__organic_matter: float | None = None
@@ -65,11 +65,16 @@ class Sample:
                     round((organic_matter - self.__used_config['organic_matter']['value']['b'])/self.__used_config['organic_matter']['value']['a'], 2))
 
         else:
-            from backend.classes.Database import Database
-            db: Database = Database()
-            sample_data = db.get_samples(sample_id=sample_id)[0]
+            from backend.classes.DatabaseHTTP import DatabaseHTTP
+            try:
+                db: DatabaseHTTP = DatabaseHTTP()
+                samples = db.get_samples(sample_id=sample_id)
+                sample_data = samples[0] if samples else {}
+            except Exception as e:
+                print(f"⚠️  Aviso: Falha ao buscar amostra anterior para comparação: {e}")
+                sample_data = {}
 
-            if phosphorus == sample_data['phosphorus']:
+            if phosphorus == sample_data.get('phosphorus'):
                 self.__phosphorus: float | None = phosphorus if phosphorus is not None else None
             else:
                 if phosphorus is None:
@@ -80,7 +85,7 @@ class Sample:
                         round((phosphorus - self.__used_config['phosphorus']['value']['b']) /
                               self.__used_config['phosphorus']['value']['a'], 2))
 
-            if potassium == sample_data['potassium']:
+            if potassium == sample_data.get('potassium'):
                 self.__potassium: float | None = potassium if potassium is not None else None
             else:
                 if potassium is None:
@@ -88,10 +93,10 @@ class Sample:
                 else:
                     self.__potassium: float | None = round(potassium * self.__used_config['potassium']['value'], 2) \
                         if self.__used_config['potassium']['selected'] == 'factors' else (
-                        round((phosphorus - self.__used_config['potassium']['value']['b']) /
+                        round((potassium - self.__used_config['potassium']['value']['b']) /
                               self.__used_config['potassium']['value']['a'], 2))
 
-            if organic_matter == sample_data['organic_matter']:
+            if organic_matter == sample_data.get('organic_matter'):
                 self.__organic_matter: float = organic_matter if organic_matter is not None else None
             else:
                 if organic_matter is None:
@@ -106,7 +111,7 @@ class Sample:
         self.__ph: float | None = ph
         self.__smp: float | None = smp
         self.__aluminum : float | None = aluminum
-        if self.__organic_matter > 50:
+        if self.__organic_matter is not None and self.__organic_matter > 50:
             self.__h_al: float = round(math.pow(2.7182, (6.9056 - (0.08824 * self.__smp))), 1) if smp is not None else None
         else:
             try:
@@ -144,7 +149,17 @@ class Sample:
 
     def verify_valid_date(self, collection_date: str) -> None:
         try:
-            self.__collection_date: str = datetime.strptime(collection_date, '%d/%m/%Y').strftime("%d/%m/%Y")
+            # Tenta parse de diferentes formatos
+            for fmt in ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d"]:
+                try:
+                    parsed = datetime.strptime(collection_date, fmt)
+                    # Armazena no formato dd/mm/YYYY para a UI; wrapper converte para API.
+                    self.__collection_date: str = parsed.strftime("%d/%m/%Y")
+                    return
+                except ValueError:
+                    continue
+            # Se nenhum formato funcionou, levanta erro
+            raise ValueError("Nenhum formato de data válido")
         except:
             raise ValueError("Error with values of 'Data'")
 
@@ -175,3 +190,6 @@ class Sample:
             return 'AD5'
         else:
             return 'AD6'
+        
+    def get_description(self) -> str:
+        return self.__description

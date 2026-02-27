@@ -4,13 +4,33 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from interface.base_windows.register_property import RegisterPropertyDialog
 from PySide6.QtCore import Qt
-from backend.classes.Database import Database
 from backend.classes.Property import Property
+from backend.classes.Address import Address
 from interface.AlertWindow import AlertWindow
+from backend.classes.Database import Database
 from backend.classes.utils import handle_exception
 
 
 class RegisterProperty(QDialog, RegisterPropertyDialog):
+    # Cidades próximas a Pato Branco por estado
+    CIDADES_PROXIMAS = {
+        "Paraná": [
+            "Pato Branco", "Marmeleiro", "Coronel Vivida", "Sulina", "Enéas Marques",
+            "Renascença", "Pranchita", "Crespo", "Santo Antônio do Sudoeste", 
+            "Capanema", "Ampére", "Neves", "Clevelândia", "Realeza"
+        ],
+        "Santa Catarina": [
+            "Chapecó", "Xanxerê", "Caxambu do Sul", "Tapejara", "Santa Cecília",
+            "Lebon Régis", "Bom Jesus do Oeste", "Anita Garibaldi", "Vargem",
+            "Iomerê", "Tigrinhos", "Cambará do Sul", "Maravilha"
+        ],
+        "Rio Grande do Sul": [
+            "Alegrete", "Rosário do Sul", "Maçambá", "Lavras do Sul", "Uruguaiana",
+            "São Gabriel", "Bagé", "Santana do Livramento", "Dom Pedrito",
+            "Caçapava do Sul", "Pinheiro Machado", "Encruzilhada do Sul"
+        ]
+    }
+
     def __init__(self, requester_id: int) -> None:
         super(RegisterProperty, self).__init__()
         self.current_property_id: int | None = None
@@ -22,9 +42,10 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
             "images"
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
-        self.create_country_completer()
-        self.country_input.editingFinished.connect(self.country_changed)
+        # Conectar eventos de mudança
         self.state_input.editingFinished.connect(self.state_changed)
+        # Autocomplete otimizado - consulta apenas 1 vez ao abrir
+        self.setup_autocomplete()
         self.requester_id: int = requester_id
         self.mode: str = 'register'
 
@@ -41,40 +62,63 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
         self.mode = 'edit'
         self.current_property_id = int(property_data['id'])
 
-    def create_country_completer(self) -> None:
-        db: Database = Database()
-        completer: QCompleter = QCompleter(db.get_countries(), self)
-        db.close_connection()
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
-        self.country_input.setCompleter(completer)
+    def setup_autocomplete(self) -> None:
+        """Configura autocomplete com dados estáticos - sem múltiplas conexões"""
+        try:
+            # Lista estática de países
+            countries = ["Brasil"]
+            completer = QCompleter(countries, self)
+            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.country_input.setCompleter(completer)
+            
+            # Apenas estados próximos a Pato Branco
+            states = ["Paraná", "Santa Catarina", "Rio Grande do Sul"]
+            state_completer = QCompleter(states, self)
+            state_completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.state_input.setCompleter(state_completer)
+        except Exception as e:
+            print(f"⚠️ Erro ao configurar autocomplete: {e}")
 
-    def country_changed(self) -> None:
-        db: Database = Database()
-        completer: QCompleter = QCompleter(db.get_states(self.country_input.text()), self)
-        db.close_connection()
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
-        self.state_input.setCompleter(completer)
 
     def state_changed(self) -> None:
-        db: Database = Database()
-        completer: QCompleter = QCompleter(db.get_cities(self.state_input.text()), self)
-        db.close_connection()
+        state = self.state_input.text()
+        
+        # Usar lista de cidades próximas se existir
+        if state in self.CIDADES_PROXIMAS:
+            cities = self.CIDADES_PROXIMAS[state]
+        else:
+            # Fallback: tentar carregar do banco de dados
+            db = Database()
+            cities = db.get_cities(state)
+            db.close_connection()
+        
+        completer = QCompleter(cities, self)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.city_input.setCompleter(completer)
 
-
     def register_action(self) -> None:
-        db: Database = Database()
+        db = Database()
         try:
-            property: Property = Property(name=self.name_input.text(), country=self.country_input.text(),
-                                          state=self.state_input.text(), city=self.city_input.text(),
-                                          location = self.location_input.text(),
-                                          registration_number=self.registration_number_input.text())
+            # Criar endereço apenas com país, estado e cidade
+            # Propriedade não usa CEP, rua ou número
+            address: Address = Address(
+                country=self.country_input.text(),
+                state=self.state_input.text(),
+                city=self.city_input.text(),
+                street='',
+                address_number='',
+                cep=''
+            )
+            property: Property = Property(
+                name=self.name_input.text(),
+                registration_number=self.registration_number_input.text(),
+                localizacao=self.location_input.text()
+            )
             if self.mode == 'register':
-                db.insert_property(property, self.requester_id)
+                db.insert_property(property, self.requester_id, address)
                 success: str = "Propriedade registrada com sucesso!"
             else:
-                db.edit_property(property, self.current_property_id)
+                db.edit_property(property, self.current_property_id, address)
                 success: str = "Alterações salvas com sucesso!"
             widget: AlertWindow = AlertWindow(success)
             widget.exec()

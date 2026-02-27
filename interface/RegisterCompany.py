@@ -3,21 +3,41 @@ import os
 from PySide6.QtGui import QPixmap
 
 from interface.base_windows.register_company import RegisterCompanyDialog
+from backend.classes.Database import Database
 from backend.classes.Company import Company
 from backend.classes.Address import Address
 from PySide6.QtCore import Qt
 from interface.AlertWindow import AlertWindow
 from PySide6.QtWidgets import (QDialog, QCompleter)
-from backend.classes.Database import Database
 from backend.classes.utils import handle_exception
 
 
 class RegisterCompany(QDialog, RegisterCompanyDialog):
+    # Cidades próximas a Pato Branco por estado
+    CIDADES_PROXIMAS = {
+        "Paraná": [
+            "Pato Branco", "Marmeleiro", "Coronel Vivida", "Sulina", "Enéas Marques",
+            "Renascença", "Pranchita", "Crespo", "Santo Antônio do Sudoeste", 
+            "Capanema", "Ampére", "Neves", "Clevelândia", "Realeza"
+        ],
+        "Santa Catarina": [
+            "Chapecó", "Xanxerê", "Caxambu do Sul", "Tapejara", "Santa Cecília",
+            "Lebon Régis", "Bom Jesus do Oeste", "Anita Garibaldi", "Vargem",
+            "Iomerê", "Tigrinhos", "Cambará do Sul", "Maravilha"
+        ],
+        "Rio Grande do Sul": [
+            "Alegrete", "Rosário do Sul", "Maçambá", "Lavras do Sul", "Uruguaiana",
+            "São Gabriel", "Bagé", "Santana do Livramento", "Dom Pedrito",
+            "Caçapava do Sul", "Pinheiro Machado", "Encruzilhada do Sul"
+        ]
+    }
+
     def __init__(self) -> None:
         super(RegisterCompany, self).__init__()
         self.requester_id: int | None = None
         self.current_company_id: int | None = None
         self.setupUi(self)
+        self.cep_input.setMaxLength(8)
         self.setWindowTitle('Registro de Pessoa Jurídica')
         self.setWindowIcon(QPixmap(os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -25,14 +45,31 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
             "images"
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.register_button.clicked.connect(self.register_action)
-        self.create_country_completer()
-        self.country_input.editingFinished.connect(self.country_changed)
+        # Conectar eventos de mudança
         self.state_input.editingFinished.connect(self.state_changed)
-        self.city_input.editingFinished.connect(self.city_changed)
+        # Autocomplete otimizado - consulta apenas 1 vez ao abrir
+        self.setup_autocomplete()
         self.mode = 'register'
+    
+    def setup_autocomplete(self) -> None:
+        """Configura autocomplete com dados estáticos - sem múltiplas conexões"""
+        try:
+            # Lista estática de países
+            countries = ["Brasil"]
+            completer = QCompleter(countries, self)
+            completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.country_input.setCompleter(completer)
+            
+            # Apenas estados próximos a Pato Branco
+            states = ["Paraná", "Santa Catarina", "Rio Grande do Sul"]
+            state_completer = QCompleter(states, self)
+            state_completer.setCaseSensitivity(Qt.CaseInsensitive)
+            self.state_input.setCompleter(state_completer)
+        except Exception as e:
+            print(f"⚠️ Erro ao configurar autocomplete: {e}")
 
     def create_country_completer(self) -> None:
-        db: Database = Database()
+        db = Database()
         completer: QCompleter = QCompleter(db.get_countries(), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -40,7 +77,7 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
 
 
     def country_changed(self) -> None:
-        db: Database = Database()
+        db = Database()
         completer: QCompleter = QCompleter(db.get_states(self.country_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -48,26 +85,47 @@ class RegisterCompany(QDialog, RegisterCompanyDialog):
 
 
     def state_changed(self) -> None:
-        db: Database = Database()
-        completer: QCompleter = QCompleter(db.get_cities(self.state_input.text()), self)
-        db.close_connection()
+        state = self.state_input.text()
+        
+        # Usar lista de cidades próximas se existir
+        if state in self.CIDADES_PROXIMAS:
+            cities = self.CIDADES_PROXIMAS[state]
+        else:
+            # Fallback: tentar carregar do banco de dados
+            db = Database()
+            cities = db.get_cities(state)
+            db.close_connection()
+        
+        completer = QCompleter(cities, self)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.city_input.setCompleter(completer)
 
 
     def city_changed(self) -> None:
-        db: Database = Database()
+        db = Database()
         completer: QCompleter = QCompleter(db.get_streets(self.city_input.text()), self)
         db.close_connection()
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.street_input.setCompleter(completer)
 
     def register_action(self) -> None:
-        db: Database = Database()
+        db = Database()
         try:
+            # Validação de campos obrigatórios do endereço
+            cep = self.cep_input.text().replace('-', '').strip()
+            street = self.street_input.text().strip()
+            address_number = self.address_number_input.text().strip()
+            
+            if not cep:
+                raise ValueError("O campo 'CEP' deve ser preenchido!")
+            if not street:
+                raise ValueError("O campo 'Rua' deve ser preenchido!")
+            if not address_number:
+                raise ValueError("O campo 'Número' deve ser preenchido!")
+
             address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
-                                       city=self.city_input.text(), street=self.street_input.text(),
-                                       address_number=self.address_number_input.text(), cep=self.cep_input.text().replace('-', ''))
+                                       city=self.city_input.text(), street=street,
+                                       address_number=address_number, cep=cep)
             company: Company = Company(company_name=self.company_name_input.text(), email=self.email_input.text(),
                                        cnpj=self.cnpj_input.text().replace('.', '').replace('/', '').replace('-', ''),
                                        phone_number=self.phone_number_input.text()

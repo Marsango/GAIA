@@ -7,8 +7,8 @@ from interface.DeleteConfirmation import DeleteConfirmation
 from interface.AlertWindow import AlertWindow
 from backend.classes.utils import handle_exception
 from interface.RegisterProperty import RegisterProperty
-from backend.classes.Database import Database
 from interface.SampleWindow import SampleWindow
+from backend.classes.Database import Database
 import sqlite3
 
 class PropertyWindow(QDialog, PropertyDialog):
@@ -23,6 +23,7 @@ class PropertyWindow(QDialog, PropertyDialog):
         ).replace("\\", "/") + "/GAIA_icon.png"))
         self.requester_list: list[sqlite3.Row] | None = None
         self.property_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.property_table.verticalHeader().setVisible(False) #linha adicionada para esconder os números das linhas, pode ser removida caso queira mostrar
         self.property_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.property_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.current_owner: str = kwargs.get('owner') if kwargs.get('owner') else ''
@@ -37,7 +38,7 @@ class PropertyWindow(QDialog, PropertyDialog):
         self.refresh_table()
 
     def refresh_table(self) -> None:
-        db: Database = Database()
+        db = Database()
         properties: list[sqlite3.Row] = db.get_properties(requester_id=self.current_owner_id)
         self.property_table.setRowCount(0)
         for property in properties:
@@ -68,7 +69,7 @@ class PropertyWindow(QDialog, PropertyDialog):
                 return
         row: int = selected_items[0].row()
         id: str = self.property_table.item(row, 0).text()
-        db: Database = Database()
+        db = Database()
         property: sqlite3.Row = db.get_properties(id=id)[0]
         db.close_connection()
         dialog.edit_mode(property)

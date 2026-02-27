@@ -2,8 +2,8 @@ from PIL.ImageQt import QPixmap
 
 from interface.base_windows.backup_window import BackupDialog
 from interface.AlertWindow import AlertWindow
-from backend.classes.Database import Database
 from PySide6.QtWidgets import (QDialog, QFileDialog)
+from backend.classes.Database import Database
 import shutil, os
 import datetime
 
@@ -38,7 +38,7 @@ class BackupWindow(QDialog, BackupDialog):
         ).replace("\\", "/") + "/GAIA_icon.png"))
 
         # Instancia a classe Database para manipulação do banco de dados
-        db: Database = Database()
+        db = Database()
 
         # Atualiza as informações da interface com os dados do banco
         self.requester_count.setText(str(len(db.get_requesters())))  # Número de solicitantes

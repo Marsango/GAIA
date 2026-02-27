@@ -30,3 +30,4 @@ class Requester:
 
     def get_email(self) -> str:
         return self.__email
+    
