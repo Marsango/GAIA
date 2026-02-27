@@ -6,7 +6,8 @@ export const Card = styled.div`
   padding: 12px;
   margin-bottom: 10px;
   background: white;
-  width: 550px;
+  width: 100%;
+  box-sizing: border-box; 
   font-family: "Poppins", sans-serif;
   overflow: hidden;
 `;
@@ -24,7 +25,6 @@ export const Divider = styled.hr`
   margin: 12px 0;
   font-family: "Poppins", sans-serif;
 `;
-
 
 export const Conteudo = styled.div`
   max-height: ${(p) => (p.$expandido ? "500px" : "0")};
@@ -55,6 +55,10 @@ export const ButtonRow = styled.div`
   gap: 10px;
   margin-top: 10px;
   justify-content: center;
+  
+  @media (max-width: 600px) {
+    gap: 5px; 
+  }
 `;
 
 export const Button = styled.button`
@@ -67,16 +71,34 @@ export const Button = styled.button`
   display: flex;
   align-items: center;
   gap: 5px;
-  width: 250px;
-  font-size: 20px;
+  width: 100%;
+  
+  /* Reduzimos de 20px para 16px no Desktop! */
+  font-size: 16px; 
   justify-content: center;
+
+  @media (max-width: 600px) {
+    font-size: 14px; 
+    padding: 8px;
+  }
 `;
 
 export const Data = styled.div`
-  font-size: 25px;
+  /* Reduzimos de 25px para 18px! (Mesmo tamanho do nome da Fazenda) */
+  font-size: 18px; 
+  font-weight: 500; 
+  
+  @media (max-width: 600px) {
+    font-size: 14px; 
+  }
 `;
 
 export const NumeroAmostra = styled.div`
-  font-size: 20px;
+  /* Reduzimos de 20px para 16px no Desktop! */
+  font-size: 16px; 
   font-family: "Poppins", sans-serif;
+
+  @media (max-width: 600px) {
+    font-size: 14px; 
+  }
 `;

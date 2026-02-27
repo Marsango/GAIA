@@ -1,19 +1,11 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import PropertiesCard from "../../components/PropertiesCard";
 import ReportsCard from "../../components/ReportsCard";
 import api from "../../api/api";
 import {
-  PageContainer,
-  Title,
-  Content,
-  Properties,
-  Reports,
-  ReportList,
-  FullPageContainer,
-  Subtitle,
+  PageContainer, Title, Content, Properties, Reports, ReportList, FullPageContainer, Subtitle, AdminButton
 } from "./styled";
 
 const CentralLaudos = () => {
@@ -23,11 +15,9 @@ const CentralLaudos = () => {
   const [propriedades, setPropriedades] = useState([]);
   const [laudos, setLaudos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const token = localStorage.getItem("token");
 
-  // Verifica autenticação ao carregar a página
   useEffect(() => {
     if (!token) {
       navigate("/login", { replace: true });
@@ -36,68 +26,41 @@ const CentralLaudos = () => {
     carregarPropriedades();
   }, []);
 
-  // Verifica se o usuário é Admin ao carregar
   useEffect(() => {
     const userStored = localStorage.getItem("user");
     if (userStored) {
       try {
         const user = JSON.parse(userStored);
-        if (user.is_staff) {
-          setIsAdmin(true);
-        }
+        if (user.is_staff) setIsAdmin(true);
       } catch (e) {
         console.error("Erro ao verificar permissão:", e);
       }
     }
   }, []);
 
-  const btnStyle = {
-    display: "block",
-    margin: "0 auto 15px auto",
-    padding: "10px 20px",
-    backgroundColor: "#ffc107",
-    color: "#000",
-    border: "none",
-    borderRadius: "5px",
-    fontWeight: "bold",
-    cursor: "pointer",
-  };
-
   const carregarPropriedades = async () => {
     try {
       setLoading(true);
-
       const response = await api.get("propriedades/");
-
-      // Trata resposta paginada ou direta
-      const lista = response.data.results || response.data;
+      const lista = response.data.results || response.data || [];
       setPropriedades(Array.isArray(lista) ? lista : []);
 
-      if (lista.length > 0) {
-        setSelectedProperty(lista[0].id);
-      }
+      if (lista.length > 0) setSelectedProperty(lista[0].id);
     } catch (error) {
       console.error("Erro ao carregar propriedades:", error);
-      setError("Não foi possível carregar as propriedades.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (selectedProperty) {
-      carregarLaudos(selectedProperty);
-    }
+    if (selectedProperty) carregarLaudos(selectedProperty);
   }, [selectedProperty]);
 
   const carregarLaudos = async (propriedadeId) => {
     try {
-      const response = await api.get(
-        `laudos/por_propriedade/?propriedade_id=${propriedadeId}`,
-      );
-
-      // Trata resposta paginada ou direta
-      const data = response.data.results || response.data;
+      const response = await api.get(`laudos/por_propriedade/?propriedade_id=${propriedadeId}`);
+      const data = response.data.results || response.data || [];
       setLaudos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao carregar laudos:", error);
@@ -108,10 +71,8 @@ const CentralLaudos = () => {
   const agruparPorData = (laudos) => {
     return laudos.reduce((acc, laudo) => {
       const data = laudo.data_coleta;
-
       if (!acc[data]) acc[data] = [];
       acc[data].push(laudo);
-
       return acc;
     }, {});
   };
@@ -121,9 +82,9 @@ const CentralLaudos = () => {
       <Header />
       <PageContainer>
         {isAdmin && (
-          <button style={btnStyle} onClick={() => navigate("/admin")}>
-            Ir para Admin Panel
-          </button>
+          <AdminButton onClick={() => navigate("/admin")}>
+            ⚙️ Painel do Administrador
+          </AdminButton>
         )}
         <Title>Central de Laudos</Title>
         <Content>
@@ -140,15 +101,15 @@ const CentralLaudos = () => {
                 />
               ))
             ) : (
-              <p>Nenhuma propriedade encontrada</p>
+              <p style={{ color: '#777' }}>Nenhuma propriedade encontrada.</p>
             )}
           </Properties>
 
           <Reports>
-            <Subtitle>Laudos</Subtitle>
+            <Subtitle>Laudos Disponíveis</Subtitle>
             <ReportList>
-              {Object.entries(agruparPorData(laudos)).map(
-                ([data, laudosDoDia]) => (
+              {laudos.length > 0 ? (
+                Object.entries(agruparPorData(laudos)).map(([data, laudosDoDia]) => (
                   <ReportsCard
                     key={data}
                     data={data}
@@ -158,7 +119,9 @@ const CentralLaudos = () => {
                       arquivoUrl: l.arquivo_url || null,
                     }))}
                   />
-                ),
+                ))
+              ) : (
+                <p style={{ color: '#777' }}>Selecione uma propriedade para ver os laudos.</p>
               )}
             </ReportList>
           </Reports>

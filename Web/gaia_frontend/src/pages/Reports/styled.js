@@ -1,62 +1,118 @@
 import styled from "styled-components";
+import { green, white, gray, black } from "../../config/colors";
 
 export const FullPageContainer = styled.div`
-  font-family: "K2D", sans-serif;
-  color: #222;
-`;
-
-export const Title = styled.h1`
-  text-align: center;
-  margin-bottom: 1rem;
-`;
-
-export const Content = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: start;
-  background-color: #f9f9f9;
-  width: fit-content;
-  margin: 0 auto;
-  padding: 20px;
-  border-radius: 10px;
-  border: 1px solid #2e7d32;
-  overflow: hidden;
-  margin-bottom: 40px;
-`;
-
-export const Properties = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  max-height: 450px; /* altura máxima visível */
-  overflow-y: auto;
-  padding-right: 10px; /* evita o texto encostar na barra */
-
-  width: 450px;
-`;
-
-export const Reports = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-export const ReportList = styled.div`
-  overflow-y: auto;
-  max-height: 400px;
-  padding-right: 10px;
-  height: 450px;
+  min-height: 100vh;
+  background-color: ${gray};
+  width: 100%;
+  overflow-x: hidden; /* Trava mestre: corta o que tentar vazar da tela */
 `;
 
 export const PageContainer = styled.div`
   padding: 20px;
-  padding-left: 40px;
-  padding-right: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+  box-sizing: border-box; /* Garante que o padding fique pra dentro */
+
+  @media (max-width: 600px) {
+    padding: 10px; /* Menos margem no celular para aproveitar a tela */
+  }
 `;
 
-export const Subtitle = styled.h3`
-  font-weight: 600;
+export const Title = styled.h1`
+  text-align: center;
+  color: ${green};
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 30px;
+  
+  @media (max-width: 600px) {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+`;
+
+export const Content = styled.div`
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+export const Properties = styled.div`
+  flex: 1;
+  background: ${white};
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  
+  /* Travas anti-vazamento no mobile */
+  width: 100%;
+  min-width: 0; 
+  box-sizing: border-box;
+
+  @media (max-width: 600px) {
+    padding: 15px;
+  }
+`;
+
+export const Reports = styled.div`
+  flex: 2;
+  background: ${white};
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  
+  /* Travas anti-vazamento no mobile */
+  width: 100%;
+  min-width: 0; 
+  box-sizing: border-box;
+
+  @media (max-width: 600px) {
+    padding: 15px;
+  }
+`;
+
+export const ReportList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+`;
+
+export const Subtitle = styled.h2`
+  color: ${black};
   font-size: 1.5rem;
-  color: #333;
-  font-family: "Poppins", sans-serif;
+  border-bottom: 2px solid ${green};
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-family: 'Poppins', sans-serif;
+
+  @media (max-width: 600px) {
+    font-size: 1.2rem;
+  }
+`;
+
+export const AdminButton = styled.button`
+  display: block;
+  margin: 0 auto 20px auto;
+  padding: 10px 20px;
+  background-color: #ffc107;
+  color: #000;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+
+  &:hover {
+    background-color: #e0a800;
+  }
 `;
