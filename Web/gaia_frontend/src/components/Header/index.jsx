@@ -1,5 +1,4 @@
-import { useState } from "react"; // ← ADICIONE ESTA LINHA
-import Logo_lab_Branco from "../../assets/images/Logo_lab_Branco.svg";
+import { useState } from "react";
 import {
   Logo,
   HeaderContainer,
@@ -7,6 +6,7 @@ import {
   ProfileText,
   LogoutButton,
   ChangePasswordButton,
+  ButtonGroup 
 } from "./styled.js";
 import { CgProfile, CgLogOut } from "react-icons/cg";
 import { MdVpnKey } from "react-icons/md";
@@ -24,19 +24,13 @@ export default function Header() {
   try {
     user = userRaw ? JSON.parse(userRaw) : null;
   } catch (error) {
-    console.error("Erro ao parsear user:", error);
     localStorage.removeItem("user");
   }
 
-  // Função que abre o modal
-  const handleLogoutClick = () => {
-    setShowLogoutModal(true);
-  };
+  const handleLogoutClick = () => setShowLogoutModal(true);
 
-  // Função que executa o logout (chamada pelo modal)
   const handleLogout = async () => {
     setLogoutLoading(true);
-
     try {
       // 1. PRIMEIRO: Chamar endpoint de logout no servidor
       //    Backend vai limpar os httpOnly cookies e sessão
@@ -56,12 +50,11 @@ export default function Header() {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Fecha modal
+      localStorage.removeItem("token");
+      localStorage.removeItem("refresh");
+      localStorage.removeItem("user");
       setShowLogoutModal(false);
-
-      // Redireciona para login
       navigate("/login");
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
     } finally {
       setLogoutLoading(false);
     }
@@ -70,33 +63,24 @@ export default function Header() {
   return (
     <>
       <HeaderContainer>
-        {/* <Logo src={Logo_lab_Branco} alt="Logo" /> */}
-
         <ProfileIcon>
-          <CgProfile size={60} />
-          <ProfileText>{user ? user.nome : "Visitante"}</ProfileText>
+          <CgProfile size={50} /> 
+          <ProfileText>
+            {user ? `${user.first_name} ${user.last_name}` : "Visitante"}
+          </ProfileText>
         </ProfileIcon>
-
-        {/* Botão para alterar senha */}
-        <ChangePasswordButton onClick={() => navigate("/change-password")}>
-          <MdVpnKey size={24} />
-          Alterar Senha
-        </ChangePasswordButton>
-
-        {/* Botão abre o modal, não faz logout direto */}
-        <LogoutButton onClick={handleLogoutClick}>
-          <CgLogOut size={24} />
-          Sair
-        </LogoutButton>
+        <ButtonGroup>
+          <ChangePasswordButton onClick={() => navigate("/change-password")}>
+            <MdVpnKey size={20} />
+            Alterar Senha
+          </ChangePasswordButton>
+          <LogoutButton onClick={handleLogoutClick}>
+            <CgLogOut size={20} />
+            Sair
+          </LogoutButton>
+        </ButtonGroup>
       </HeaderContainer>
-
-      {/* Modal de confirmação */}
-      <LogoutModal
-        isOpen={showLogoutModal}
-        onClose={() => !logoutLoading && setShowLogoutModal(false)}
-        onConfirm={handleLogout}
-        loading={logoutLoading}
-      />
+      <LogoutModal isOpen={showLogoutModal} onClose={() => !logoutLoading && setShowLogoutModal(false)} onConfirm={handleLogout} loading={logoutLoading} />
     </>
   );
 }

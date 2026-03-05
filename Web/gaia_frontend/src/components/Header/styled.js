@@ -1,27 +1,32 @@
 import styled from "styled-components";
-import {gray, black, green} from "../../config/colors"
+import { gray, black, green } from "../../config/colors";
 
 export const HeaderContainer = styled.header`
   width: 100%;
+  box-sizing: border-box;
   display: flex;
-  align-items: flex-start;
-  padding: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
   background-color: ${gray};
+  flex-wrap: wrap;
+  gap: 15px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    justify-content: center;
+    padding: 15px;
+  }
 `;
 
 export const Logo = styled.img`
   height: 70px;
-  justify-self: flex-start;
-  padding-left: 4px;
+  @media (max-width: 600px) { height: 50px; }
 `;
 
 export const ProfileIcon = styled.div`
-  margin-left: 36px;
-  height: 70px;
   display: flex;
-  justify-self: flex-start;
   align-items: center;
-  padding-right: 20px;
 `;
 
 export const ProfileText = styled.span`
@@ -29,42 +34,21 @@ export const ProfileText = styled.span`
   color: ${black};
   margin-left: 8px;
   font-family: 'Poppins', sans-serif !important;
-  align-self: center;
+
+  @media (max-width: 600px) {
+    font-size: 16px; /* Reduzi de 20px para 16px no celular! */
+  }
 `;
 
-export const LogoutButton = styled.button`
+export const ButtonGroup = styled.div`
   display: flex;
-  margin-left: auto;
-  align-items: center;
-  align-self: center;
-  gap: 3px;
-  padding: 10px 20px;
-  background: ${green};
-  border: 2px solid white;
-  color: white;
-  border-radius: 6px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 160px;
-  justify-content: center;
-  
-  &:hover {
-    background: white;
-    color: #2e7d32;
-  }
-  
-  &:active {
-    transform: scale(0.98);
-  }
+  gap: 10px;
+  @media (max-width: 600px) { width: 100%; }
 `;
 
 export const ChangePasswordButton = styled.button`
   display: flex;
-  margin-right: 16px;
   align-items: center;
-  align-self: center;
   gap: 8px;
   padding: 10px 20px;
   background: #2196f3;
@@ -77,12 +61,33 @@ export const ChangePasswordButton = styled.button`
   transition: all 0.3s ease;
   justify-content: center;
   
-  &:hover {
-    background: white;
-    color: #2196f3;
+  &:hover { background: white; color: #2196f3; }
+  &:active { transform: scale(0.98); }
+
+  @media (max-width: 600px) {
+    flex: 1; padding: 8px 10px; font-size: 14px;
   }
+`;
+
+export const LogoutButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 20px;
+  background: ${green};
+  border: 2px solid white;
+  color: white;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  justify-content: center;
   
-  &:active {
-    transform: scale(0.98);
+  &:hover { background: white; color: #2e7d32; }
+  &:active { transform: scale(0.98); }
+
+  @media (max-width: 600px) {
+    flex: 1; padding: 8px 10px; font-size: 14px; width: auto;
   }
 `;
