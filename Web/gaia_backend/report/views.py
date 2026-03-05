@@ -2,7 +2,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import FileResponse
@@ -23,6 +23,28 @@ class PersonViewSet(viewsets.ModelViewSet):
     filterset_fields = ['cpf', 'email']
     search_fields = ['name', 'cpf', 'email', 'phone_number']
     ordering_fields = ['name', 'nascimento']
+
+    def get_permissions(self):
+        """Apenas admins podem deletar pessoas"""
+        if self.action == 'destroy':
+            return [IsAdminUser()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        """Restringe acesso por dono para evitar IDOR."""
+        user = self.request.user
+        if user.is_staff:
+            return Person.objects.all()
+
+        query = Q()
+        if hasattr(user, 'cpf') and user.cpf:
+            query |= Q(cpf=user.cpf)
+        if user.email:
+            query |= Q(email=user.email)
+
+        if not query:
+            return Person.objects.none()
+        return Person.objects.filter(query).distinct()
     
     def destroy(self, request, *args, **kwargs):
         """
@@ -88,11 +110,35 @@ class EnderecoViewSet(viewsets.ModelViewSet):
     search_fields = ['rua', 'cidade', 'estado', 'cep']
     ordering_fields = ['cidade', 'estado']
 
+    def get_queryset(self):
+        """Restringe endereços aos recursos vinculados ao usuário logado."""
+        user = self.request.user
+        if user.is_staff:
+            return Endereco.objects.all()
+
+        query = Q(propriedade__usuario=user)
+
+        if hasattr(user, 'cpf') and user.cpf:
+            query |= Q(person__cpf=user.cpf)
+            query |= Q(propriedade__proprietario_pessoa__cpf=user.cpf)
+
+        if hasattr(user, 'cnpj') and user.cnpj:
+            query |= Q(empresa__cnpj=user.cnpj)
+            query |= Q(propriedade__proprietario_empresa__cnpj=user.cnpj)
+
+        return Endereco.objects.filter(query).distinct()
+
 class PropriedadeViewSet(viewsets.ModelViewSet):
     queryset = Propriedade.objects.all()
     serializer_class = PropriedadeSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None  # Desabilita paginação (usuários geralmente têm poucas propriedades)
+
+    def get_permissions(self):
+        """Apenas admins podem deletar propriedades"""
+        if self.action == 'destroy':
+            return [IsAdminUser()]
+        return super().get_permissions()
 
     def get_queryset(self):
         """Filtra propriedades do usuário logado (ou todas se admin)"""
@@ -132,7 +178,12 @@ class LaudoViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['propriedade', 'ativo']
     search_fields = ['numero_amostra']
-    pagination_class = None  # Desabilita paginação para laudos (geralmente poucos por propriedade)
+
+    def get_permissions(self):
+        """Apenas admins podem deletar laudos"""
+        if self.action == 'destroy':
+            return [IsAdminUser()]
+        return super().get_permissions()
 
     def get_queryset(self):
         """Filtra laudos das propriedades do usuário (ou todas se admin)"""
@@ -337,7 +388,12 @@ class AmostraViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['propriedade', 'ativo', 'classificacao']
     search_fields = ['numero_amostra', 'descricao']
-    pagination_class = None  # Desabilita paginação (amostras geralmente filtradas por propriedade)
+    
+    def get_permissions(self):
+        """Apenas admins podem deletar amostras"""
+        if self.action == 'destroy':
+            return [IsAdminUser()]
+        return super().get_permissions()
     
     def get_queryset(self):
         """Filtra amostras pelas propriedades do usuário"""
@@ -622,6 +678,28 @@ class EmpresaViewSet(viewsets.ModelViewSet):
     filterset_fields = ['cnpj', 'email']
     search_fields = ['name', 'cnpj', 'email', 'telefone']
     ordering_fields = ['name']
+
+    def get_permissions(self):
+        """Apenas admins podem deletar empresas"""
+        if self.action == 'destroy':
+            return [IsAdminUser()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        """Restringe acesso por dono para evitar IDOR."""
+        user = self.request.user
+        if user.is_staff:
+            return Empresa.objects.all()
+
+        query = Q()
+        if hasattr(user, 'cnpj') and user.cnpj:
+            query |= Q(cnpj=user.cnpj)
+        if user.email:
+            query |= Q(email=user.email)
+
+        if not query:
+            return Empresa.objects.none()
+        return Empresa.objects.filter(query).distinct()
     
     def destroy(self, request, *args, **kwargs):
         """

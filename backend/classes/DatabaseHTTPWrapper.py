@@ -137,7 +137,7 @@ class DatabaseHTTPWrapper:
             
             if response.status_code == 200:
                 data = response.json()
-                self.token = data.get("access")
+                self.token = data.get("access_token")  # ✅ CORRIGIDO: era "access"
                 if self.token:
                     self.headers["Authorization"] = f"Bearer {self.token}"
                     return True
@@ -169,7 +169,7 @@ class DatabaseHTTPWrapper:
 
             if response.status_code == 200:
                 data = response.json()
-                self.token = data.get("access")
+                self.token = data.get("access_token")  # ✅ CORRIGIDO: era "access"
                 if self.token:
                     self.headers["Authorization"] = f"Bearer {self.token}"
                     return True

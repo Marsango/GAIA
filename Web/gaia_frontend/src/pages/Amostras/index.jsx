@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api";
+import api from "../../api/api"; // ✅ API com interceptors e auto-refresh
 import "./styles.css";
 
 export default function Amostras() {
@@ -9,12 +9,11 @@ export default function Amostras() {
   const [loading, setLoading] = useState(false);
   const [convenio, setConvenio] = useState("UTFPR");
   const [error, setError] = useState(null);
-
   // Verifica autenticação ao carregar
   useEffect(() => {
-    const token =
-      localStorage.getItem("token") || localStorage.getItem("access_token");
-    if (!token) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!user.id) {
       navigate("/login", { replace: true });
       return;
     }
@@ -26,12 +25,8 @@ export default function Amostras() {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("access_token");
-      const response = await api.get("/amostras/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // ✅ NOVO: Token em httpOnly cookie, axios envia automaticamente
+      const response = await api.get("/amostras/");
 
       setAmostras(response.data.results || response.data);
     } catch (err) {
@@ -47,15 +42,11 @@ export default function Amostras() {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("access_token");
-
+      // ✅ NOVO: Token em httpOnly cookie, axios envia automaticamente
       // Fazer requisição para gerar PDF
       const response = await api.get(
         `/amostras/${amostraId}/gerar_laudo/?convenio=${encodeURIComponent(convenio)}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
           responseType: "blob", // Importante para baixar arquivo
         },
       );

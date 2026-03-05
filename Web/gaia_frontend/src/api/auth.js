@@ -2,30 +2,68 @@ import axios from "axios";
 
 const API_URL = "http://localhost:8000/api"; // URL base do seu backend
 
-export async function login(cpf, password) {
+export async function loginSecureCPF(cpf, password, captchaToken = null, captchaAnswer = null) {
   try {
-    const response = await axios.post(`${API_URL}/login/`, {
+    const payload = {
       cpf,
       password,
+    };
+
+    if (captchaToken && captchaAnswer) {
+      payload.captcha_token = captchaToken;
+      payload.captcha_answer = captchaAnswer;
+    }
+
+    const response = await axios.post(`${API_URL}/login/cpf/secure/`, payload, {
+      withCredentials: true,
     });
-    console.log("Usuário logado:", response.data);
-    return response.data; // Retorna os dados do usuário
+
+    return response.data;
   } catch (error) {
-    console.error("Erro no login:", error.response?.data || error.message);
     throw error;
   }
 }
 
-export async function loginWithCNPJ(cnpj, password) {
+export async function login(cpf, password, captchaToken = null, captchaAnswer = null) {
   try {
-    const response = await axios.post(`${API_URL}/login/cnpj/`, {
+    const payload = {
+      cpf,
+      password,
+    };
+
+    if (captchaToken && captchaAnswer) {
+      payload.captcha_token = captchaToken;
+      payload.captcha_answer = captchaAnswer;
+    }
+
+    const response = await axios.post(`${API_URL}/login/cpf/secure/`, payload, {
+      withCredentials: true,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function loginWithCNPJ(cnpj, password, captchaToken = null, captchaAnswer = null) {
+  try {
+    const payload = {
       cnpj,
       password,
+    };
+
+    if (captchaToken && captchaAnswer) {
+      payload.captcha_token = captchaToken;
+      payload.captcha_answer = captchaAnswer;
+    }
+
+    const response = await axios.post(`${API_URL}/login/cnpj/secure/`, payload, {
+      withCredentials: true,
     });
-    console.log("Empresa logada:", response.data);
-    return response.data; // Retorna os dados do usuário
+
+    return response.data;
   } catch (error) {
-    console.error("Erro no login com CNPJ:", error.response?.data || error.message);
     throw error;
   }
 }

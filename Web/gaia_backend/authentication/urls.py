@@ -8,8 +8,12 @@ urlpatterns = [
     path('user-info/', views.current_user, name='current-user'),
     path('sync/usuario/', views.sync_usuario, name='sync-usuario'),
     path('list/usuarios/', views.list_usuarios, name='list-usuarios'),
-    path('login/cpf/', views.login_with_cpf, name='login-with-cpf'),
-    path('login/cnpj/', views.login_with_cnpj, name='login-with-cnpj'),
+    path('token/refresh-cookie/', views.refresh_token_from_cookie, name='token-refresh-cookie'),
+
+    # 🔒 Endpoints com segurança progressiva + CAPTCHA
+    path('login/cpf/secure/', views.login_with_cpf_secure, name='login-cpf-secure'),
+    path('login/cnpj/secure/', views.login_with_cnpj_secure, name='login-cnpj-secure'),
+    path('captcha/verify/', views.verify_captcha_endpoint, name='captcha-verify'),
 
     # Novas rotas
     path('register/', views.register_client_email, name='register-client'),

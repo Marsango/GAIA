@@ -65,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'config.middleware.JWTCookieToHeaderMiddleware',  # ✅ NOVO: Converte cookie → header
     'config.middleware.SecurityHeadersMiddleware',  # Headers de segurança customizados
 ]
 
@@ -124,6 +125,19 @@ DATABASES = {
     }
 }
 
+# ===============================================
+# 🔐 Cache Configuration (necessário para Rate Limiting)
+# ===============================================
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'gaia-ratelimit-cache',
+        'TIMEOUT': 3600,  # 1 hora
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -203,6 +217,15 @@ SIMPLE_JWT = {
 # Static files (CSS, JS, imagens do próprio Django)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# ===============================================
+# 🔒 SEGURANÇA: httpOnly Cookies (Proteção contra XSS)
+# ===============================================
+# EM DESENVOLVIMENTO: Ativado para testar; em PRODUÇÃO: controlled by if not DEBUG
+SESSION_COOKIE_HTTPONLY = True      # ✅ Cookies inacessíveis via JavaScript
+CSRF_COOKIE_HTTPONLY = True         # ✅ CSRF token inacessível via JavaScript
+SESSION_COOKIE_SAMESITE = 'Lax'     # ✅ Mitiga CSRF attacks
+CSRF_COOKIE_SAMESITE = 'Lax'        # ✅ Mitiga CSRF attacks
 
 # Segurança para produção
 if not DEBUG:

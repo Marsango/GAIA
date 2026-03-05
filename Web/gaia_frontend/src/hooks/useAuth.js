@@ -28,22 +28,16 @@ export function useAuth() {
   }, []);
 
   // Função de login
-  const login = (userData, tokens) => {
-    // Salva tokens se fornecidos
-    if (tokens) {
-      localStorage.setItem("access_token", tokens.access);
-      localStorage.setItem("refresh_token", tokens.refresh);
-    }
-    
-    // Salva dados do usuário
+  const login = (userData) => {
+    // ✅ NOVO: Tokens são armazenados em httpOnly cookies pelo servidor
+    // Apenas armazenar dados do usuário
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
   };
 
   // Função de logout
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    // ✅ NOVO: Cookies são removidos pelo endpoint /logout do servidor
     localStorage.removeItem("user");
     setUser(null);
   };

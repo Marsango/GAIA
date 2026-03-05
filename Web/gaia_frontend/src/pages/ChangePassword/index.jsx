@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api";
+import api from "../../api/api"; // ✅ CORRIGIDO: usar o api com interceptors
 import logo from "../../assets/images/Logo_lab_Branco.svg";
 import { styles } from "./styled";
 import { lightGray, black } from "../../config/colors.js";
@@ -81,32 +81,17 @@ export default function ChangePassword() {
   const sendChangePasswordRequest = async (currentPass, newPass) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setError("Sessão expirada. Faça login novamente.");
-        setTimeout(() => navigate("/login"), 2000);
-        return;
-      }
-
-      await api.post(
-        "/change-password/",
-        {
-          old_password: currentPass,
-          new_password: newPass,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      // ✅ Token automático via api.js interceptor
+      await api.post("change-password/", {
+        // ← CORRIGIDO: /api/change-password/
+        old_password: currentPass,
+        new_password: newPass,
+      });
 
       setMessage("Senha definida com sucesso! Redirecionando...");
 
-      localStorage.removeItem("token");
+      // Logout: remover apenas dados de usuário (tokens já estão em cookies)
       localStorage.removeItem("user");
-      localStorage.removeItem("refresh");
 
       setTimeout(() => {
         navigate("/login");

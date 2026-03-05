@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { IoMdDownload } from "react-icons/io";
+import api from "../../api/api";
 import {
   Card,
   Header,
@@ -70,16 +71,12 @@ const ReportCard = ({ data, amostras }) => {
                   <Button
                     onClick={async () => {
                       try {
-                        const response = await fetch(laudo.arquivoUrl, {
-                          method: "GET",
-                          headers: {
-                            Authorization: `Bearer ${localStorage.getItem(
-                              "token",
-                            )}`,
-                          },
+                        // ✅ NOVO: Usar axios/api com httpOnly cookies ao invés de fetch manual
+                        const response = await api.get(laudo.arquivoUrl, {
+                          responseType: "blob",
                         });
 
-                        const blob = await response.blob();
+                        const blob = response.data;
                         const url = window.URL.createObjectURL(blob);
 
                         const link = document.createElement("a");

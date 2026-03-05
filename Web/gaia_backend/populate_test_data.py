@@ -261,12 +261,12 @@ def popular_banco():
     """Função principal para popular o banco"""
     
     print("\n" + "="*70)
-    print("🌾 POPULANDO BANCO DE DADOS COM DADOS DE TESTE")
+    print(" POPULANDO BANCO DE DADOS COM DADOS DE TESTE")
     print("="*70)
     
     try:
         # Limpar dados antigos (opcional)
-        print("\n🗑️ Limpando dados antigos...")
+        print("\n Limpando dados antigos...")
         Laudo.objects.all().delete()
         Amostra.objects.all().delete()
         Propriedade.objects.all().delete()
@@ -287,26 +287,74 @@ def popular_banco():
         
         # Criar amostras (3 por propriedade)
         amostras = criar_amostras(propriedades, quantidade_por_propriedade=3)
-        
+
+        # Criar mais de 50 amostras na MESMA DATA para outra propriedade
+        propriedade_muitas_amostras = propriedades[1]
+        data_unica = datetime.now().date()
+        print(
+            f"\n🧪 Criando 55 amostras na mesma data para: {propriedade_muitas_amostras.name}..."
+        )
+        ultimo_numero_amostra = Amostra.objects.all().order_by('numero_amostra').last()
+        proximo_numero_amostra = (
+            ultimo_numero_amostra.numero_amostra + 1 if ultimo_numero_amostra else 1
+        )
+        amostras_extras = []
+        for i in range(55):
+            amostra_extra = Amostra.objects.create(
+                numero_amostra=proximo_numero_amostra + i,
+                data_coleta=data_unica,
+                descricao="Amostra extra coletada no mesmo dia",
+                propriedade=propriedade_muitas_amostras,
+                area_total=random.uniform(10, 200),
+                latitude=random.uniform(-27, -22),
+                longitude=random.uniform(-52, -48),
+                profundidade=random.choice([10, 15, 20, 25]),
+                ph=round(random.uniform(4.5, 7.5), 2),
+                smp=round(random.uniform(3.0, 7.0), 2),
+                fosforo=round(random.uniform(5, 50), 2),
+                potassio=round(random.uniform(30, 300), 2),
+                materia_organica=round(random.uniform(1.5, 8.0), 2),
+                aluminio=round(random.uniform(0, 3), 2),
+                h_al=round(random.uniform(0.5, 10), 2),
+                calcio=round(random.uniform(0.5, 8), 2),
+                magnesio=round(random.uniform(0.2, 4), 2),
+                cobre=round(random.uniform(0.5, 5), 2),
+                ferro=round(random.uniform(10, 100), 2),
+                manganes=round(random.uniform(1, 10), 2),
+                zinco=round(random.uniform(0.5, 15), 2),
+                soma_bases=round(random.uniform(1, 15), 2),
+                ctc=round(random.uniform(5, 30), 2),
+                v_percent=round(random.uniform(10, 90), 2),
+                saturacao_aluminio=round(random.uniform(0, 50), 2),
+                ctc_efetiva=round(random.uniform(5, 30), 2),
+                argila=round(random.uniform(10, 60), 2),
+                silte=round(random.uniform(10, 50), 2),
+                areia=round(random.uniform(10, 70), 2),
+                classificacao=random.choice(["AD0", "AD1", "AD2", "AD3", "AD4", "AD5", "AD6"]),
+            )
+            amostras_extras.append(amostra_extra)
+        amostras.extend(amostras_extras)
+        print(f"   ✅ 55 amostras extras criadas para {propriedade_muitas_amostras.name}!")
+
         # Criar laudos
         laudos = criar_laudos(amostras)
-        
-        # Criar 20 laudos adicionais para a primeira propriedade de João
+
+        # Criar mais de 50 laudos adicionais para a primeira propriedade de João
         primeira_propriedade = propriedades[0]
-        print(f"\n📄 Criando 20 laudos adicionais para: {primeira_propriedade.name}...")
+        print(f"\n📄 Criando 60 laudos adicionais para: {primeira_propriedade.name}...")
         # Descobrir o próximo numero_amostra
         ultimo_numero = Laudo.objects.all().order_by('numero_amostra').last()
         proximo_numero = (ultimo_numero.numero_amostra + 1) if ultimo_numero else 1
-        
-        for i in range(20):
-            laudo_extra = Laudo.objects.create(
+
+        for i in range(60):
+            Laudo.objects.create(
                 numero_amostra=proximo_numero + i,
                 data_coleta=datetime.now().date(),
                 propriedade=primeira_propriedade,
                 ativo=True,
                 publicado=random.choice([True, False, True]),
             )
-        print(f"   ✅ 20 laudos adicionais criados para {primeira_propriedade.name}!")
+        print(f"   ✅ 60 laudos adicionais criados para {primeira_propriedade.name}!")
         
         # Resumo
         print("\n" + "="*70)

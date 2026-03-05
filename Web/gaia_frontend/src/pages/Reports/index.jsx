@@ -25,11 +25,11 @@ const CentralLaudos = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // Verifica autenticação ao carregar a página
   useEffect(() => {
-    if (!token) {
+    if (!user.id) {
       navigate("/login", { replace: true });
       return;
     }

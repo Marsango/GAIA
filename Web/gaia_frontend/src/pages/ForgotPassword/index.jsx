@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api"; // Sua configuração do axios
+import api from "../../api/api"; // ✅ API com interceptors e auto-refresh
 import logo from "../../assets/images/Logo_lab_Branco.svg";
 import { styles } from "./styled";
 import InputLogin from "../../components/InputLogin";

@@ -13,11 +13,11 @@ from backend.classes.Property import Property
 from backend.classes.exceptions import CNPJAlreadyExistsError
 from backend.classes.utils import to_dict  # Assumindo que existe
 
-print("📦 Módulo DatabaseHTTP.py sendo importado/recarregado", flush=True)
+print("Módulo DatabaseHTTP.py sendo importado/recarregado", flush=True)
 
 class DatabaseHTTP:
     def __init__(self, base_url: str = "http://localhost:8000"):
-        print(f"\n🏗️  Inicializando DatabaseHTTP com base_url={base_url}", flush=True)
+        print(f"\n Inicializando DatabaseHTTP com base_url={base_url}", flush=True)
         self.base_url = base_url.rstrip('/')
         self.token: Optional[str] = None
         self.headers = {
@@ -32,7 +32,7 @@ class DatabaseHTTP:
         
         # Auto login ao iniciar
         self._auto_login()
-        print(f"✅ DatabaseHTTP inicializado. Token: {'OK' if self.token else 'FALHOU'}", flush=True)
+        print(f"DatabaseHTTP inicializado. Token: {'OK' if self.token else 'FALHOU'}", flush=True)
     
     def _normalize_cpf(self, cpf: str) -> str:
         """Remove formatação do CPF, deixando apenas 11 dígitos"""
@@ -82,11 +82,11 @@ class DatabaseHTTP:
                     continue
 
             # Se nenhum formato funcionou, print debug e retorna None
-            print(f"   ⚠️  Nenhum formato de data reconhecido: {date_str}")
-            print(f"      Formatos suportados: DD/MM/YYYY, DD/MM/YY, YYYY-MM-DD")
+            print(f"Nenhum formato de data reconhecido: {date_str}")
+            print(f"Formatos suportados: DD/MM/YYYY, DD/MM/YY, YYYY-MM-DD")
             return None
         except Exception as e:
-            print(f"   ⚠️  Erro ao converter data {date_str}: {e}")
+            print(f"Erro ao converter data {date_str}: {e}")
             return None
     
     def _auto_login(self) -> bool:
@@ -105,22 +105,22 @@ class DatabaseHTTP:
             
             if response.status_code == 200:
                 data = response.json()
-                self.token = data.get("access")
+                self.token = data.get("access_token")  # ✅ CORRIGIDO: era "access"
                 if self.token:
                     self.headers["Authorization"] = f"Bearer {self.token}"
-                    print(f"✅ Login automático realizado!")
+                    print(f"Login automático realizado!")
                     print(f"   Token: {self.token[:50]}...")
                     
                     # Verificar se token funciona
                     self._verify_token()
                     return True
                 else:
-                    print(f"❌ Token não encontrado na resposta")
+                    print(f"Token não encontrado na resposta")
                     print(f"   Resposta: {data}")
                     return False
             
             elif response.status_code == 401:
-                print(f"❌ Credenciais inválidas")
+                print(f"Credenciais inválidas")
                 print(f"   Verifique se o usuário existe e a senha está correta")
                 
                 # Debug da resposta
@@ -133,12 +133,12 @@ class DatabaseHTTP:
                 return False
             
             else:
-                print(f"❌ Status inesperado: {response.status_code}")
+                print(f"Status inesperado: {response.status_code}")
                 print(f"   Resposta: {response.text[:200]}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Erro no login automático: {e}")
+            print(f"Erro no login automático: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -153,14 +153,14 @@ class DatabaseHTTP:
             )
             
             if response.status_code == 200:
-                print(f"✅ Token verificado com sucesso")
+                print(f"Token verificado com sucesso")
                 return True
             else:
-                print(f"❌ Token inválido. Status: {response.status_code}")
+                print(f"Token inválido. Status: {response.status_code}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Erro ao verificar token: {e}")
+            print(f"Erro ao verificar token: {e}")
             return False
     
     def _make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None) -> Any:
@@ -170,7 +170,7 @@ class DatabaseHTTP:
             
             # Se não tem token, tentar login primeiro
             if not self.token:
-                print("⚠️  Sem token, tentando login...")
+                print("Sem token, tentando login...")
                 if not self._auto_login():
                     return None
             
@@ -190,7 +190,7 @@ class DatabaseHTTP:
             print(f"   Status: {response.status_code}")
             
             if response.status_code == 401:
-                print("   🔑 Token expirado ou inválido, tentando relogin...")
+                print("Token expirado ou inválido, tentando relogin...")
                 if self._auto_login():
                     # Repetir requisição com novo token
                     return self._make_request(method, endpoint, data, params)
@@ -199,26 +199,26 @@ class DatabaseHTTP:
             if response.status_code in [200, 201]:
                 try:
                     result = response.json() if response.content else True
-                    print(f"   ✅ Sucesso!")
+                    print(f"Sucesso!")
                     return result
                 except Exception as e:
-                    print(f"   ⚠️  Erro ao parsear JSON: {e}")
+                    print(f"Erro ao parsear JSON: {e}")
                     return True
             
             if response.status_code == 204:  # No Content
-                print(f"   ✅ Sucesso (sem conteúdo)")
+                print(f"Sucesso (sem conteúdo)")
                 return True
             
             # Erros
             if response.status_code == 404:
-                print(f"   ❌ Endpoint não encontrado: {endpoint}")
+                print(f"Endpoint não encontrado: {endpoint}")
             elif response.status_code == 400:
                 # Erro de validação - mostrar detalhes COMPLETOS
                 try:
                     error_data = response.json()
-                    print(f"   ❌ Erro de validação {response.status_code}:")
-                    print(f"      Dados enviados: {json.dumps(data, indent=2)}")
-                    print(f"      Erros retornados:")
+                    print(f"Erro de validação {response.status_code}:")
+                    print(f"Dados enviados: {json.dumps(data, indent=2)}")
+                    print(f"Erros retornados:")
                     for field, errors in error_data.items():
                         if isinstance(errors, list):
                             for error in errors:
@@ -226,19 +226,20 @@ class DatabaseHTTP:
                         else:
                             print(f"         - {field}: {errors}")
                 except Exception as e:
-                    print(f"   ❌ Erro {response.status_code}: {response.text[:500]}")
+                    print(f"Erro ao processar erros de validação: {e}")
+                    print(f"Erro {response.status_code}: {response.text[:500]}")
             elif response.status_code >= 400:
                 try:
                     error_data = response.json()
-                    print(f"   ❌ Erro HTTP {response.status_code}:")
-                    print(f"      {json.dumps(error_data, indent=2)[:200]}")
+                    print(f"Erro HTTP {response.status_code}:")
+                    print(f"   {json.dumps(error_data, indent=2)[:200]}")
                 except:
-                    print(f"   ❌ Erro {response.status_code}: {response.text[:200]}")
+                    print(f"Erro {response.status_code}: {response.text[:200]}")
             
             return None
             
         except Exception as e:
-            print(f"❌ Erro na requisição {method} {endpoint}: {e}")
+            print(f"Erro na requisição {method} {endpoint}: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -248,7 +249,7 @@ class DatabaseHTTP:
     def insert_person(self, person: Person, address: Address = None) -> Optional[int]:
         """Cadastra pessoa - VERSÃO CORRIGIDA"""
         try:
-            print(f"\n➕ Cadastrando nova pessoa...")
+            print(f"\nCadastrando nova pessoa...")
             
             # Converter objetos para dict
             person_dict = to_dict(person)
@@ -263,13 +264,13 @@ class DatabaseHTTP:
             missing_fields = [field for field in required_fields if not person_dict.get(field)]
             
             if missing_fields:
-                print(f"❌ Campos obrigatórios faltando: {missing_fields}")
+                print(f"Campos obrigatórios faltando: {missing_fields}")
                 return None
             
             # 2. Criar endereço primeiro (se fornecido)
             endereco_id = None
             if address_dict and any(address_dict.values()):
-                print(f"🔨 Criando endereço...")
+                print(f"Criando endereço...")
                 
                 endereco_data = {
                     "cep": address_dict.get("cep", ""),
@@ -289,13 +290,13 @@ class DatabaseHTTP:
                 
                 if endereco_result and 'id' in endereco_result:
                     endereco_id = endereco_result['id']
-                    print(f"✅ Endereço criado (ID: {endereco_id})")
+                    print(f"Endereço criado (ID: {endereco_id})")
                 else:
-                    print(f"❌ Falha ao criar endereço")
+                    print(f"Falha ao criar endereço")
                     return None
             
             # 3. Criar pessoa
-            print(f"👤 Criando pessoa...")
+            print(f"Criando pessoa...")
             
             pessoa_data = {
                 "name": person_dict.get("name", ""),           # Campo deve ser "name"
@@ -318,14 +319,14 @@ class DatabaseHTTP:
             
             if pessoa_result and 'id' in pessoa_result:
                 pessoa_id = pessoa_result['id']
-                print(f"✅ Pessoa cadastrada com sucesso (ID: {pessoa_id})")
+                print(f"Pessoa cadastrada com sucesso (ID: {pessoa_id})")
                 return pessoa_id
             
-            print(f"❌ Falha ao cadastrar pessoa")
+            print(f"Falha ao cadastrar pessoa")
             return None
             
         except Exception as e:
-            print(f"❌ Erro ao cadastrar pessoa: {e}")
+            print(f"Erro ao cadastrar pessoa: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -407,13 +408,13 @@ class DatabaseHTTP:
             
             if result:
                 prop_id = result.get("id")
-                print(f"✅ Propriedade {data['nome']} cadastrada com ID: {prop_id}")
+                print(f"Propriedade {data['nome']} cadastrada com ID: {prop_id}")
                 return prop_id
             
             return None
             
         except Exception as e:
-            print(f"❌ Erro ao cadastrar propriedade: {e}")
+            print(f"Erro ao cadastrar propriedade: {e}")
             return None
     
     def get_properties(self, **kwargs) -> List[Dict]:
@@ -483,13 +484,13 @@ class DatabaseHTTP:
             
             if result:
                 amostra_id = result.get("id")
-                print(f"✅ Amostra {sample_number} cadastrada com ID: {amostra_id}")
+                print(f"Amostra {sample_number} cadastrada com ID: {amostra_id}")
                 return amostra_id
             
             return None
             
         except Exception as e:
-            print(f"❌ Erro ao cadastrar amostra: {e}")
+            print(f"Erro ao cadastrar amostra: {e}")
             return None
     
     def get_samples(self, **kwargs) -> List[Dict]:
@@ -531,7 +532,7 @@ class DatabaseHTTP:
             # Primeiro, buscar amostra para obter dados
             amostra = self._make_request("GET", f"/api/amostras/{sample_id}/")
             if not amostra:
-                print(f"❌ Amostra {sample_id} não encontrada")
+                print(f"Amostra {sample_id} não encontrada")
                 return None
             
             data = {
@@ -551,13 +552,13 @@ class DatabaseHTTP:
                 if file_location:
                     self._upload_pdf(laudo_id, file_location)
                 
-                print(f"✅ Laudo cadastrado com ID: {laudo_id}")
+                print(f"Laudo cadastrado com ID: {laudo_id}")
                 return laudo_id
             
             return None
             
         except Exception as e:
-            print(f"❌ Erro ao cadastrar laudo: {e}")
+            print(f"Erro ao cadastrar laudo: {e}")
             return None
     
     def _upload_pdf(self, laudo_id: int, file_path: str) -> bool:
@@ -576,14 +577,14 @@ class DatabaseHTTP:
                 )
                 
                 if response.status_code == 200:
-                    print(f"✅ PDF enviado para laudo {laudo_id}")
+                    print(f"PDF enviado para laudo {laudo_id}")
                     return True
                 else:
-                    print(f"❌ Erro ao enviar PDF: {response.status_code}")
+                    print(f"Erro ao enviar PDF: {response.status_code}")
                     return False
                     
         except Exception as e:
-            print(f"❌ Erro no upload do PDF: {e}")
+            print(f"Erro no upload do PDF: {e}")
             return False
     
     # ========== EMPRESAS ==========
@@ -620,13 +621,13 @@ class DatabaseHTTP:
             result = self._make_request("POST", "/api/empresas/", data=empresa_data)
             
             if result:
-                print(f"✅ Empresa {company_dict.get('company_name')} cadastrada")
+                print(f"Empresa {company_dict.get('company_name')} cadastrada com ID: {result.get('id')}")
                 return result.get("id")
             
             return None
             
         except Exception as e:
-            print(f"❌ Erro ao cadastrar empresa: {e}")
+            print(f"Erro ao cadastrar empresa: {e}")
             return None
     
     # ========== EDIÇÕES ==========

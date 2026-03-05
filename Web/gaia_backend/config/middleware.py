@@ -41,3 +41,29 @@ class SecurityHeadersMiddleware:
         response['Content-Security-Policy'] = '; '.join(csp_directives)
         
         return response
+
+
+class JWTCookieToHeaderMiddleware:
+    """
+    Middleware que lê o access_token do httpOnly cookie
+    e o injeta no Authorization header para validação pelo Django
+    
+    Isso permite que o backend valide tokens via cookies,
+    mantendo a segurança de httpOnly (inacessível via JavaScript)
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Se não há Authorization header, tenta ler do cookie
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            access_token = request.COOKIES.get('access_token')
+            
+            if access_token:
+                # Injetar no Authorization header para validação
+                request.META['HTTP_AUTHORIZATION'] = f'Bearer {access_token}'
+                print(f'[JWT] 🔄 Token injetado do cookie para header (len={len(access_token)})')
+        
+        response = self.get_response(request)
+        return response

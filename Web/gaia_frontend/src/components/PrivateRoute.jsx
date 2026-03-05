@@ -1,9 +1,15 @@
 import { Navigate } from "react-router-dom";
 
 const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  // Se não há token, redireciona para login
+  // Se não há usuário logado, redireciona para login
+  if (!user.id) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Se há usuário, renderiza o componente filho
+  return children;
   if (!token) {
     return <Navigate to="/login" replace />;
   }

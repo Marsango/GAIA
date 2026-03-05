@@ -39,3 +39,47 @@ Em caso de dúvidas, entre em contato com nosso suporte pelo numero (46)99999-99
     class Meta:
         verbose_name = "Configuração de E-mail"
         verbose_name_plural = "Configurações de E-mail"
+
+
+# ===============================================
+# 🔐 RATE LIMITING PROGRESSIVO COM CAPTCHA
+# ===============================================
+
+class LoginAttempt(models.Model):
+    """Rastreia tentativas de login para rate limiting progressivo"""
+    identifier = models.CharField(max_length=20)  # CPF ou CNPJ
+    ip_address = models.GenericIPAddressField()
+    success = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        status = "✅ Sucesso" if self.success else "❌ Falha"
+        return f"{self.identifier} ({self.ip_address}) - {status}"
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['identifier', 'timestamp']),
+            models.Index(fields=['ip_address', 'timestamp']),
+        ]
+
+
+class CaptchaChallenge(models.Model):
+    """Desafios CAPTCHA para usuários com múltiplas falhas"""
+    identifier = models.CharField(max_length=20)  # CPF ou CNPJ
+    ip_address = models.GenericIPAddressField()
+    challenge_token = models.CharField(max_length=64, unique=True)
+    challenge_key = models.CharField(max_length=10)  # ex: "3 + 5 = ?"
+    correct_answer = models.CharField(max_length=10)  # ex: "8"
+    attempts = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_solved = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"CAPTCHA: {self.identifier} - {self.challenge_key}"
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['challenge_token']),
+            models.Index(fields=['expires_at']),
+        ]

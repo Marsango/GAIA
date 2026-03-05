@@ -9,11 +9,14 @@ import {
   ErrorMessage,
 } from "./styled";
 import Logo_lab_Branco from "../../assets/images/Logo_lab_Branco.svg";
-import { login, getCurrentUser, loginWithCNPJ } from "../../api/auth"; // Adicione getUserInfo
+import { loginSecureCPF, loginWithCNPJ } from "../../api/auth";
 
 const Login = () => {
   const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaChallenge, setCaptchaChallenge] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [error, setError] = useState({ cpf: "", password: "", general: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -69,19 +72,28 @@ const Login = () => {
       // Chama a API de login apropriada
       const data = isCNPJ
         ? await loginWithCNPJ(formattedDoc, password)
-        : await login(formattedDoc, password);
+        : await loginSecureCPF(
+            formattedDoc,
+            password,
+            captchaToken || null,
+            captchaAnswer || null,
+          );
+
+      console.log("📦 Resposta do backend:", data); // ← NOVO: Debug
 
       // Verifica se os dados esperados estão presentes
-      if (!data.access || !data.refresh) {
+      if (!data.user) {
         throw new Error("Dados incompletos recebidos do servidor");
       }
 
-      // Salva no localStorage
-      localStorage.setItem("token", data.access);
-      localStorage.setItem("refresh", data.refresh);
+      // ✅ httpOnly Cookies já são enviados automaticamente pelo navegador
+      // Não precisamos mais salvar o token em sessionStorage
+      // O axios com withCredentials: true vai gerenciar isso para nós
 
-      const userData = await getCurrentUser(data.access);
+      // Armazenar dados do usuário (não-sensível)
+      const userData = data.user;
       localStorage.setItem("user", JSON.stringify(userData));
+
       if (data.user && data.user.primeiro_acesso) {
         navigate("/change-password");
       } else {
@@ -89,6 +101,21 @@ const Login = () => {
       }
     } catch (err) {
       console.error("Erro completo no login:", err);
+
+      const responseData = err.response?.data;
+
+      if (responseData?.require_captcha && responseData?.captcha) {
+        setCaptchaChallenge(
+          responseData.captcha.challenge || "Resolva o CAPTCHA",
+        );
+        setCaptchaToken(responseData.captcha.token || "");
+        setCaptchaAnswer("");
+        setError((prev) => ({
+          ...prev,
+          general: "Confirme sua identidade resolvendo o CAPTCHA.",
+        }));
+        return;
+      }
 
       if (err.response?.status === 401) {
         setError((prev) => ({
@@ -154,6 +181,21 @@ const Login = () => {
           disabled={loading}
           error={error.password}
         />
+
+        {captchaChallenge && (
+          <>
+            <p style={{ margin: "4px 0 0", fontWeight: 600 }}>
+              {captchaChallenge}
+            </p>
+            <InputLogin
+              type="text"
+              value={captchaAnswer}
+              onChange={(e) => setCaptchaAnswer(e.target.value)}
+              placeholder="Resposta do CAPTCHA"
+              disabled={loading}
+            />
+          </>
+        )}
 
         <Button type="submit" disabled={loading}>
           {loading ? "Entrando..." : "Login"}

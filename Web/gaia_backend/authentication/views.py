@@ -25,6 +25,17 @@ from .serializers import LoginSerializer, UsuarioSerializer, ConfiguracaoEmailSe
 
 from rest_framework.permissions import IsAdminUser
 
+# ✨ NOVO: Importar funções de segurança progressiva
+from .security import (
+    record_login_attempt,
+    get_failed_attempts,
+    get_login_security_status,
+    should_block_login,
+    create_captcha_challenge,
+    verify_captcha,
+    clear_failed_attempts
+)
+
 # ============ NOVO: View customizada que retorna primeiro_acesso ============
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
@@ -33,15 +44,26 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     informações do usuário e campo primeiro_acesso
     """
     serializer_class = CustomTokenObtainPairSerializer
-# ==========================================================================
 
+# ===============================================
+# 🔒 LOGIN COM SEGURANÇA PROGRESSIVA + CAPTCHA
+# ===============================================
+
+@ratelimit(key='ip', rate='6/m', method='POST', block=True)
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@ratelimit(key='ip', rate='20/m', method='POST', block=True)
-def login_with_cpf(request):
-    """Login usando CPF (para site e software)"""
-    cpf = request.data.get('cpf')
+def login_with_cpf_secure(request):
+    """
+    Login com segurança progressiva:
+    - 0-2 falhas: Sem restrição
+    - 3-4 falhas: Aguardar 30s entre tentativas
+    - 5+ falhas: Requer CAPTCHA
+    """
+    cpf = request.data.get('cpf', '').replace('.', '').replace('-', '')
     password = request.data.get('password')
+    captcha_token = request.data.get('captcha_token')  # Opcional
+    captcha_answer = request.data.get('captcha_answer')  # Opcional
+    ip_address = get_client_ip(request)
     
     if not cpf or not password:
         return Response(
@@ -49,51 +71,135 @@ def login_with_cpf(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    # 🔒 Verificar se está bloqueado completamente
+    if should_block_login(cpf, ip_address):
+        return Response(
+            {'error': 'Muitas tentativas. Conta bloqueada temporariamente.'},
+            status=status.HTTP_429_TOO_MANY_REQUESTS
+        )
+    
+    # 📊 Obter status de segurança
+    security_status = get_login_security_status(cpf, ip_address)
+    
+    # 🤖 Se requer CAPTCHA, validar primeiro
+    if security_status['require_captcha']:
+        if not captcha_token or not captcha_answer:
+            # Usuário não enviou CAPTCHA, gerar novo desafio
+            captcha_data = create_captcha_challenge(cpf, ip_address)
+            return Response({
+                'require_captcha': True,
+                'captcha': captcha_data,
+                'message': 'Muito muitas tentativas. Por favor, resolva o CAPTCHA.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Validar CAPTCHA
+        captcha_valid, captcha_msg = verify_captcha(captcha_token, captcha_answer)
+        if not captcha_valid:
+            return Response({
+                'require_captcha': True,
+                'error': captcha_msg
+            }, status=status.HTTP_403_FORBIDDEN)
+    
+    # 🔐 Tentar login
     User = get_user_model()
     
     try:
-        # Buscar usuário por CPF
-        if hasattr(User(), 'cpf'):
-            user = User.objects.get(cpf=cpf)
-        else:
-            cpf_limpo = cpf.replace('.', '').replace('-', '')
-            user = User.objects.get(username=cpf_limpo)
+        user = User.objects.get(cpf=cpf)
         
-        # Verificar senha
         if user.check_password(password):
             if user.is_active:
-                refresh = RefreshToken.for_user(user)
+                # ✅ Login bem-sucedido
+                record_login_attempt(cpf, ip_address, success=True)
+                clear_failed_attempts(cpf, ip_address)
                 
-                return Response({
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh),
+                # Gerar tokens
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
+                
+                response = Response({
+                    'access_token': access_token,
                     'user': {
                         'id': user.id,
                         'nome': f'{user.first_name} {user.last_name}'.strip(),
                         'email': user.email,
                         'cpf': cpf,
                         'is_staff': user.is_staff,
-                        # AQUI ESTÁ A ATUALIZAÇÃO IMPORTANTE:
                         'primeiro_acesso': user.primeiro_acesso,
                     }
-                })
-            else:
-                return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
-            
+                }, status=status.HTTP_200_OK)
+                
+                # Configurar cookies
+                response.set_cookie(
+                    key='access_token',
+                    value=access_token,
+                    httponly=True,
+                    secure=not settings.DEBUG,
+                    samesite='Strict' if not settings.DEBUG else 'Lax',
+                    max_age=3600,
+                    path='/'
+                )
+                response.set_cookie(
+                    key='refresh_token',
+                    value=refresh_token,
+                    httponly=True,
+                    secure=not settings.DEBUG,
+                    samesite='Strict' if not settings.DEBUG else 'Lax',
+                    max_age=7 * 24 * 3600,
+                    path='/'
+                )
+                
+                return response
+        
+        # ❌ Senha incorreta
+        failed = get_failed_attempts(cpf, ip_address, minutes=60)
+        record_login_attempt(cpf, ip_address, success=False)
+        
+        # Checar se agora precisa de CAPTCHA
+        new_security_status = get_login_security_status(cpf, ip_address)
+        
+        if new_security_status['require_captcha']:
+            captcha_data = create_captcha_challenge(cpf, ip_address)
+            return Response({
+                'error': 'Credenciais inválidas',
+                'require_captcha': True,
+                'captcha': captcha_data,
+                'failed_attempts': new_security_status['failed_attempts']
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        return Response({
+            'error': 'Credenciais inválidas',
+            'failed_attempts': failed,
+            'max_attempts_before_captcha': 5
+        }, status=status.HTTP_401_UNAUTHORIZED)
+        
     except User.DoesNotExist:
-        return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+        record_login_attempt(cpf, ip_address, success=False)
+        return Response(
+            {'error': 'Credenciais inválidas'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
+@ratelimit(key='ip', rate='6/m', method='POST', block=True)
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@ratelimit(key='ip', rate='20/m', method='POST', block=True)
-def login_with_cnpj(request):
-    """Login usando CNPJ (para empresas)"""
-    cnpj = request.data.get('cnpj')
+def login_with_cnpj_secure(request):
+    """
+    Login com segurança progressiva:
+    - 0-2 falhas: Sem restrição
+    - 3-4 falhas: Aguardar 30s entre tentativas
+    - 5+ falhas: Requer CAPTCHA
+    """
+    cnpj = request.data.get('cnpj', '').replace('.', '').replace('-', '').replace('/', '')
     password = request.data.get('password')
+    captcha_token = request.data.get('captcha_token')  # Opcional
+    captcha_answer = request.data.get('captcha_answer')  # Opcional
+    ip_address = get_client_ip(request)
     
     if not cnpj or not password:
         return Response(
@@ -101,37 +207,228 @@ def login_with_cnpj(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    # 🔒 Verificar se está bloqueado completamente
+    if should_block_login(cnpj, ip_address):
+        return Response(
+            {'error': 'Muitas tentativas. Conta bloqueada temporariamente.'},
+            status=status.HTTP_429_TOO_MANY_REQUESTS
+        )
+    
+    # 📊 Obter status de segurança
+    security_status = get_login_security_status(cnpj, ip_address)
+    
+    # 🤖 Se requer CAPTCHA, validar primeiro
+    if security_status['require_captcha']:
+        if not captcha_token or not captcha_answer:
+            # Usuário não enviou CAPTCHA, gerar novo desafio
+            captcha_data = create_captcha_challenge(cnpj, ip_address)
+            return Response({
+                'require_captcha': True,
+                'captcha': captcha_data,
+                'message': 'Muito muitas tentativas. Por favor, resolva o CAPTCHA.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Validar CAPTCHA
+        captcha_valid, captcha_msg = verify_captcha(captcha_token, captcha_answer)
+        if not captcha_valid:
+            return Response({
+                'require_captcha': True,
+                'error': captcha_msg
+            }, status=status.HTTP_403_FORBIDDEN)
+    
+    # 🔐 Tentar login
     User = get_user_model()
     
     try:
-        # Buscar usuário por CNPJ
-        cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
-        user = User.objects.get(cnpj=cnpj_limpo)
+        user = User.objects.get(cnpj=cnpj)
         
-        # Verificar senha
         if user.check_password(password):
             if user.is_active:
-                refresh = RefreshToken.for_user(user)
+                # ✅ Login bem-sucedido
+                record_login_attempt(cnpj, ip_address, success=True)
+                clear_failed_attempts(cnpj, ip_address)
                 
-                return Response({
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh),
+                # Gerar tokens
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
+                
+                response = Response({
+                    'access_token': access_token,
                     'user': {
                         'id': user.id,
                         'nome': f'{user.first_name} {user.last_name}'.strip(),
                         'email': user.email,
-                        'cnpj': cnpj_limpo,
+                        'cnpj': cnpj,
                         'is_staff': user.is_staff,
                         'primeiro_acesso': user.primeiro_acesso,
                     }
-                })
-            else:
-                return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
-            
+                }, status=status.HTTP_200_OK)
+                
+                # Configurar cookies
+                response.set_cookie(
+                    key='access_token',
+                    value=access_token,
+                    httponly=True,
+                    secure=not settings.DEBUG,
+                    samesite='Strict' if not settings.DEBUG else 'Lax',
+                    max_age=3600,
+                    path='/'
+                )
+                response.set_cookie(
+                    key='refresh_token',
+                    value=refresh_token,
+                    httponly=True,
+                    secure=not settings.DEBUG,
+                    samesite='Strict' if not settings.DEBUG else 'Lax',
+                    max_age=7 * 24 * 3600,
+                    path='/'
+                )
+                
+                return response
+        
+        # ❌ Senha incorreta
+        failed = get_failed_attempts(cnpj, ip_address, minutes=60)
+        record_login_attempt(cnpj, ip_address, success=False)
+        
+        # Checar se agora precisa de CAPTCHA
+        new_security_status = get_login_security_status(cnpj, ip_address)
+        
+        if new_security_status['require_captcha']:
+            captcha_data = create_captcha_challenge(cnpj, ip_address)
+            return Response({
+                'error': 'Credenciais inválidas',
+                'require_captcha': True,
+                'captcha': captcha_data,
+                'failed_attempts': new_security_status['failed_attempts']
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        return Response({
+            'error': 'Credenciais inválidas',
+            'failed_attempts': failed,
+            'max_attempts_before_captcha': 5
+        }, status=status.HTTP_401_UNAUTHORIZED)
+        
     except User.DoesNotExist:
-        return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+        record_login_attempt(cnpj, ip_address, success=False)
+        return Response(
+            {'error': 'Credenciais inválidas'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_captcha_endpoint(request):
+    """Endpoint para verificar resposta de CAPTCHA"""
+    token = request.data.get('captcha_token')
+    answer = request.data.get('captcha_answer')
+    
+    if not token or not answer:
+        return Response(
+            {'error': 'Token e resposta são obrigatórios'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    valid, message = verify_captcha(token, answer)
+    
+    if valid:
+        return Response({
+            'success': True,
+            'message': message
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'success': False,
+            'error': message
+        }, status=status.HTTP_403_FORBIDDEN)
+
+
+def get_client_ip(request):
+    """Extrai o IP real do cliente (considerando proxies)"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+# Endpoint de Logout (limpa httpOnly cookies)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    """Logout - Remove os httpOnly cookies de autenticação"""
+    response = Response(
+        {'message': 'Logout realizado com sucesso'},
+        status=status.HTTP_200_OK
+    )
+    
+    # Remove os cookies de autenticação
+    response.delete_cookie('access_token')
+    response.delete_cookie('refresh_token')
+    
+    return response
+
+# Endpoint de Refresh Token (renova access_token usando refresh_token do cookie)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_token_from_cookie(request):
+    """Refresh token - Renova o access_token usando refresh_token do cookie"""
+    try:
+        refresh_token = request.COOKIES.get('refresh_token')
+        
+        if not refresh_token:
+            return Response(
+                {'error': 'Refresh token não encontrado'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        try:
+            refresh = RefreshToken(refresh_token)
+            new_access = str(refresh.access_token)
+            new_refresh = str(refresh)
+            
+            response = Response(
+                {
+                    'access_token': new_access,  # ← NOVO: Retornar na resposta JSON
+                    'message': 'Token renovado com sucesso'
+                },
+                status=status.HTTP_200_OK
+            )
+            
+            # Atualizar cookies com novo access_token
+            response.set_cookie(
+                key='access_token',
+                value=new_access,
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite='Strict' if not settings.DEBUG else 'Lax',
+                max_age=3600,
+                path='/'
+            )
+            response.set_cookie(
+                key='refresh_token',
+                value=new_refresh,
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite='Strict' if not settings.DEBUG else 'Lax',
+                max_age=7 * 24 * 3600,
+                path='/'
+            )
+            
+            return response
+            
+        except Exception as e:
+            return Response(
+                {'error': 'Token inválido ou expirado'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -319,6 +616,7 @@ Em caso de dúvidas, entre em contato com nosso suporte (46) 999XX-XXXX."""
         traceback.print_exc()
         print("="*60 + "\n")
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password(request):
@@ -411,10 +709,6 @@ def change_password(request):
         traceback.print_exc()
         return Response({'error': f'Erro ao processar: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-# 3. Esqueci Minha Senha (Reset Simples enviando nova senha)
-# Nota: Para um fluxo mais seguro em produção, usa-se links com tokens, 
-# mas este método envia uma nova senha provisória direto para simplificar o MVP.
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def forgot_password(request):
@@ -454,7 +748,7 @@ def forgot_password(request):
 
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAdminUser]) # Só ADM pode mexer aqui
+@permission_classes([IsAdminUser]) 
 def manage_email_template(request):
     """
     GET: Retorna o template atual.
@@ -475,49 +769,14 @@ def manage_email_template(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
-def login_view(request):
-    serializer = LoginSerializer(data=request.data)
-
-    if serializer.is_valid():
-        user = serializer.validated_data['user']
-
-        refresh = RefreshToken.for_user(user)
-
-        return Response({
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-            "user": {
-                "id": user.id,
-                "nome": f"{user.first_name} {user.last_name}",
-                "cpf": user.cpf,
-                "email": user.email
-            }
-        }, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['POST'])
-def logout_view(request):
-    return Response({'message': 'Logout realizado com sucesso'})
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def sync_usuario(request):
-    """API simples para o software cadastrar usuários - Requer autenticação"""
+    """API simples para o software cadastrar usuários - Apenas admins"""
     print(f"\n📝 [sync_usuario] Solicitação recebida")
     print(f"   Usuário logado: {request.user.username} (is_staff: {request.user.is_staff})")
     print(f"   Dados: {request.data}")
     
     try:
-        # Verificar se o usuário logado é admin
-        if not request.user.is_staff:
-            print(f"❌ Usuário não é admin!")
-            return Response(
-                {'error': 'Apenas administradores podem cadastrar usuários'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         data = request.data
         
         # Validar CPF (obrigatório)
@@ -609,7 +868,7 @@ def sync_usuario(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def list_usuarios(request):
     """Lista todos os usuários cadastrados via sync_usuario"""
     print(f"\n📋 [list_usuarios] Solicitação recebida")
@@ -662,15 +921,9 @@ def list_usuarios(request):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def delete_usuario(request):
     """Exclui um usuario pelo CPF (apenas admins)."""
-    if not request.user.is_staff:
-        return Response(
-            {'error': 'Apenas administradores podem excluir usuários'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-
     cpf = request.query_params.get('cpf') or request.data.get('cpf')
     if not cpf:
         return Response({'error': 'CPF é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -766,7 +1019,7 @@ Laboratório de Solos - UTFPR
 # ========== SINCRONIZAÇÃO DE DADOS EMPRESA/PERSON ↔ USUARIO ==========
 
 @api_view(['PATCH'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def sync_usuario_by_cpf(request):
     """
     Sincroniza dados do Usuario quando Person é editada
@@ -853,7 +1106,7 @@ def sync_usuario_by_cpf(request):
 
 
 @api_view(['PATCH'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def sync_usuario_by_cnpj(request):
     """
     Sincroniza dados do Usuario quando Empresa é editada
@@ -940,7 +1193,7 @@ def sync_usuario_by_cnpj(request):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def delete_usuario_by_cpf(request):
     """
     Deleta Usuario por CPF (usado internamente quando Person é excluída)
@@ -986,7 +1239,7 @@ def delete_usuario_by_cpf(request):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def delete_usuario_by_cnpj(request):
     """
     Deleta Usuario por CNPJ (usado internamente quando Empresa é excluída)
