@@ -39,9 +39,9 @@ def get_login_security_status(identifier, ip_address):
     """
     Retorna o status de segurança do login (rate limit progressivo):
     
-    - 0-2 falhas: Sem restrição ✅
-    - 3-4 falhas: Aguardar 30 segundos entre tentativas ⚠️
-    - 5+ falhas: Requer CAPTCHA 🚫
+    - 0-2 falhas: Sem restrição 
+    - 3-4 falhas: Aguardar 30 segundos entre tentativas 
+    - 5+ falhas: Requer CAPTCHA 
     """
     failed = get_failed_attempts(identifier, ip_address, minutes=60)
     
@@ -60,13 +60,12 @@ def should_block_login(identifier, ip_address):
 
 
 # ===============================================
-# 🤖 CAPTCHA MATEMÁTICO SIMPLES
+#  CAPTCHA MATEMÁTICO SIMPLES
 # ===============================================
 
 CAPTCHA_OPERATIONS = [
     (lambda a, b: a + b, "{} + {} = ?"),
     (lambda a, b: a - b, "{} - {} = ?"),
-    (lambda a, b: a * b, "{} × {} = ?"),
 ]
 
 

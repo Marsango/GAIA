@@ -13,10 +13,9 @@ class Person(Requester):
 
         super().__init__(phone_number, email, address)
         
-        # CORREÇÃO: Chamar métodos que atribuem internamente
-        self.verify_valid_date(birth_date)  # ← Agora apenas chama
-        self.verify_valid_cpf(cpf)          # ← Agora apenas chama  
-        self.verify_name(name)              # ← Agora apenas chama
+        self.verify_valid_date(birth_date) 
+        self.verify_valid_cpf(cpf)         
+        self.verify_name(name)             
 
     def verify_valid_date(self, birth_date: str) -> None:
         """Valida e atribui data de nascimento"""

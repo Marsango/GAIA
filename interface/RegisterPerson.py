@@ -17,7 +17,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         "Paraná": [
             "Pato Branco", "Marmeleiro", "Coronel Vivida", "Sulina", "Enéas Marques",
             "Renascença", "Pranchita", "Crespo", "Santo Antônio do Sudoeste", 
-            "Capanema", "Ampére", "Neves", "Clevelândia", "Realeza"
+            "Capanema", "Ampére", "Neves", "Clevelândia", "Realeza", "Francisco Beltrão"
         ],
         "Santa Catarina": [
             "Chapecó", "Xanxerê", "Caxambu do Sul", "Tapejara", "Santa Cecília",
@@ -65,7 +65,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
             state_completer.setCaseSensitivity(Qt.CaseInsensitive)
             self.state_input.setCompleter(state_completer)
         except Exception as e:
-            print(f"⚠️ Erro ao configurar autocomplete: {e}")
+            print(f" Erro ao configurar autocomplete: {e}")
 
     def edit_mode(self, person_data) -> None:
         self.country_input.setText(person_data['country'])
@@ -108,10 +108,10 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
                 print(f"✓ Data exibida: {date_str} → {converted}")
                 return converted
             
-            print(f"⚠️ Formato de data não reconhecido na exibição: {date_str}")
+            print(f" Formato de data não reconhecido na exibição: {date_str}")
             return date_str
         except Exception as e:
-            print(f"⚠️ Erro ao converter data para exibição: {e}")
+            print(f" Erro ao converter data para exibição: {e}")
             return date_str
 
     def _convert_date_to_iso(self, date_str: str) -> str:
@@ -134,10 +134,10 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
                 return converted
             
             # Formato não reconhecido
-            print(f"⚠️ Formato de data não reconhecido: {date_str}")
+            print(f" Formato de data não reconhecido: {date_str}")
             return ""
         except Exception as e:
-            print(f"⚠️ Erro ao converter data {date_str}: {e}")
+            print(f" Erro ao converter data {date_str}: {e}")
             return ""
 
     def create_country_completer(self) -> None:
@@ -223,9 +223,21 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
             # Tentar fazer parse para validar a data
             try:
                 from datetime import datetime
-                datetime.strptime(birth_date_raw, "%d/%m/%Y")
+                birth_date_obj = datetime.strptime(birth_date_raw, "%d/%m/%Y").date()
             except ValueError:
                 raise ValueError("Data de nascimento inválida! Verifique se a data existe")
+
+            # Impedir datas futuras
+            today = datetime.today().date()
+            if birth_date_obj > today:
+                raise ValueError("Data de nascimento não pode ser futura")
+
+            # Validar faixa etária (18 a 120 anos)
+            age = today.year - birth_date_obj.year - ((today.month, today.day) < (birth_date_obj.month, birth_date_obj.day))
+            if age < 18:
+                raise ValueError(f"Idade mínima é 18 anos. Idade atual: {age} anos")
+            if age > 120:
+                raise ValueError(f"Data de nascimento muito antiga. Idade calculada: {age} anos")
 
             address: Address = Address(country=self.country_input.text(), state=self.state_input.text(),
                                        city=self.city_input.text(), street=street,
@@ -239,20 +251,16 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
                 db.insert_person(person, address)
                 success_text: str = "Solicitante registrado com sucesso!"
             elif self.mode == 'edit':
-                print(f"\n🔧 Chamando edit_person...")
-                print(f"   person_id: {self.current_person_id}")
-                print(f"   requester_id: {self.requester_id}")
                 
                 try:
                     result = db.edit_person(person, address, self.current_person_id, self.requester_id)
-                    print(f"\n📊 Resultado de edit_person: {result}")
                     
                     if result:
                         success_text: str = "Alterações salvas com sucesso!"
                     else:
                         raise ValueError("Falha ao salvar alterações - verifique o console para detalhes")
                 except Exception as edit_error:
-                    print(f"\n❌ ERRO CAPTURADO no RegisterPerson:")
+                    print(f"\n ERRO CAPTURADO no RegisterPerson:")
                     print(f"   Tipo: {type(edit_error).__name__}")
                     print(f"   Mensagem: {str(edit_error)}")
                     import traceback

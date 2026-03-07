@@ -42,12 +42,15 @@ class SQLiteRow:
     def __repr__(self):
         return f"SQLiteRow({self._data})"
 
+# wrappers para compatibilidade com o modelo antigo (SQLite) - agora usando API HTTP
+
 class DatabaseHTTPWrapper:
     """Wrapper 100% compatível com o DatabaseSQLite antigo"""
     
     def __init__(self, api_url: str = "http://localhost:8000"):
         self.base_url = api_url.rstrip('/')
         self.token: Optional[str] = None
+        self.last_auth_error: str = ""
         self.headers = {
             'Content-Type': 'application/json',
             'User-Agent': 'GAIA-Software-Desktop/Compat'
@@ -129,47 +132,57 @@ class DatabaseHTTPWrapper:
     def _auto_login(self) -> bool:
         """Login automático"""
         try:
+            login_cpf = self._normalize_cpf(self.TECH_CPF)
             response = self.session.post(
-                f"{self.base_url}/api/login/cpf/",
-                json={"cpf": self.TECH_CPF, "password": self.TECH_PASSWORD},
+                f"{self.base_url}/api/login/cpf/desktop/",
+                json={"cpf": login_cpf, "password": self.TECH_PASSWORD},
                 timeout=10
             )
             
             if response.status_code == 200:
                 data = response.json()
-                self.token = data.get("access_token")  # ✅ CORRIGIDO: era "access"
+                self.token = data.get("access_token")
                 if self.token:
                     self.headers["Authorization"] = f"Bearer {self.token}"
+                    self.last_auth_error = ""
                     return True
             elif response.status_code == 429:
                 # Rate limited - aguardar e tentar novamente
-                print("⚠️ Taxa de requisições excedida. Aguardando 60 segundos...")
                 import time
                 time.sleep(60)
                 return self._auto_login()  # Retry após aguardar
+            elif response.status_code == 403:
+                self.last_auth_error = (
+                    "Acesso temporariamente bloqueado por limite de tentativas "
+                    "(ratelimit no endpoint /api/login/cpf/desktop/)."
+                )
+                return False
             else:
-                print(f"❌ Auto-login falhou: Status {response.status_code}")
-                print(f"   Resposta: {response.text[:200]}")
+                try:
+                    error_payload = response.json()
+                    self.last_auth_error = f"HTTP {response.status_code}: {error_payload}"
+                except Exception:
+                    self.last_auth_error = f"HTTP {response.status_code}: {response.text[:200]}"
                 return False
         except Exception as e:
-            print(f"❌ Erro no auto-login: {str(e)}")
+            self.last_auth_error = str(e)
             return False
         
     def login(self, cpf: str = None, password: str = None) -> bool:
-        """Login usando o mesmo endpoint do teste simples"""
+        """Login manual com CPF e senha (opcional, usa credenciais do técnico por padrão)"""
         try:
-            login_cpf = cpf or self.TECH_CPF
+            login_cpf = self._normalize_cpf(cpf or self.TECH_CPF)
             login_password = password or self.TECH_PASSWORD
 
             response = self.session.post(
-                f"{self.base_url}/api/login/cpf/",
+                f"{self.base_url}/api/login/cpf/desktop/",
                 json={"cpf": login_cpf, "password": login_password},
                 timeout=10,
             )
 
             if response.status_code == 200:
                 data = response.json()
-                self.token = data.get("access_token")  # ✅ CORRIGIDO: era "access"
+                self.token = data.get("access_token")
                 if self.token:
                     self.headers["Authorization"] = f"Bearer {self.token}"
                     return True
@@ -185,17 +198,18 @@ class DatabaseHTTPWrapper:
         try:
             url = f"{self.base_url}{endpoint}"
             
-            print(f"🌐 HTTP {method} {url}", flush=True)
             if data:
-                print(f"📤 Payload: {data}", flush=True)
+                pass
 
             if not self.token:
                 if not self._auto_login():
+                    detalhes = f"\nDetalhes técnicos: {self.last_auth_error}" if self.last_auth_error else ""
                     raise RuntimeError(
                         f"Falha no auto-login. Verifique:\n"
                         f"1. Se o servidor está rodando em {self.base_url}\n"
                         f"2. Se auth_config.json está configurado corretamente\n"
                         f"3. Se o usuário existe no banco de dados"
+                        f"{detalhes}"
                     )
 
             headers = self.headers.copy()
@@ -210,25 +224,23 @@ class DatabaseHTTPWrapper:
                 timeout=30
             )
 
-            print(f"📥 Status: {response.status_code}", flush=True)
 
             if response.status_code == 204:
-                print(f"✅ Sucesso (204 No Content)", flush=True)
+                pass
                 return True
 
             if response.status_code in (200, 201, 209):
                 if response.content:
                     try:
                         result = response.json()
-                        print(f"✅ Sucesso - Resposta: {result}", flush=True)
                         return result
                     except ValueError:
-                        print(f"⚠️ Resposta não é JSON: {response.text[:200]}", flush=True)
+                        pass
                         raise RuntimeError("Resposta não é JSON válido")
                 return True
 
             if response.status_code == 401 and not _retry:
-                print(f"🔐 Token expirado, renovando...", flush=True)
+                pass
                 if self._auto_login():
                     return self._make_request(
                         method, endpoint, data, params, _retry=True
@@ -237,38 +249,34 @@ class DatabaseHTTPWrapper:
             
             # Tratamento especial para 404 em DELETE - é normal (já foi deletado)
             if response.status_code == 404 and method.upper() == "DELETE":
-                print(f"⚠️ DELETE retornou 404 (recurso já deletado?) - considerando como sucesso", flush=True)
+                pass
                 return True  # Tratamos como sucesso - recurso não existe ou já foi deletado
             
             # Tratamento especial para erro 400 (Bad Request) - validação
             if response.status_code == 400:
                 try:
                     error_data = response.json()
-                    print(f"❌ Erro de validação (400):", flush=True)
-                    print(f"   Detalhes: {error_data}", flush=True)
                     
                     # Extrai mensagens de erro por campo
                     if isinstance(error_data, dict):
                         for field, errors in error_data.items():
                             if isinstance(errors, list):
                                 for error in errors:
-                                    print(f"   • {field}: {error}", flush=True)
+                                    pass
                             else:
-                                print(f"   • {field}: {errors}", flush=True)
+                                pass
                     
                     raise RuntimeError(f"Erro de validação: {error_data}")
                 except ValueError:
                     # Se não for JSON, mostra texto bruto
-                    print(f"❌ Erro 400 (texto): {response.text[:500]}", flush=True)
                     raise RuntimeError(f"Erro HTTP 400: {response.text[:200]}")
 
             # Outros erros HTTP
             error_msg = f"Erro HTTP {response.status_code}: {response.text[:200]}"
-            print(f"❌ {error_msg}", flush=True)
             raise RuntimeError(error_msg)
 
         except Exception as e:
-            print(f"💥 Exceção em _make_request: {e}", flush=True)
+            pass
             raise   
 
     
@@ -285,11 +293,15 @@ class DatabaseHTTPWrapper:
     
     def insert_person(self, person: Person, address: Address) -> dict:
         """MESMA ASSINATURA DO SQLITE ANTIGO - Cria Usuário + Pessoa"""
+        endereco_id = None
+        usuario_id = None
+        cpf_limpo = None
         try:
-            print(f"\n📝 Inserindo nova pessoa...")
+            pass
             
             name = person.name 
             cpf = person.cpf 
+            cpf_limpo = ''.join(filter(str.isdigit, str(cpf or '')))
             email = person.email
             birth_date = person.birth_date if hasattr(person, 'birth_date') else ''
             
@@ -305,11 +317,6 @@ class DatabaseHTTPWrapper:
             if not email:
                 raise ValueError("Email é obrigatório")
             
-            print(f"   Nome: {name}")
-            print(f"   CPF: {cpf}")
-            print(f"   Email: {email}")
-            print(f"   Telefone: {phone}")
-            print(f"   Data de Nascimento: {birth_date}")
             
             # PASSO 1: Criar usuário e enviar email via /api/register/
             usuario_data = {
@@ -317,12 +324,15 @@ class DatabaseHTTPWrapper:
                 "cpf": cpf,
                 "email": email,
                 "phone_number": phone,
+                "data_nascimento": self._format_date(birth_date) if birth_date else None,
             }
             
-            print(f"\n🔄 Criando usuário em /api/register/ (com envio de email)...")
             usuario_result = self._make_request("POST", "/api/register/", data=usuario_data)
             
-            print(f"   Resposta: {usuario_result}")
+            # Capturar usuario_id para linkar Person ao Usuario
+            usuario_id = usuario_result.get('id') if usuario_result and isinstance(usuario_result, dict) else None
+            if not usuario_id:
+                raise Exception("Falha ao obter ID do usuário criado para vincular à pessoa")
             
             # Verificar se foi criado com sucesso
             if not (usuario_result and isinstance(usuario_result, dict)):
@@ -331,10 +341,20 @@ class DatabaseHTTPWrapper:
             if 'error' in usuario_result:
                 raise ValueError(usuario_result.get('error'))
             
-            print("✅ Usuário criado com sucesso e email enviado!")
+            # PASSO 1.1: Validar conflito de email no domínio report antes de criar Endereco
+            # Evita gerar endereço órfão quando o POST /api/pessoas/ falharia por email duplicado.
+            if email and email.strip():
+                pessoas_mesmo_email = self._make_request("GET", "/api/pessoas/", params={"email": email})
+                pessoas_list = self._unwrap_results(pessoas_mesmo_email)
+                if pessoas_list:
+                    raise ValueError(f"Email {email} já está cadastrado para outra pessoa.")
+
+                empresas_mesmo_email = self._make_request("GET", "/api/empresas/", params={"email": email})
+                empresas_list = self._unwrap_results(empresas_mesmo_email)
+                if empresas_list:
+                    raise ValueError(f"Email {email} já está cadastrado para uma empresa.")
             
             # PASSO 2: Criar endereço (se fornecido)
-            endereco_id = None
             if address:
                 endereco_data = to_dict(address)
                 if any(endereco_data.values()):
@@ -350,10 +370,8 @@ class DatabaseHTTPWrapper:
                     endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_payload)
                     if endereco_result and 'id' in endereco_result:
                         endereco_id = endereco_result['id']
-                        print(f"✅ Endereço criado! ID: {endereco_id}")
             
             # PASSO 3: Criar registro completo em /api/pessoas/ com nascimento
-            print(f"\n🔄 Criando Pessoa em /api/pessoas/...")
             
             pessoa_payload = {
                 "name": name,
@@ -361,6 +379,7 @@ class DatabaseHTTPWrapper:
                 "email": email,
                 "phone_number": phone,
                 "nascimento": self._format_date(birth_date) if birth_date else None,
+                "usuario": usuario_id,  # Linkar Person ao Usuario para CASCADE delete
             }
             
             if endereco_id:
@@ -372,20 +391,34 @@ class DatabaseHTTPWrapper:
             pessoa_result = self._make_request("POST", "/api/pessoas/", data=pessoa_payload)
             
             if pessoa_result and 'id' in pessoa_result:
-                print(f"✅ Pessoa cadastrada com sucesso! ID: {pessoa_result['id']}")
+                pass
                 return pessoa_result
             else:
                 # Se falhar, tentar buscar se já existe (pode ter CPF duplicado)
                 persons = self._make_request("GET", "/api/pessoas/", params={'cpf': cpf})
                 if persons and isinstance(persons, dict) and 'results' in persons:
                     if persons['results']:
-                        print(f"✅ Pessoa já existe! ID: {persons['results'][0]['id']}")
+                        pass
                         return persons['results'][0]
                 
                 raise Exception(f"Falha ao criar Pessoa. Resposta: {pessoa_result}")
                     
         except Exception as e:
-            print(f"❌ Erro ao inserir pessoa: {e}")
+            # Rollback completo: remove endereço e usuário criados se as etapas falharem
+            if endereco_id:
+                try:
+                    self._make_request("DELETE", f"/api/enderecos/{endereco_id}/")
+                except Exception as delete_endereco_error:
+                    print(
+                        f"WARNING: falha ao remover Endereco {endereco_id} no rollback de INSERT_PERSON: {delete_endereco_error}",
+                        flush=True,
+                    )
+            if cpf_limpo:
+                try:
+                    self._make_request("DELETE", "/api/delete/usuario/cpf/", params={"cpf": cpf_limpo})
+                except Exception:
+                    pass
+            pass
             import traceback
             traceback.print_exc()
             raise
@@ -403,25 +436,19 @@ class DatabaseHTTPWrapper:
         Returns:
             bool: True se a edição foi bem sucedida, False caso contrário
         """
-        print(f"\n🔵 edit_person CHAMADO - ID: {id}", flush=True)
         
         try:
             # Converte objetos para dicionários
             person_dict = to_dict(person)
             address_dict = to_dict(address)
             
-            print(f"📋 person_dict: {person_dict}", flush=True)
-            print(f"📋 address_dict: {address_dict}", flush=True)
 
             # Recupera dados atuais para manter campos obrigatórios
-            print(f"🔍 Buscando dados atuais de pessoa ID {id}...", flush=True)
             current = self._make_request("GET", f"/api/pessoas/{id}/") or {}
-            print(f"📊 Dados atuais: {current}", flush=True)
             endereco_id = current.get("endereco")
             
             # Salva CPF antigo ANTES de normalizar o novo (para sync)
             cpf_antigo = current.get("cpf", "")
-            print(f"🔖 CPF antigo no banco: '{cpf_antigo}'", flush=True)
 
             # Atualiza ou cria endereço
             endereco_payload = {
@@ -433,16 +460,13 @@ class DatabaseHTTPWrapper:
                 "pais": address_dict.get("country", "Brasil"),
             }
             
-            print(f"📍 Payload de endereço: {endereco_payload}", flush=True)
-
             if endereco_id:
-                print(f"✏️ Atualizando endereço ID {endereco_id}...", flush=True)
+                pass
                 self._make_request("PATCH", f"/api/enderecos/{endereco_id}/", data=endereco_payload)
             else:
-                print(f"➕ Criando novo endereço...", flush=True)
+                pass
                 endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_payload)
                 endereco_id = endereco_result.get("id") if endereco_result else None
-                print(f"✅ Novo endereço criado - ID: {endereco_id}", flush=True)
 
             # Prepara telefone
             phone = person_dict.get("phone_number") or person_dict.get("phone") or person_dict.get("telefone")
@@ -450,12 +474,10 @@ class DatabaseHTTPWrapper:
             # Normaliza CPF (remove formatação)
             cpf_raw = person_dict.get("cpf", current.get("cpf", ""))
             cpf_normalized = self._normalize_cpf(cpf_raw)
-            print(f"🆔 CPF - Original: '{cpf_raw}' → Normalizado: '{cpf_normalized}'", flush=True)
             
             # Formata data de nascimento
             birth_date_raw = person_dict.get("birth_date") or current.get("nascimento")
             birth_date_formatted = self._format_date(birth_date_raw)
-            print(f"📅 Data - Original: '{birth_date_raw}' → Formatada: '{birth_date_formatted}'", flush=True)
 
             # Monta payload da pessoa
             pessoa_payload = {
@@ -469,29 +491,16 @@ class DatabaseHTTPWrapper:
             if endereco_id:
                 pessoa_payload["endereco"] = endereco_id
 
-            print(f"👤 Payload final da pessoa: {pessoa_payload}", flush=True)
-            print(f"� Comparação ANTES vs DEPOIS:", flush=True)
-            print(f"   name: '{current.get('name')}' → '{pessoa_payload['name']}'", flush=True)
-            print(f"   cpf: '{current.get('cpf')}' → '{pessoa_payload['cpf']}'", flush=True)
-            print(f"   email: '{current.get('email')}' → '{pessoa_payload['email']}'", flush=True)
-            print(f"   phone_number: '{current.get('phone_number')}' → '{pessoa_payload['phone_number']}'", flush=True)
-            print(f"   nascimento: '{current.get('nascimento')}' → '{pessoa_payload['nascimento']}'", flush=True)
-            
-            print(f"🔄 Enviando PATCH para /api/pessoas/{id}/", flush=True)
-            
             # Usa PATCH ao invés de PUT para atualização parcial
             result = self._make_request("PATCH", f"/api/pessoas/{id}/", data=pessoa_payload)
             
             if result:
-                print(f"✅ Pessoa editada com sucesso! Resultado: {result}", flush=True)
+                pass
                 
                 # VALIDAÇÃO CRÍTICA: Comparar ANTES vs DEPOIS
-                print(f"🔍 Verificando persistência...", flush=True)
                 updated = self._make_request("GET", f"/api/pessoas/{id}/")
-                print(f"📊 Dados após edição: {updated}", flush=True)
                 
                 # Verificar se campos críticos realmente mudaram
-                print(f"\n🔎 VALIDAÇÃO DE PERSISTÊNCIA:", flush=True)
                 campos_criticos = ['name', 'cpf', 'email', 'phone_number', 'nascimento']
                 
                 mudancas_confirmadas = []
@@ -503,39 +512,34 @@ class DatabaseHTTPWrapper:
                     valor_solicitado = pessoa_payload.get(campo)
                     
                     if valor_antes != valor_depois:
-                        mudancas_confirmadas.append(f"✅ {campo}: '{valor_antes}' → '{valor_depois}'")
+                        mudancas_confirmadas.append(f" {campo}: '{valor_antes}' → '{valor_depois}'")
                     elif valor_solicitado and valor_antes == valor_depois and valor_solicitado != valor_antes:
-                        mudancas_nao_confirmadas.append(f"❌ {campo}: solicitado '{valor_solicitado}' mas permanece '{valor_depois}'")
+                        mudancas_nao_confirmadas.append(f" {campo}: solicitado '{valor_solicitado}' mas permanece '{valor_depois}'")
                 
                 for msg in mudancas_confirmadas:
-                    print(f"   {msg}", flush=True)
+                    pass
                 
                 for msg in mudancas_nao_confirmadas:
-                    print(f"   {msg}", flush=True)
+                    pass
                 
                 if mudancas_nao_confirmadas:
-                    print(f"\n⚠️  ALERTA: Algumas mudanças NÃO foram persistidas no backend!", flush=True)
-                    print(f"   Isso indica um problema na API Django (serializer não está salvando)", flush=True)
-                    print(f"   Tentando com PUT completo como fallback...", flush=True)
+                    pass
                     
                     # PUT completo como fallback
-                    print(f"🔄 Enviando PUT para /api/pessoas/{id}/", flush=True)
                     result_put = self._make_request("PUT", f"/api/pessoas/{id}/", data=pessoa_payload)
                     
                     if result_put:
                         # Verificar novamente após PUT
                         updated_put = self._make_request("GET", f"/api/pessoas/{id}/")
-                        print(f"📊 Dados após PUT: {updated_put}", flush=True)
                         
                         # Revisar
-                        print(f"\n✅ Revisão após PUT:", flush=True)
                         for campo in campos_criticos:
                             valor_agora = updated_put.get(campo)
                             valor_solicitado = pessoa_payload.get(campo)
                             if valor_agora == valor_solicitado:
-                                print(f"   ✅ {campo}: '{valor_agora}' (confirmado)", flush=True)
+                                pass
                             else:
-                                print(f"   ❌ {campo}: solicitado '{valor_solicitado}' mas é '{valor_agora}'", flush=True)
+                                pass
                 
                 # NOVO: Sincronizar Usuario (usa CPF ANTIGO para encontrar o Usuario)
                 # Se CPF mudou, primeiro atualiza o Usuario com CPF antigo, depois atualiza o CPF dele também
@@ -550,11 +554,11 @@ class DatabaseHTTPWrapper:
                 
                 return len(mudancas_nao_confirmadas) == 0
             else:
-                print(f"❌ Falha ao editar pessoa - resultado vazio", flush=True)
+                pass
                 return False
 
         except Exception as e:
-            print(f"❌ ERRO em edit_person: {e}", flush=True)
+            print(f" ERRO em edit_person: {e}", flush=True)
             import traceback
             traceback.print_exc()
             raise
@@ -572,27 +576,25 @@ class DatabaseHTTPWrapper:
             new_cpf: Novo CPF se foi alterado (opcional)
         """
         if not cpf:
-            print(f"⚠️ CPF vazio, não sincronizando Usuario", flush=True)
+            pass
             return False
         
         cpf_normalized = self._normalize_cpf(cpf)
-        print(f"\n🔄 SYNC Usuario (CPF) - Original: '{cpf}' → Normalizado: '{cpf_normalized}'", flush=True)
         
         if not cpf_normalized or len(cpf_normalized) != 11:
-            print(f"⚠️ CPF normalizado inválido (tem {len(cpf_normalized) if cpf_normalized else 0} dígitos, esperado 11)", flush=True)
+            pass
             return False
         
         try:
-            print(f"📤 Enviando PATCH /api/sync/usuario/cpf/", flush=True)
-            print(f"   CPF (antigo): {cpf_normalized}", flush=True)
+            pass
             if new_cpf:
-                print(f"   CPF (novo): {new_cpf}", flush=True)
+                pass
             if email:
-                print(f"   Email: {email}", flush=True)
+                pass
             if name:
-                print(f"   Nome: {name}", flush=True)
+                pass
             if phone:
-                print(f"   Telefone: {phone}", flush=True)
+                pass
             
             sync_data = {"cpf": cpf_normalized}
             if email:
@@ -607,74 +609,101 @@ class DatabaseHTTPWrapper:
             result = self._make_request("PATCH", "/api/sync/usuario/cpf/", data=sync_data)
             
             if result and 'id' in result:
-                print(f"✅ Usuario ID {result['id']} sincronizado com sucesso", flush=True)
+                pass
                 return True
             else:
-                print(f"⚠️ Sincronização retornou: {result}", flush=True)
+                pass
                 return False
         
         except Exception as e:
-            print(f"⚠️ Erro ao sincronizar Usuario (CPF): {str(e)[:150]}", flush=True)
+            pass
             # NÃO bloqueia a edição se sync falhar
             return False
     
     def delete_person(self, id: int) -> bool:
         """MESMA ASSINATURA DO SQLITE ANTIGO - Deleta Pessoa"""
-        print(f"\n🔵 delete_person CHAMADO - ID: {id}", flush=True)
         
         try:
             # Recuperar dados da pessoa antes de deletar
-            print(f"🔍 Buscando dados da pessoa ID {id}...", flush=True)
             person = self._make_request("GET", f"/api/pessoas/{id}/") or {}
             cpf = person.get("cpf")
             name = person.get("name")
-            print(f"📊 Pessoa encontrada: {name} (CPF: {cpf})", flush=True)
 
             # DELETAR PESSOA
-            print(f"🗑️ Deletando Pessoa ID {id}...", flush=True)
             result = self._make_request("DELETE", f"/api/pessoas/{id}/")
             
             if result is False or result is None:
-                print(f"❌ API retornou FALSE/None para DELETE", flush=True)
+                pass
                 raise Exception("Falha ao excluir pessoa - API retornou false")
             
-            print(f"✅ Pessoa deletada com sucesso!", flush=True)
 
             # Tentar deletar usuario associado (opcional, não bloqueia)
             if cpf:
                 cpf_limpo = ''.join(filter(str.isdigit, cpf))
                 try:
-                    print(f"🗑️ Tentando deletar Usuario com CPF {cpf_limpo}...", flush=True)
+                    pass
                     usuario_result = self._make_request("DELETE", "/api/delete/usuario/cpf/", params={"cpf": cpf_limpo})
                     if usuario_result:
-                        print(f"✅ Usuario deletado", flush=True)
+                        pass
                 except Exception as e:
-                    print(f"⚠️ Aviso: Usuario talvez já tenha sido deletado: {str(e)[:100]}", flush=True)
+                    pass
                     # NÃO bloqueia a deleção da pessoa
             
             return True
 
         except Exception as e:
-            print(f"❌ ERRO em delete_person: {e}", flush=True)
+            print(f" ERRO em delete_person: {e}", flush=True)
             import traceback
             traceback.print_exc()
             raise
     
     def insert_company(self, company: Company, address: Address) -> dict:
         """MESMA ASSINATURA DO SQLITE ANTIGO"""
+        endereco_id = None
+        usuario_id = None
+        cnpj_limpo = None
         try:
-            print("\n" + "="*60)
-            print("🏢 INSERT_COMPANY - Iniciando inserção de empresa")
-            print("="*60)
+            pass
             
             company_dict = to_dict(company)
             address_dict = to_dict(address)
+            cnpj_limpo = ''.join(filter(str.isdigit, str(company_dict.get("cnpj", "") or "")))
             
-            print(f"Empresa: {company_dict.get('company_name')}")
-            print(f"CNPJ: {company_dict.get('cnpj')}")
-            print(f"Email: {company_dict.get('email')}")
             
-            # 1. Criar endereço
+            # PASSO 1: Registrar usuário primeiro (obrigatório para evitar cadastros órfãos)
+            registro_usuario_data = {
+                "first_name": company_dict.get("company_name", ""),
+                "email": company_dict.get("email", ""),
+                "cnpj": company_dict.get("cnpj", ""),
+                "phone_number": company_dict.get("phone_number", ""),
+            }
+            
+            registro_result = self._make_request(
+                "POST", 
+                "/api/register/empresa/",
+                data=registro_usuario_data
+            )
+            
+            # Capturar usuario_id para linkar Empresa ao Usuario
+            usuario_id = registro_result.get('id') if registro_result and isinstance(registro_result, dict) else None
+            if not usuario_id:
+                raise Exception("Falha ao obter ID do usuário criado para vincular à empresa")
+
+            # PASSO 1.1: Validar conflito de email no domínio report antes de criar Endereco
+            # Evita gerar endereço órfão quando o POST /api/empresas/ falharia por email duplicado.
+            company_email = (company_dict.get("email") or "").strip()
+            if company_email:
+                pessoas_mesmo_email = self._make_request("GET", "/api/pessoas/", params={"email": company_email})
+                pessoas_list = self._unwrap_results(pessoas_mesmo_email)
+                if pessoas_list:
+                    raise ValueError(f"Email {company_email} já está cadastrado para uma pessoa.")
+
+                empresas_mesmo_email = self._make_request("GET", "/api/empresas/", params={"email": company_email})
+                empresas_list = self._unwrap_results(empresas_mesmo_email)
+                if empresas_list:
+                    raise ValueError(f"Email {company_email} já está cadastrado para outra empresa.")
+            
+            # PASSO 2: Criar endereço
             endereco_data = {
                 "cep": address_dict.get("cep", ""),
                 "rua": address_dict.get("street", ""),
@@ -684,68 +713,46 @@ class DatabaseHTTPWrapper:
                 "pais": address_dict.get("country", "Brasil"),
             }
             
-            print("📍 Criando endereço...")
             endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_data)
             
             if not endereco_result:
                 raise Exception("Falha ao criar endereço")
             
             endereco_id = endereco_result.get("id")
-            print(f"✅ Endereço criado: ID={endereco_id}")
             
-            # 2. Criar empresa
+            # PASSO 3: Criar empresa
             empresa_data = {
                 "name": company_dict.get("company_name", ""),
                 "cnpj": company_dict.get("cnpj", ""),
                 "email": company_dict.get("email", ""),
                 "telefone": company_dict.get("phone_number", ""),
                 "endereco": endereco_id,
+                "usuario": usuario_id,  # Linkar Empresa ao Usuario para CASCADE delete
             }
             
-            print("🏢 Criando empresa na API...")
             empresa_result = self._make_request("POST", "/api/empresas/", data=empresa_data)
             
             if not empresa_result or 'id' not in empresa_result:
                 raise Exception("Falha ao criar empresa")
             
-            print(f"✅ Empresa criada: ID={empresa_result.get('id')}")
-            
-            # 3. Registrar Usuario com CNPJ para permitir login (só se tiver email)
-            if company_dict.get("email"):
-                try:
-                    registro_usuario_data = {
-                        "first_name": company_dict.get("company_name", ""),
-                        "email": company_dict.get("email", ""),
-                        "cnpj": company_dict.get("cnpj", ""),
-                        "phone_number": company_dict.get("phone_number", ""),  # ← Adiciona telefone!
-                    }
-                    
-                    # print("🔐 Registrando usuario/envio de email...")
-                    # print(f"   Endpoint: /api/register/empresa/")
-                    # print(f"   Dados: {registro_usuario_data}")
-                    
-                    registro_result = self._make_request(
-                        "POST", 
-                        "/api/register/empresa/",
-                        data=registro_usuario_data
-                    )
-                    
-                    print(f"✅ Empresa e Usuario criados com sucesso")
-                    print(f"   Email de acesso enviado para: {company_dict.get('email')}")
-                    print("="*60 + "\n")
-                    
-                except Exception as user_error:
-                    # Se falhar ao criar usuario, a empresa já foi criada
-                    # Informar mas não quebrar o fluxo
-                    print(f"⚠️ Aviso: Empresa criada mas erro ao registrar usuario/enviar email")
-                    print(f"   Erro: {str(user_error)}")
-                    print("="*60 + "\n")
-                    
             return empresa_result
                 
         except Exception as e:
-            print(f"❌ ERRO em INSERT_COMPANY: {str(e)}")
-            print("="*60 + "\n")
+            # Rollback completo: remove endereço e usuário criados se as etapas falharem
+            if endereco_id:
+                try:
+                    self._make_request("DELETE", f"/api/enderecos/{endereco_id}/")
+                except Exception as delete_endereco_error:
+                    print(
+                        f"WARNING: falha ao remover Endereco {endereco_id} no rollback de INSERT_COMPANY: {delete_endereco_error}",
+                        flush=True,
+                    )
+            if cnpj_limpo:
+                try:
+                    self._make_request("DELETE", "/api/delete/usuario/cnpj/", params={"cnpj": cnpj_limpo})
+                except Exception:
+                    pass
+            print(f" ERRO em INSERT_COMPANY: {str(e)}")
             raise
     
     def edit_company(self, company: Company, address: Address, id: int, requester_id: int) -> bool:
@@ -761,25 +768,19 @@ class DatabaseHTTPWrapper:
         Returns:
             bool: True se a edição foi bem sucedida, False caso contrário
         """
-        print(f"\n🔵 edit_company CHAMADO - ID: {id}", flush=True)
         
         try:
             # Converte objetos para dicionários
             company_dict = to_dict(company)
             address_dict = to_dict(address)
             
-            print(f"📋 company_dict: {company_dict}", flush=True)
-            print(f"📋 address_dict: {address_dict}", flush=True)
 
             # Recupera dados atuais
-            print(f"🔍 Buscando dados atuais de empresa ID {id}...", flush=True)
             current = self._make_request("GET", f"/api/empresas/{id}/") or {}
-            print(f"📊 Dados atuais: {current}", flush=True)
             endereco_id = current.get("endereco")
             
             # Salva CNPJ antigo ANTES de normalizar o novo (para sync)
             cnpj_antigo = current.get("cnpj", "")
-            print(f"🔖 CNPJ antigo no banco: '{cnpj_antigo}'", flush=True)
 
             # Atualiza ou cria endereço
             endereco_payload = {
@@ -791,21 +792,18 @@ class DatabaseHTTPWrapper:
                 "pais": address_dict.get("country", "Brasil"),
             }
             
-            print(f"📍 Payload de endereço: {endereco_payload}", flush=True)
 
             if endereco_id:
-                print(f"✏️ Atualizando endereço ID {endereco_id}...", flush=True)
+                pass
                 self._make_request("PATCH", f"/api/enderecos/{endereco_id}/", data=endereco_payload)
             else:
-                print(f"➕ Criando novo endereço...", flush=True)
+                pass
                 endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_payload)
                 endereco_id = endereco_result.get("id") if endereco_result else None
-                print(f"✅ Novo endereço criado - ID: {endereco_id}", flush=True)
 
             # Normaliza CNPJ (remove formatação)
             cnpj_raw = company_dict.get("cnpj", current.get("cnpj", ""))
             cnpj_normalized = self._normalize_cnpj(cnpj_raw)
-            print(f"🆔 CNPJ - Original: '{cnpj_raw}' → Normalizado: '{cnpj_normalized}'", flush=True)
 
             # Monta payload da empresa
             empresa_payload = {
@@ -818,19 +816,15 @@ class DatabaseHTTPWrapper:
             if endereco_id:
                 empresa_payload["endereco"] = endereco_id
 
-            print(f"🏢 Payload final da empresa: {empresa_payload}", flush=True)
-            print(f"🔄 Enviando PATCH para /api/empresas/{id}/", flush=True)
             
             # Usa PATCH ao invés de PUT
             result = self._make_request("PATCH", f"/api/empresas/{id}/", data=empresa_payload)
             
             if result:
-                print(f"✅ Empresa editada com sucesso! Resultado: {result}", flush=True)
+                pass
                 
                 # Verifica persistência
-                print(f"🔍 Verificando persistência...", flush=True)
                 updated = self._make_request("GET", f"/api/empresas/{id}/")
-                print(f"📊 Dados após edição: {updated}", flush=True)
                 
                 # NOVO: Sincronizar Usuario (usa CNPJ ANTIGO para encontrar o Usuario)
                 # Se CNPJ mudou, primeiro atualiza o Usuario com CNPJ antigo, depois atualiza o CNPJ dele também
@@ -845,53 +839,48 @@ class DatabaseHTTPWrapper:
                 
                 return True
             else:
-                print(f"❌ Falha ao editar empresa - resultado vazio", flush=True)
+                pass
                 return False
 
         except Exception as e:
-            print(f"❌ ERRO em edit_company: {e}", flush=True)
+            print(f" ERRO em edit_company: {e}", flush=True)
             import traceback
             traceback.print_exc()
             raise
     
     def delete_company(self, id: int) -> bool:
         """MESMA ASSINATURA DO SQLITE ANTIGO - Deleta Empresa"""
-        print(f"\n🔵 delete_company CHAMADO - ID: {id}", flush=True)
         
         try:
             # Recuperar dados da empresa antes de deletar
-            print(f"🔍 Buscando dados da empresa ID {id}...", flush=True)
             empresa = self._make_request("GET", f"/api/empresas/{id}/") or {}
             cnpj = empresa.get("cnpj")
             name = empresa.get("name")
-            print(f"📊 Empresa encontrada: {name} (CNPJ: {cnpj})", flush=True)
 
             # DELETAR EMPRESA
-            print(f"🗑️ Deletando Empresa ID {id}...", flush=True)
             result = self._make_request("DELETE", f"/api/empresas/{id}/")
             
             if result is False or result is None:
-                print(f"❌ API retornou FALSE/None para DELETE", flush=True)
+                pass
                 raise Exception("Falha ao excluir empresa - API retornou false")
             
-            print(f"✅ Empresa deletada com sucesso!", flush=True)
 
             # Tentar deletar usuario associado (opcional, não bloqueia)
             if cnpj:
                 cnpj_limpo = ''.join(filter(str.isdigit, cnpj))
                 try:
-                    print(f"🗑️ Tentando deletar Usuario com CNPJ {cnpj_limpo}...", flush=True)
+                    pass
                     usuario_result = self._make_request("DELETE", "/api/delete/usuario/cnpj/", params={"cnpj": cnpj_limpo})
                     if usuario_result:
-                        print(f"✅ Usuario deletado", flush=True)
+                        pass
                 except Exception as e:
-                    print(f"⚠️ Aviso: Usuario talvez já tenha sido deletado: {str(e)[:100]}", flush=True)
+                    pass
                     # NÃO bloqueia a deleção da empresa
             
             return True
 
         except Exception as e:
-            print(f"❌ ERRO em delete_company: {e}", flush=True)
+            print(f" ERRO em delete_company: {e}", flush=True)
             import traceback
             traceback.print_exc()
             raise
@@ -909,27 +898,25 @@ class DatabaseHTTPWrapper:
             new_cnpj: Novo CNPJ se foi alterado (opcional)
         """
         if not cnpj:
-            print(f"⚠️ CNPJ vazio, não sincronizando Usuario", flush=True)
+            pass
             return False
         
         cnpj_normalized = self._normalize_cnpj(cnpj)
-        print(f"\n🔄 SYNC Usuario (CNPJ) - Original: '{cnpj}' → Normalizado: '{cnpj_normalized}'", flush=True)
         
         if not cnpj_normalized or len(cnpj_normalized) != 14:
-            print(f"⚠️ CNPJ normalizado inválido (tem {len(cnpj_normalized) if cnpj_normalized else 0} dígitos, esperado 14)", flush=True)
+            pass
             return False
         
         try:
-            print(f"📤 Enviando PATCH /api/sync/usuario/cnpj/", flush=True)
-            print(f"   CNPJ (antigo): {cnpj_normalized}", flush=True)
+            pass
             if new_cnpj:
-                print(f"   CNPJ (novo): {new_cnpj}", flush=True)
+                pass
             if email:
-                print(f"   Email: {email}", flush=True)
+                pass
             if name:
-                print(f"   Nome: {name}", flush=True)
+                pass
             if phone:
-                print(f"   Telefone: {phone}", flush=True)
+                pass
             
             sync_data = {"cnpj": cnpj_normalized}
             if email:
@@ -944,26 +931,24 @@ class DatabaseHTTPWrapper:
             result = self._make_request("PATCH", "/api/sync/usuario/cnpj/", data=sync_data)
             
             if result and 'id' in result:
-                print(f"✅ Usuario ID {result['id']} sincronizado com sucesso", flush=True)
+                pass
                 return True
             else:
-                print(f"⚠️ Sincronização retornou: {result}", flush=True)
+                pass
                 return False
         
         except Exception as e:
-            print(f"⚠️ Erro ao sincronizar Usuario (CNPJ): {str(e)[:150]}", flush=True)
+            pass
             # NÃO bloqueia a edição se sync falhar
             return False
     
     def insert_property(self, property: Property, requester_id: int, address: Address) -> dict:
         """Cadastra propriedade - vinculada a uma Person OU Empresa"""
-        print(f"\n🏠 Cadastrando propriedade...")
         
         # VALIDAÇÃO CRÍTICA: Requester é obrigatório
         if not requester_id:
-            raise ValueError("❌ ERRO CRÍTICO: Propriedade DEVE ter um proprietário (pessoa ou empresa)!")
+            raise ValueError("ERRO CRÍTICO: Propriedade DEVE ter um proprietário (pessoa ou empresa)!")
         
-        print(f"   Proprietário ID: {requester_id}")
         
         property_dict = to_dict(property)
         address_dict = to_dict(address)
@@ -978,58 +963,54 @@ class DatabaseHTTPWrapper:
             "pais": address_dict.get("country", "Brasil"),
         }
         
-        print(f"   Criando endereço: {endereco_data.get('cidade')}/{endereco_data.get('estado')}")
         endereco_result = self._make_request("POST", "/api/enderecos/", data=endereco_data)
 
         if not endereco_result or 'id' not in endereco_result:
-            raise Exception("❌ Falha ao criar endereço da propriedade")
+            raise Exception("Falha ao criar endereço da propriedade")
         
         endereco_id = endereco_result.get("id")
-        print(f"   ✅ Endereço criado: ID {endereco_id}")
 
         try:
             # 2. DETECTAR TIPO DE PROPRIETÁRIO: Person ou Empresa
-            print(f"   Detectando tipo de proprietário (ID: {requester_id})...")
             
             proprietario_pessoa = None
             proprietario_empresa = None
             
             # Tentar primeiro como Person ID direto
-            print(f"   Tentando como Person ID...")
             try:
                 pessoa_response = self._make_request("GET", f"/api/pessoas/{requester_id}/")
                 if pessoa_response and pessoa_response.get('id'):
-                    print(f"   ✅ Detectado: PERSON (Pessoa) ID {requester_id}")
+                    pass
                     proprietario_pessoa = requester_id
             except Exception as e:
-                print(f"   ✗ Não é Person ID: {e}")
+                pass
             
             # Se não for Person, tentar como Empresa ID
             if proprietario_pessoa is None:
-                print(f"   Tentando como Empresa ID...")
+                pass
                 try:
                     empresa_response = self._make_request("GET", f"/api/empresas/{requester_id}/")
                     if empresa_response and empresa_response.get('id'):
-                        print(f"   ✅ Detectado: EMPRESA (Pessoa Jurídica) ID {requester_id}")
+                        pass
                         proprietario_empresa = requester_id
                 except Exception as e:
-                    print(f"   ✗ Não é Empresa ID: {e}")
+                    pass
             
             # Se não for Person nem Empresa direto, tentar converter Usuario ID
             if proprietario_pessoa is None and proprietario_empresa is None:
-                print(f"   Tentando converter Usuario ID {requester_id} para Person...")
+                pass
                 try:
                     usuario_response = self._make_request("GET", f"/api/list/usuarios/{requester_id}/")
                     
                     if not usuario_response:
                         raise ValueError(
-                            f"❌ ERRO CRÍTICO: Proprietário ID {requester_id} não encontrado "
+                            f"ERRO CRÍTICO: Proprietário ID {requester_id} não encontrado "
                             f"como Person, Empresa ou Usuario! Propriedade NÃO PODE ser cadastrada."
                         )
                     
                     cpf = usuario_response.get('cpf')
                     if not cpf:
-                        raise ValueError(f"❌ ERRO: Usuário {requester_id} não tem CPF cadastrado!")
+                        raise ValueError(f" ERRO: Usuário {requester_id} não tem CPF cadastrado!")
                     
                     # Buscar Person pelo CPF
                     persons_response = self._make_request("GET", "/api/pessoas/", params={'cpf': cpf})
@@ -1037,10 +1018,8 @@ class DatabaseHTTPWrapper:
                     
                     if persons:
                         proprietario_pessoa = persons[0].get('id')
-                        print(f"   ✅ Person encontrada para Usuario ID {requester_id}: Person ID {proprietario_pessoa}")
                     else:
                         # Criar nova Person no modelo report
-                        print(f"   Criando Person no modelo report para Usuario {requester_id} (CPF {cpf})...")
                         usuario_data = usuario_response
                         person_payload = {
                             "name": usuario_data.get('name') or f"{usuario_data.get('first_name', '')} {usuario_data.get('last_name', '')}".strip(),
@@ -1058,21 +1037,19 @@ class DatabaseHTTPWrapper:
                                 raise Exception("Resposta inválida ao criar Person")
                             
                             proprietario_pessoa = person_response.get('id')
-                            print(f"   ✅ Person criada no modelo report: ID {proprietario_pessoa}")
                             
                         except Exception as e:
                             # Se falhar por CPF duplicado, tentar buscar novamente
                             if 'já está cadastrado' in str(e).lower() or 'cpf' in str(e).lower():
-                                print(f"   ⚠️  CPF já existe, buscando Person existente...")
+                                pass
                                 persons_retry = self._make_request("GET", "/api/pessoas/", params={'cpf': cpf})
                                 persons_list = self._unwrap_results(persons_retry)
                                 
                                 if persons_list:
                                     proprietario_pessoa = persons_list[0].get('id')
-                                    print(f"   ✅ Person encontrada: ID {proprietario_pessoa}")
                                 else:
                                     raise Exception(
-                                        f"❌ ERRO: Falha ao criar Person e não foi possível encontrá-la. "
+                                        f" ERRO: Falha ao criar Person e não foi possível encontrá-la. "
                                         f"Erro original: {e}"
                                     )
                             else:
@@ -1083,7 +1060,7 @@ class DatabaseHTTPWrapper:
             # VALIDAÇÃO FINAL: Garantir que temos um proprietário (Person OU Empresa)
             if proprietario_pessoa is None and proprietario_empresa is None:
                 raise Exception(
-                    f"❌ ERRO CRÍTICO: Não foi possível obter um proprietário válido! "
+                    f" ERRO CRÍTICO: Não foi possível obter um proprietário válido! "
                     f"Propriedade NÃO PODE ser cadastrada."
                 )
 
@@ -1092,7 +1069,6 @@ class DatabaseHTTPWrapper:
             proprietario_tipo = "Person" if proprietario_pessoa else "Empresa"
             proprietario_id = proprietario_pessoa if proprietario_pessoa else proprietario_empresa
             
-            print(f"   Criando propriedade '{property_dict.get('name')}' para {proprietario_tipo} ID {proprietario_nome}...")
             
             data = {
                 "name": property_dict["name"],
@@ -1102,20 +1078,21 @@ class DatabaseHTTPWrapper:
                 "proprietario_id": proprietario_id,  # Campo genérico que aceita Person ou Empresa
             }
             
-            print(f"   📤 Enviando para API: {data}")
             result = self._make_request("POST", "/api/propriedades/", data=data)
 
             if not result or "id" not in result:
-                raise Exception("❌ Falha ao criar propriedade no servidor")
+                raise Exception(" Falha ao criar propriedade no servidor")
 
-            print(f"✅ Propriedade cadastrada com sucesso!")
-            print(f"   - Propriedade ID: {result.get('id')}")
-            print(f"   - Proprietário ({proprietario_tipo}): {proprietario_nome}")
             return result
             
         except Exception as e:
-            # Se falhar após criar endereço, logar o problema
-            print(f"⚠️  AVISO: Endereço ID {endereco_id} foi criado mas propriedade falhou")
+            # Rollback: remove endereço criado se a propriedade não foi criada
+            if endereco_id:
+                try:
+                    self._make_request("DELETE", f"/api/enderecos/{endereco_id}/")
+                except Exception:
+                    pass
+            print(f" ERRO em create_property: {e}", flush=True)
             raise
         
     def edit_property(self, property: Property, property_id: int, address: Address = None) -> bool:
@@ -1130,17 +1107,13 @@ class DatabaseHTTPWrapper:
         Returns:
             bool: True se a edição foi bem sucedida, False caso contrário
         """
-        print(f"\n🔵 edit_property CHAMADO - ID: {property_id}", flush=True)
         
         try:
             # Converte objetos para dicionários
             property_dict = to_dict(property)
-            print(f"📋 property_dict: {property_dict}", flush=True)
 
             # Recupera dados atuais
-            print(f"🔍 Buscando dados atuais de propriedade ID {property_id}...", flush=True)
             current = self._make_request("GET", f"/api/propriedades/{property_id}/") or {}
-            print(f"📊 Dados atuais: {current}", flush=True)
 
             endereco_id = None
             endereco = current.get("endereco") or current.get("endereco_id")
@@ -1156,7 +1129,7 @@ class DatabaseHTTPWrapper:
             )
 
             if endereco_id and has_new_address:
-                print(f"📍 Atualizando endereço da propriedade...", flush=True)
+                pass
                 endereco_atual = self._get_complete_address(endereco_id) or {}
                 endereco_payload = {
                     "cep": address_dict.get("cep") or endereco_atual.get("cep", ""),
@@ -1166,7 +1139,6 @@ class DatabaseHTTPWrapper:
                     "estado": address_dict.get("state") or endereco_atual.get("estado", ""),
                     "pais": address_dict.get("country") or endereco_atual.get("pais", "Brasil"),
                 }
-                print(f"📍 Payload de endereço: {endereco_payload}", flush=True)
                 self._make_request("PATCH", f"/api/enderecos/{endereco_id}/", data=endereco_payload)
 
             # Manter proprietário atual (Person ou Empresa)
@@ -1187,7 +1159,6 @@ class DatabaseHTTPWrapper:
                     "Proprietário da propriedade não identificado para atualização"
                 )
 
-            print(f"👤 Proprietário ID: {proprietario_id}", flush=True)
 
             # Monta payload da propriedade
             data = {
@@ -1200,27 +1171,23 @@ class DatabaseHTTPWrapper:
             if endereco_id:
                 data["endereco"] = endereco_id
 
-            print(f"🏠 Payload final da propriedade: {data}", flush=True)
-            print(f"🔄 Enviando PATCH para /api/propriedades/{property_id}/", flush=True)
 
             # Usa PATCH ao invés de PUT
             result = self._make_request("PATCH", f"/api/propriedades/{property_id}/", data=data)
 
             if result:
-                print(f"✅ Propriedade editada com sucesso! Resultado: {result}", flush=True)
+                pass
                 
                 # Verifica persistência
-                print(f"🔍 Verificando persistência...", flush=True)
                 updated = self._make_request("GET", f"/api/propriedades/{property_id}/")
-                print(f"📊 Dados após edição: {updated}", flush=True)
                 
                 return True
             else:
-                print(f"❌ Falha ao editar propriedade - resultado vazio", flush=True)
+                pass
                 return False
 
         except Exception as e:
-            print(f"❌ ERRO em edit_property: {e}", flush=True)
+            print(f"ERRO em edit_property: {e}", flush=True)
             import traceback
             traceback.print_exc()
             raise
@@ -1230,28 +1197,23 @@ class DatabaseHTTPWrapper:
     
     def delete_property(self, id: int) -> bool:
         """MESMA ASSINATURA DO SQLITE ANTIGO - Deleta Propriedade"""
-        print(f"\n🔵 delete_property CHAMADO - ID: {id}", flush=True)
         
         try:
             # Recuperar dados da propriedade antes de deletar
-            print(f"🔍 Buscando dados da propriedade ID {id}...", flush=True)
             propriedade = self._make_request("GET", f"/api/propriedades/{id}/") or {}
             name = propriedade.get("name")
-            print(f"📊 Propriedade encontrada: {name}", flush=True)
 
             # DELETAR PROPRIEDADE
-            print(f"🗑️ Deletando Propriedade ID {id}...", flush=True)
             result = self._make_request("DELETE", f"/api/propriedades/{id}/")
             
             if result is False or result is None:
-                print(f"❌ API retornou FALSE/None para DELETE", flush=True)
+                pass
                 raise Exception("Falha ao excluir propriedade - API retornou false")
             
-            print(f"✅ Propriedade deletada com sucesso!", flush=True)
             return True
 
         except Exception as e:
-            print(f"❌ ERRO em delete_property: {e}", flush=True)
+            print(f" ERRO em delete_property: {e}", flush=True)
             import traceback
             traceback.print_exc()
             raise
@@ -1329,17 +1291,13 @@ class DatabaseHTTPWrapper:
         Returns:
             bool: True se a edição foi bem sucedida, False caso contrário
         """
-        print(f"\n🔵 edit_sample CHAMADO - ID: {sample_id}", flush=True)
         
         try:
             # Converte objeto para dicionário
             sample_dict = to_dict(sample) or {}
-            print(f"📋 sample_dict: {sample_dict}", flush=True)
 
             # Recupera dados atuais
-            print(f"🔍 Buscando dados atuais de amostra ID {sample_id}...", flush=True)
             current = self._make_request("GET", f"/api/amostras/{sample_id}/") or {}
-            print(f"📊 Dados atuais: {current}", flush=True)
             
             propriedade_id = current.get("propriedade") or sample_dict.get("fk_property_id")
             numero_amostra = current.get("numero_amostra") or sample_dict.get("sample_number")
@@ -1347,7 +1305,6 @@ class DatabaseHTTPWrapper:
             # Formata data de coleta
             collection_date_raw = sample_dict.get("collection_date") or current.get("data_coleta")
             collection_date_formatted = self._format_date(collection_date_raw)
-            print(f"📅 Data coleta - Original: '{collection_date_raw}' → Formatada: '{collection_date_formatted}'", flush=True)
 
             # Construir payload com fallbacks seguros para todos os campos
             data = {
@@ -1383,55 +1340,46 @@ class DatabaseHTTPWrapper:
                 "profundidade": sample_dict.get("depth") or current.get("profundidade"),
             }
 
-            print(f"🧪 Payload final da amostra: {data}", flush=True)
-            print(f"🔄 Enviando PATCH para /api/amostras/{sample_id}/", flush=True)
 
             # Usa PATCH ao invés de PUT
             result = self._make_request("PATCH", f"/api/amostras/{sample_id}/", data=data)
 
             if result:
-                print(f"✅ Amostra editada com sucesso! Resultado: {result}", flush=True)
+                pass
                 
                 # Verifica persistência
-                print(f"🔍 Verificando persistência...", flush=True)
                 updated = self._make_request("GET", f"/api/amostras/{sample_id}/")
-                print(f"📊 Dados após edição: {updated}", flush=True)
                 
                 return True
             else:
-                print(f"❌ Falha ao editar amostra - resultado vazio", flush=True)
+                pass
                 return False
 
         except Exception as e:
-            print(f"❌ ERRO em edit_sample: {e}", flush=True)
+            print(f" ERRO em edit_sample: {e}", flush=True)
             import traceback
             traceback.print_exc()
             raise
     
     def delete_sample(self, id: int) -> bool:
         """MESMA ASSINATURA DO SQLITE ANTIGO - Deleta Amostra"""
-        print(f"\n🔵 delete_sample CHAMADO - ID: {id}", flush=True)
         
         try:
             # Recuperar dados da amostra antes de deletar
-            print(f"🔍 Buscando dados da amostra ID {id}...", flush=True)
             amostra = self._make_request("GET", f"/api/amostras/{id}/") or {}
             numero_amostra = amostra.get("numero_amostra")
-            print(f"📊 Amostra encontrada: Número {numero_amostra}", flush=True)
 
             # DELETAR AMOSTRA
-            print(f"🗑️ Deletando Amostra ID {id}...", flush=True)
             result = self._make_request("DELETE", f"/api/amostras/{id}/")
             
             if result is False or result is None:
-                print(f"❌ API retornou FALSE/None para DELETE", flush=True)
+                pass
                 raise Exception("Falha ao excluir amostra - API retornou false")
             
-            print(f"✅ Amostra deletada com sucesso!", flush=True)
             return True
 
         except Exception as e:
-            print(f"❌ ERRO em delete_sample: {e}", flush=True)
+            print(f" ERRO em delete_sample: {e}", flush=True)
             import traceback
             traceback.print_exc()
             raise
@@ -1460,7 +1408,7 @@ class DatabaseHTTPWrapper:
             if file_location:
                 upload_success = self._upload_report_pdf(result['id'], file_location)
                 if not upload_success:
-                    print(f"[AVISO] Falha ao fazer upload do PDF para laudo {result['id']}: {file_location}")
+                    pass
             
             return result['id']
         
@@ -1471,13 +1419,13 @@ class DatabaseHTTPWrapper:
     def get_persons(self, **kwargs) -> list:
         """RETORNA LISTA DE SQLiteRow COMPATÍVEL"""
         try:
-            print(f"\n👤 Buscando pessoas...")
+            pass
             
             params = {}
 
             # Busca por ID (detalhe)
             if kwargs.get('id'):
-                print(f"   Filtro: ID = {kwargs['id']}")
+                pass
                 response = self._make_request("GET", f"/api/pessoas/{kwargs['id']}/")
                 pessoas = [response] if response else []
             else:
@@ -1486,11 +1434,11 @@ class DatabaseHTTPWrapper:
                 name = kwargs.get('name')
 
                 if cpf_in:
-                    print(f"   Filtro: CPF = {cpf_in}")
+                    pass
                     cpf_digits = ''.join(ch for ch in str(cpf_in) if ch.isdigit())
                     params['cpf'] = cpf_digits
                 elif name:
-                    print(f"   Filtro: Nome = {name}")
+                    pass
                     params['search'] = name
 
                 # Buscar pessoas do endpoint /api/pessoas/
@@ -1536,11 +1484,10 @@ class DatabaseHTTPWrapper:
 
                 formatted.append(SQLiteRow(row_data))
 
-            print(f"✅ {len(formatted)} pessoa(s) encontrada(s)")
             return formatted
 
         except Exception as e:
-            print(f"❌ Erro ao buscar pessoas: {e}")
+            pass
             import traceback
             traceback.print_exc()
             return []
@@ -1685,12 +1632,10 @@ class DatabaseHTTPWrapper:
                     }
                     formatted.append(SQLiteRow(row_data))
                 
-                print(f"   📋 {len(formatted)} propriedade(s) encontrada(s)")
                 return formatted
 
             # ESTRATÉGIA: Filtrar em Python comparando proprietários
             requester_id = kwargs['requester_id']
-            print(f"🔍 Filtrando propriedades para requester_id {requester_id} (em Python)...")
             
             formatted = []
             for prop in propriedades:
@@ -1709,7 +1654,7 @@ class DatabaseHTTPWrapper:
                 
                 # Verificar se essa propriedade pertence ao requester
                 if pessoa_id == requester_id or empresa_id == requester_id:
-                    print(f"   ✅ Propriedade ID {prop.get('id')}: proprietario_pessoa={pessoa_id}, proprietario_empresa={empresa_id}")
+                    pass
                     
                     endereco = prop.get("endereco_detalhes") or {}
                     location_value = (
@@ -1729,11 +1674,10 @@ class DatabaseHTTPWrapper:
                     }
                     formatted.append(SQLiteRow(row_data))
             
-            print(f"   📋 {len(formatted)} propriedade(s) encontrada(s) para requester_id {requester_id}")
             return formatted
 
         except Exception as e:
-            print(f"❌ Erro ao buscar propriedades: {e}")
+            pass
             return []
         
     def _get_property_from_sample(self, sample_id: int) -> Optional[int]:
@@ -1815,17 +1759,15 @@ class DatabaseHTTPWrapper:
     def get_sample_info(self, sample_id: int) -> SQLiteRow:
         """RETORNA SQLiteRow COMPATÍVEL para geração de laudo"""
         try:
-            print(f"\n🔍 [get_sample_info] Buscando amostra ID {sample_id}...")
+            pass
             amostra = self._make_request("GET", f"/api/amostras/{sample_id}/")
             if not amostra:
-                print(f"❌ [get_sample_info] Amostra não encontrada")
+                pass
                 return SQLiteRow({})
             
-            print(f"✅ [get_sample_info] Amostra encontrada: {amostra.get('numero_amostra')}")
 
             # Propriedade e endereço
             propriedade_id = amostra.get("propriedade")
-            print(f"   Propriedade ID: {propriedade_id}")
             propriedade = None
             endereco = {}
             proprietario_id = None
@@ -1833,20 +1775,17 @@ class DatabaseHTTPWrapper:
             if propriedade_id:
                 try:
                     propriedade = self._make_request("GET", f"/api/propriedades/{propriedade_id}/") or {}
-                    print(f"   ✅ Propriedade: {propriedade.get('name')}")
                     
                     # Buscar endereço
                     endereco_ref = propriedade.get("endereco")
                     if endereco_ref:
                         endereco = self._get_complete_address(endereco_ref) or {}
-                        print(f"   ✅ Endereço: {endereco.get('cidade')}/{endereco.get('estado')}")
                     
                     # Identificar proprietário ID
                     proprietario_id = propriedade.get("proprietario_pessoa") or propriedade.get("proprietario_empresa")
-                    print(f"   Proprietário ID: {proprietario_id}")
                     
                 except Exception as e:
-                    print(f"❌ Erro ao buscar propriedade: {e}")
+                    pass
                     propriedade = {}
 
             # Proprietário (pessoa ou empresa)
@@ -1862,7 +1801,6 @@ class DatabaseHTTPWrapper:
                         requester_name = pessoa.get("name", "")
                         document_number = pessoa.get("cpf", "")
                         document_type = "cpf"
-                        print(f"   ✅ Proprietário (Pessoa): {requester_name} - CPF {document_number}")
                 except Exception:
                     # Se não for pessoa, tentar como empresa
                     try:
@@ -1871,9 +1809,8 @@ class DatabaseHTTPWrapper:
                             requester_name = empresa.get("name", "")
                             document_number = empresa.get("cnpj", "")
                             document_type = "cnpj"
-                            print(f"   ✅ Proprietário (Empresa): {requester_name} - CNPJ {document_number}")
                     except Exception as e:
-                        print(f"❌ Erro ao buscar proprietário: {e}")
+                        pass
 
             row_data = {
                 'sample_description': amostra.get('descricao', ''),
@@ -1891,16 +1828,11 @@ class DatabaseHTTPWrapper:
                 'document_type': document_type,
             }
             
-            print(f"\n📋 [get_sample_info] Dados compilados:")
-            print(f"   Solicitante: {requester_name} ({document_type.upper()}: {document_number})")
-            print(f"   Propriedade: {row_data['property_name']} - {row_data['city']}/{row_data['state']}")
-            print(f"   Amostra: {row_data['sample_number']} - Prof: {row_data['depth']}cm - Área: {row_data['total_area']}m²")
-            print(f"✅ [get_sample_info] Row data retornado com sucesso\n")
 
             return SQLiteRow(row_data)
 
         except Exception as e:
-            print(f"❌ [get_sample_info] Erro geral: {e}")
+            pass
             import traceback
             traceback.print_exc()
             return SQLiteRow({})
@@ -1912,7 +1844,6 @@ class DatabaseHTTPWrapper:
             # Debug para entender ausência de laudos
             try:
                 size = len(result_list) if hasattr(result_list, '__len__') else 1
-                print(f"[DEBUG] get_report_info: laudos recebidos = {size}")
             except Exception:
                 pass
 
@@ -1935,29 +1866,49 @@ class DatabaseHTTPWrapper:
             return formatted
             
         except Exception as e:
-            print(f"[DEBUG] get_report_info erro: {e}")
+            pass
             return []
     
-    def publish_report(self, laudo_id: int) -> bool:
+    def publish_report(self, laudo_id: int) -> dict:
         """
         Publica um laudo (marca como revisado e disponível para produtor)
-        Retorna True se sucesso, False caso contrário
+        Retorna dict com {'success': bool, 'message': str, 'already_published': bool}
         """
         try:
-            print(f"\n📋 Publicando laudo ID={laudo_id}...")
+            pass
             result = self._make_request("POST", f"/api/laudos/{laudo_id}/publicar/")
             
             if result and result.get('success'):
-                print(f"✅ Laudo {laudo_id} publicado com sucesso!")
-                print(f"   Data de publicação: {result.get('data_publicacao')}")
-                return True
+                pass
+                return {
+                    'success': True,
+                    'message': result.get('message', 'Laudo publicado com sucesso'),
+                    'already_published': False
+                }
+            elif result and 'já foi publicado' in result.get('message', ''):
+                # Laudo já estava publicado
+                pass
+                return {
+                    'success': False,
+                    'message': result.get('message', 'Este laudo já foi publicado anteriormente'),
+                    'already_published': True
+                }
             else:
-                print(f"⚠️ Laudo {laudo_id}: {result.get('message', 'Erro desconhecido')}")
-                return False
+                pass
+                error_msg = result.get('error') or result.get('message', 'Erro desconhecido ao publicar laudo')
+                return {
+                    'success': False,
+                    'message': error_msg,
+                    'already_published': False
+                }
                 
         except Exception as e:
-            print(f"❌ Erro ao publicar laudo {laudo_id}: {str(e)}")
-            return False
+            pass
+            return {
+                'success': False,
+                'message': f'Erro de conexão: {str(e)}',
+                'already_published': False
+            }
     
     def upload_signed_report(self, laudo_id: int, file_path: str) -> bool:
         """
@@ -1965,19 +1916,18 @@ class DatabaseHTTPWrapper:
         Retorna True se sucesso, False caso contrário
         """
         try:
-            print(f"\n📄 Fazendo upload do PDF assinado para laudo ID={laudo_id}...")
-            print(f"📁 Arquivo: {file_path}")
+            pass
             
             success = self._upload_report_pdf(laudo_id, file_path)
             
             if success:
-                print(f"✅ PDF assinado enviado com sucesso!")
+                pass
                 return True
             else:
-                print(f"❌ Falha ao enviar PDF assinado")
+                pass
                 return False
         except Exception as e:
-            print(f"❌ Erro ao fazer upload do PDF assinado: {str(e)}")
+            pass
             return False
     
     def delete_report(self, laudo_id: int) -> bool:
@@ -1986,7 +1936,7 @@ class DatabaseHTTPWrapper:
         Retorna True se sucesso, False caso contrário
         """
         try:
-            print(f"\n🗑️ Removendo laudo ID={laudo_id}...")
+            pass
             
             response = self.session.delete(
                 f"{self.base_url}/api/laudos/{laudo_id}/",
@@ -1994,17 +1944,16 @@ class DatabaseHTTPWrapper:
             )
             
             if response.status_code == 204:  # No Content - sucesso na deleção
-                print(f"✅ Laudo {laudo_id} removido com sucesso!")
                 return True
             elif response.status_code == 404:
-                print(f"⚠️ Laudo {laudo_id} não encontrado")
+                pass
                 return False
             else:
-                print(f"❌ Erro ao remover laudo {laudo_id}: Status {response.status_code}")
+                pass
                 return False
                 
         except Exception as e:
-            print(f"❌ Erro ao remover laudo {laudo_id}: {str(e)}")
+            pass
             return False
     
     def get_next_report_id(self) -> int:
@@ -2034,26 +1983,20 @@ class DatabaseHTTPWrapper:
         
     def _upload_report_pdf(self, laudo_id: int, file_path: str) -> bool:
         """Faz upload do arquivo PDF para o laudo"""
-        print(f"\n{'='*60}")
-        print(f"📤 [_upload_report_pdf] Iniciando upload para laudo ID={laudo_id}")
-        print(f"{'='*60}")
         
         try:
             # Validações locais antes de enviar
             import os
             if not os.path.exists(file_path):
-                print(f"❌ Arquivo não existe: {file_path}")
+                pass
                 return False
             
             file_size = os.path.getsize(file_path)
-            print(f"📁 Arquivo: {file_path}")
-            print(f"💾 Tamanho: {file_size} bytes ({file_size / (1024*1024):.2f} MB)")
             
             # Verificar extensão
             if not file_path.lower().endswith('.pdf'):
-                print(f"❌ Arquivo não é PDF")
+                pass
                 return False
-            print(f"✅ Extensão .pdf confirmada")
             
             with open(file_path, 'rb') as f:
                 files = {'arquivo_pdf': f}
@@ -2062,8 +2005,6 @@ class DatabaseHTTPWrapper:
                 headers = {k: v for k, v in self.headers.items() if k != 'Content-Type'}
                 
                 url = f"{self.base_url}/api/laudos/{laudo_id}/upload_pdf/"
-                print(f"📤 URL: {url}")
-                print(f"🔐 Headers: {headers}")
                 
                 response = self.session.post(
                     url,
@@ -2072,29 +2013,20 @@ class DatabaseHTTPWrapper:
                     timeout=30  # 30 segundos de timeout
                 )
                 
-                print(f"📊 Status code: {response.status_code}")
-                print(f"📝 Response text: {response.text[:500]}")
                 
                 if response.status_code in [200, 201]:  # 200 OK ou 201 Created
-                    print(f"✅ Upload realizado com sucesso!")
-                    print(f"{'='*60}\n")
                     return True
                 else:
-                    print(f"❌ Erro no upload - Status: {response.status_code}")
-                    print(f"   Resposta: {response.text}")
-                    print(f"{'='*60}\n")
+                    pass
                     return False
                     
         except FileNotFoundError as e:
-            print(f"❌ Arquivo não encontrado: {file_path}")
-            print(f"   Erro: {e}")
-            print(f"{'='*60}\n")
+            pass
             return False
         except Exception as e:
-            print(f"❌ Erro ao fazer upload: {str(e)}")
+            pass
             import traceback
             traceback.print_exc()
-            print(f"{'='*60}\n")
             return False
         
     def _unwrap_results(self, response):
@@ -2135,16 +2067,12 @@ class Database:
     """Classe final 100% compatível com o código antigo"""
     
     def __init__(self, use_http: bool = True):
-        if use_http:
-            self.db = DatabaseHTTPWrapper()
-            print("🌐 Usando API HTTP Django (modo compatível)")
-        else:
-            try:
-                from .DatabaseSQLite import Database as DatabaseSQLite
-                self.db = DatabaseSQLite()
-                print("💾 Usando SQLite local")
-            except ImportError:
-                raise ImportError("Não foi possível carregar SQLite")
+        if not use_http:
+            raise NotImplementedError(
+                "DatabaseHTTPWrapper suporta apenas modo HTTP/API. "
+                "Use backend/classes/Database.py para seleção de backend."
+            )
+        self.db = DatabaseHTTPWrapper()
     
     def __getattr__(self, name):
         """Delega todos os métodos para o backend"""
@@ -2153,13 +2081,10 @@ class Database:
 
 # Teste rápido
 if __name__ == "__main__":
-    print("=== Teste de compatibilidade ===")
+    pass
     db = Database(use_http=True)
     
     persons = db.get_persons()
-    print(f"📊 {len(persons)} pessoa(s) encontrada(s)")
     
     if persons:
         first_person = persons[0]
-        print(f"📋 Formato: {type(first_person)}")
-        print(f"👤 Nome: {first_person['name']}")

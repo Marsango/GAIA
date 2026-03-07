@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "../../api/api"; // ✅ API com interceptors e auto-refresh
+import api from "../../api/api"; //  API com interceptors e auto-refresh
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -57,7 +57,7 @@ export default function AdminPanel() {
 
   const fetchEmailConfig = async () => {
     try {
-      // ✅ NOVO: Token em httpOnly cookie, axios envia automaticamente
+      //  NOVO: Token em httpOnly cookie, axios envia automaticamente
       const response = await api.get("admin/email-config/");
       setEmailConfig(response.data);
     } catch (error) {
@@ -74,7 +74,7 @@ export default function AdminPanel() {
     const cpfClean = newUser.cpf.replace(/\D/g, "");
 
     try {
-      // ✅ NOVO: Token em httpOnly cookie, axios envia automaticamente
+      //  NOVO: Token em httpOnly cookie, axios envia automaticamente
       await api.post("register/", {
         ...newUser,
         cpf: cpfClean,
@@ -102,7 +102,7 @@ export default function AdminPanel() {
     setMessage(null);
 
     try {
-      // ✅ NOVO: Token em httpOnly cookie
+      //  NOVO: Token em httpOnly cookie
       // 2. Envia o token automaticamente via api
       await api.post("admin/email-config/", emailConfig);
       setMessage({

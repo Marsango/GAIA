@@ -65,13 +65,13 @@ class Sample:
                     round((organic_matter - self.__used_config['organic_matter']['value']['b'])/self.__used_config['organic_matter']['value']['a'], 2))
 
         else:
-            from backend.classes.DatabaseHTTP import DatabaseHTTP
+            from backend.classes.DatabaseHTTPWrapper import DatabaseHTTPWrapper
             try:
-                db: DatabaseHTTP = DatabaseHTTP()
+                db: DatabaseHTTPWrapper = DatabaseHTTPWrapper()
                 samples = db.get_samples(sample_id=sample_id)
                 sample_data = samples[0] if samples else {}
             except Exception as e:
-                print(f"⚠️  Aviso: Falha ao buscar amostra anterior para comparação: {e}")
+                print(f"  Aviso: Falha ao buscar amostra anterior para comparação: {e}")
                 sample_data = {}
 
             if phosphorus == sample_data.get('phosphorus'):

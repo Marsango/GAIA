@@ -63,7 +63,6 @@ class JWTCookieToHeaderMiddleware:
             if access_token:
                 # Injetar no Authorization header para validação
                 request.META['HTTP_AUTHORIZATION'] = f'Bearer {access_token}'
-                print(f'[JWT] 🔄 Token injetado do cookie para header (len={len(access_token)})')
         
         response = self.get_response(request)
         return response

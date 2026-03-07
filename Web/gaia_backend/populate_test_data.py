@@ -65,7 +65,7 @@ def criar_enderecos(quantidade=10):
             pais="Brasil"
         )
         enderecos.append(endereco)
-        print(f"   ✅ Endereço {i+1}: {endereco.rua}, {endereco.numero} - {cidade}/{estado}")
+        print(f"    Endereço {i+1}: {endereco.rua}, {endereco.numero} - {cidade}/{estado}")
     
     return enderecos
 
@@ -374,13 +374,13 @@ def popular_banco():
         print(f"\n👤 PESSOA FÍSICA:")
         print(f"   Email: pessoa@labsolos.test")
         print(f"   Senha: senha123")
-        print(f"\n🏢 EMPRESA:")
+        print(f"\n EMPRESA:")
         print(f"   Email: empresa@labsolos.test")
         print(f"   Senha: senha123")
         print("="*70 + "\n")
         
     except Exception as e:
-        print(f"\n❌ ERRO ao popular banco: {str(e)}")
+        print(f"\n ERRO ao popular banco: {str(e)}")
         import traceback
         traceback.print_exc()
 

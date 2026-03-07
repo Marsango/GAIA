@@ -3,14 +3,15 @@ from backend.classes.utils import verify_type
 from typing import get_type_hints, Any
 import os
 
+#arquivo gerencia as configurações do sistema, como os fatores de correção para fósforo, potássio e matéria orgânica. Ele permite salvar e carregar essas configurações em um arquivo JSON, garantindo que as informações sejam persistentes entre as execuções do programa.
 
 class Configuration:
-
+    #kwargs torna um construtor mais flexíveis, permitindo que sejam passados um número variável de argumentos nomeados para a função.
     def __init__(self, **kwargs) -> None:
-        verify_type(get_type_hints(Configuration.__init__), locals())
-        base_dir: str = os.path.dirname(os.path.abspath(__file__))
-        self.__file_location = os.path.join(base_dir, 'config.json')
-        self.__user_config = kwargs.get('selected_config')
+        verify_type(get_type_hints(Configuration.__init__), locals())#verificar se o tipo do argumento passado é o mesmo do tipo definido na função
+        base_dir: str = os.path.dirname(os.path.abspath(__file__))#descobrir o diretório atual do arquivo
+        self.__file_location = os.path.join(base_dir, 'config.json')#criar o caminho completo para o arquivo de configuração, unindo o diretório base com o nome do arquivo
+        self.__user_config = kwargs.get('selected_config')#obter o valor do argumento 'selected_config' passado para a função, se não for passado, o valor será None
         if self.__user_config is not None:
             self.save_config()
         self.__current_config = self.load_config()

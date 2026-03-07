@@ -6,7 +6,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:8000/api/",
-  withCredentials: true,  // ✅ Envia cookies automaticamente (httpOnly)
+  withCredentials: true,  //  Envia cookies automaticamente (httpOnly)
 });
 
 // ============================================================
@@ -24,7 +24,7 @@ api.interceptors.response.use(
         originalRequest._retry = true;
         
         try {
-          console.log('[API] 🔄 Token expirado, tentando refresh...');
+          console.log('[API]  Token expirado, tentando refresh...');
           
           // Backend vai renovar o refresh_token cookie e retornar novo access_token
           await axios.post(
@@ -34,11 +34,11 @@ api.interceptors.response.use(
           );
           
           // Retry request original com novo token
-          console.log('[API] ✅ Token renovado, retentando requisição...');
+          console.log('[API]  Token renovado, retentando requisição...');
           return api(originalRequest);
         } catch (refreshError) {
           // Se refresh falhar, fazer logout
-          console.error('[API] ❌ Refresh falhou - fazendo logout');
+          console.error('[API]  Refresh falhou - fazendo logout');
           localStorage.removeItem("user");
           window.location.href = "/login";
           return Promise.reject(refreshError);

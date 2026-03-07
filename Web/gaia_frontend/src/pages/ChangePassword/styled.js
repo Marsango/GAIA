@@ -19,6 +19,11 @@ export const styles = {
     maxWidth: "400px",
     boxShadow: "0 5px 10px 0 rgba(0, 0, 0, 0.10)",
   },
+  mobileBox: {
+    boxShadow: "none",
+    borderRadius: "0",
+    backgroundColor: "transparent",
+  },
   button: {
     width: "60%",
     padding: "10px",

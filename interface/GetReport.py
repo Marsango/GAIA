@@ -29,17 +29,18 @@ class GetReport(QDialog, GetReportDialog):
         self.upload_button.clicked.connect(self.upload_signed_pdf)
         self.publish_button.clicked.connect(self.publish_report)
         self.remove_button.clicked.connect(self.remove_report)
-        self.close_button.clicked.connect(self.close)
         self.refresh_table()
 
     def refresh_table(self) -> None:
         db = Database()
         reports: list[sqlite3.Row] = db.get_report_info()
+        reports = sorted(
+            [report for report in (reports or []) if report['id'] is not None],
+            key=lambda item: int(item['id']),
+            reverse=True,
+        )
         self.report_table.setRowCount(0)
         for report in reports:
-            # Ignora laudos sem ID (API pode retornar entradas vazias)
-            if report['id'] is None:
-                continue
             row_position: int = self.report_table.rowCount()
             self.report_table.insertRow(row_position)
             self.report_table.setItem(row_position, 0, QTableWidgetItem(str(report['id'])))
@@ -240,13 +241,27 @@ class GetReport(QDialog, GetReportDialog):
         
         if confirm.clickedButton() == sim_button:
             db = Database()
-            success = db.publish_report(laudo_id)
+            result = db.publish_report(laudo_id)
             db.close_connection()
             
-            if success:
-                widget: AlertWindow = AlertWindow(f"Laudo {laudo_id} publicado com sucesso!\n\nO produtor agora pode visualizá-lo no site.")
+            if result['success']:
+                widget: AlertWindow = AlertWindow(f"✓ Laudo {laudo_id} publicado com sucesso!\n\nO produtor agora pode visualizá-lo no site.")
                 widget.exec()
                 self.refresh_table()  # Atualiza a tabela
+            elif result.get('already_published'):
+                # Laudo já estava publicado
+                widget: AlertWindow = AlertWindow(
+                    f"⚠ Laudo {laudo_id} já foi publicado\n\n"
+                    f"Este laudo já estava publicado anteriormente e já está visível para o produtor no site.\n\n"
+                    f"Não é necessário publicá-lo novamente."
+                )
+                widget.exec()
             else:
-                widget: AlertWindow = AlertWindow(f"Erro ao publicar laudo {laudo_id}.\n\nVerifique o console para mais detalhes.")
+                # Outro tipo de erro
+                error_msg = result.get('message', 'Erro desconhecido')
+                widget: AlertWindow = AlertWindow(
+                    f"✗ Erro ao publicar laudo {laudo_id}\n\n"
+                    f"Detalhes: {error_msg}\n\n"
+                    f"Verifique sua conexão com o servidor e tente novamente."
+                )
                 widget.exec()

@@ -29,7 +29,7 @@ export function useAuth() {
 
   // Função de login
   const login = (userData) => {
-    // ✅ NOVO: Tokens são armazenados em httpOnly cookies pelo servidor
+    //  NOVO: Tokens são armazenados em httpOnly cookies pelo servidor
     // Apenas armazenar dados do usuário
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
@@ -37,7 +37,7 @@ export function useAuth() {
 
   // Função de logout
   const logout = () => {
-    // ✅ NOVO: Cookies são removidos pelo endpoint /logout do servidor
+    //  NOVO: Cookies são removidos pelo endpoint /logout do servidor
     localStorage.removeItem("user");
     setUser(null);
   };

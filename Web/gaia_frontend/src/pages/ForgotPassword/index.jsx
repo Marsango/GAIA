@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api/api"; // ✅ API com interceptors e auto-refresh
+import api from "../../api/api"; //  API com interceptors e auto-refresh
 import logo from "../../assets/images/Logo_lab_Branco.svg";
 import { styles } from "./styled";
 import InputLogin from "../../components/InputLogin";
@@ -9,7 +9,14 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const handleReset = async (e) => {
     if (e) {
@@ -29,7 +36,7 @@ export default function ForgotPassword() {
       // Chama a rota do Django que criamos
       await api.post("/forgot-password/", { email: trimmedEmail });
       setMessage(
-        "Se o e-mail estiver cadastrado, uma nova senha foi enviada para ele.",
+        "Se o e-mail estiver cadastrado, voce recebera um link para redefinir a senha.",
       );
     } catch (error) {
       setMessage("Erro ao tentar conectar com o servidor.");
@@ -40,7 +47,7 @@ export default function ForgotPassword() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.box}>
+      <div style={{ ...styles.box, ...(isMobile ? styles.mobileBox : {}) }}>
         <img
           src={logo}
           alt="Gaia Logo"
@@ -48,7 +55,7 @@ export default function ForgotPassword() {
         />
         <h2 style={{ marginBottom: "20px" }}>Recuperar Senha</h2>
 
-        <p style={{ color: "#aaa", marginBottom: "20px", fontSize: "14px" }}>
+        <p style={{ color: "#646464", marginBottom: "20px", fontSize: "14px" }}>
           Digite seu e-mail para receber uma senha temporária.
         </p>
 

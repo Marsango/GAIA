@@ -102,6 +102,7 @@ export const Subtitle = styled.h2`
 export const AdminButton = styled.button`
   display: block;
   margin: 0 auto 20px auto;
+  min-height: 44px;
   padding: 10px 20px;
   background-color: #ffc107;
   color: #000;
@@ -114,5 +115,10 @@ export const AdminButton = styled.button`
 
   &:hover {
     background-color: #e0a800;
+  }
+
+  &:focus-visible {
+    outline: 3px solid ${black};
+    outline-offset: 2px;
   }
 `;

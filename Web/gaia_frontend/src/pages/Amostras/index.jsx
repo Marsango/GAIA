@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api/api"; // ✅ API com interceptors e auto-refresh
+import api from "../../api/api"; 
 import "./styles.css";
 
 export default function Amostras() {
@@ -25,7 +25,7 @@ export default function Amostras() {
       setLoading(true);
       setError(null);
 
-      // ✅ NOVO: Token em httpOnly cookie, axios envia automaticamente
+      //  NOVO: Token em httpOnly cookie, axios envia automaticamente
       const response = await api.get("/amostras/");
 
       setAmostras(response.data.results || response.data);
@@ -41,8 +41,7 @@ export default function Amostras() {
     try {
       setLoading(true);
       setError(null);
-
-      // ✅ NOVO: Token em httpOnly cookie, axios envia automaticamente
+      
       // Fazer requisição para gerar PDF
       const response = await api.get(
         `/amostras/${amostraId}/gerar_laudo/?convenio=${encodeURIComponent(convenio)}`,

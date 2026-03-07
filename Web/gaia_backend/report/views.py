@@ -11,6 +11,23 @@ from .serializers import PropriedadeSerializer, LaudoSerializer, AmostraSerializ
 from django.utils import timezone
 from .pdf_generator import WebReportGenerator
 from authentication.models import Usuario
+from authentication.serializers import UsuarioSerializer
+
+
+def _delete_endereco_if_orphan(endereco_id: int) -> bool:
+    """Remove Endereco apenas se não estiver mais referenciado."""
+    if not endereco_id:
+        return False
+
+    if Person.objects.filter(endereco_id=endereco_id).exists():
+        return False
+    if Empresa.objects.filter(endereco_id=endereco_id).exists():
+        return False
+    if Propriedade.objects.filter(endereco_id=endereco_id).exists():
+        return False
+
+    Endereco.objects.filter(id=endereco_id).delete()
+    return True
 
 class PersonViewSet(viewsets.ModelViewSet):
     """
@@ -50,11 +67,9 @@ class PersonViewSet(viewsets.ModelViewSet):
         """
         Deleta a pessoa E o usuario associado a dela
         """
-        print(f"\n🔵 PersonViewSet.destroy() CHAMADO", flush=True)
         
         pessoa = self.get_object()
-        print(f"   Deletando Person ID: {pessoa.id} - {pessoa.name}", flush=True)
-        print(f"   CPF: {pessoa.cpf}", flush=True)
+        endereco_id = pessoa.endereco_id
         
         # Limpar CPF e procurar Usuario associado
         cpf_originl = pessoa.cpf
@@ -65,32 +80,26 @@ class PersonViewSet(viewsets.ModelViewSet):
         try:
             usuario = Usuario.objects.filter(cpf=cpf_limpo).first()
             if usuario:
-                print(f"   🗑️ Encontrado Usuario ID {usuario.id} com CPF {cpf_limpo}")
-                print(f"      Deletando usuario...", flush=True)
                 usuario_id = usuario.id
                 usuario.delete()
-                print(f"      ✅ Usuario {usuario_id} deletado", flush=True)
                 usuario_deletado = True
             else:
-                print(f"   ⚠️ Usuario com CPF {cpf_limpo} não encontrado", flush=True)
+                pass
         except Exception as e:
-            print(f"   ⚠️ Erro ao deletar usuario: {e}", flush=True)
+            pass
             # NÃO bloqueia a deleção da pessoa
         
         # DELETAR PESSOA - OBRIGATÓRIO
-        print(f"   💾 Deletando Person do banco de dados...", flush=True)
         try:
-            pessoa_id = pessoa.id
             pessoa.delete()
-            print(f"   ✅ Person {pessoa_id} deletada com sucesso", flush=True)
+
+            _delete_endereco_if_orphan(endereco_id)
             
             # Retornar resposta de sucesso
             response = Response(status=status.HTTP_204_NO_CONTENT)
-            print(f"   ✅ Retornando status 204 No Content", flush=True)
             return response
             
         except Exception as e:
-            print(f"   ❌ ERRO ao deletar Person: {e}", flush=True)
             import traceback
             traceback.print_exc()
             return Response(
@@ -243,28 +252,19 @@ class LaudoViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def upload_pdf(self, request, pk=None):
         """Upload de arquivo PDF para laudo"""
-        print(f"\n{'='*60}")
-        print(f"📤 [upload_pdf] Iniciando upload para laudo ID={pk}")
-        print(f"{'='*60}")
         
         laudo = self.get_object()
         
         if 'arquivo_pdf' not in request.FILES:
-            print(f"❌ Nenhum arquivo 'arquivo_pdf' encontrado em request.FILES")
-            print(f"   Arquivos disponíveis: {list(request.FILES.keys())}")
             return Response(
                 {'error': 'Nenhum arquivo enviado'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         arquivo = request.FILES['arquivo_pdf']
-        print(f"📄 Nome do arquivo: {arquivo.name}")
-        print(f"📊 Tamanho: {arquivo.size} bytes")
-        print(f"🔍 MIME type informado: {arquivo.content_type}")
         
         # Validação 1: Verificar extensão do arquivo
         if not arquivo.name.lower().endswith('.pdf'):
-            print(f"❌ Extensão não é .pdf: {arquivo.name}")
             return Response(
                 {'error': 'Apenas arquivos PDF são permitidos'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -283,29 +283,22 @@ class LaudoViewSet(viewsets.ModelViewSet):
         ]
         
         if arquivo.content_type not in allowed_mime_types:
-            print(f"⚠️  MIME type não reconhecido: {arquivo.content_type}")
-            print(f"   Permitindo mesmo assim pois extensão é .pdf")
+            pass
         else:
-            print(f"✅ MIME type aceito: {arquivo.content_type}")
+            pass
         
         # Validação 3: Verificar tamanho (máximo 10MB)
         max_size = 10 * 1024 * 1024  # 10MB em bytes
         if arquivo.size > max_size:
-            print(f"❌ Arquivo muito grande: {arquivo.size} bytes (máx: {max_size})")
             return Response(
                 {'error': f'Arquivo muito grande. Tamanho máximo: 10MB'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        print(f"✅ Todas as validações passaram")
-        print(f"💾 Salvando arquivo no banco...")
         
         laudo.arquivo_pdf = arquivo
         laudo.save()
         
-        print(f"✅ Arquivo salvo com sucesso!")
-        print(f"   URL: {laudo.arquivo_pdf.url}")
-        print(f"{'='*60}\n")
         
         return Response({
             'success': True,
@@ -662,7 +655,7 @@ def health_check(request):
 @permission_classes([IsAuthenticated])
 def current_user(request):
     """Retorna informações do usuário atual"""
-    serializer = UserSerializer(request.user)
+    serializer = UsuarioSerializer(request.user)
     return Response(serializer.data)
 
 # Endpoint para empresas (se necessário)
@@ -705,11 +698,9 @@ class EmpresaViewSet(viewsets.ModelViewSet):
         """
         Deleta a empresa E o usuario associado a ela
         """
-        print(f"\n🔵 EmpresaViewSet.destroy() CHAMADO", flush=True)
         
         empresa = self.get_object()
-        print(f"   Deletando Empresa ID: {empresa.id} - {empresa.name}", flush=True)
-        print(f"   CNPJ: {empresa.cnpj}", flush=True)
+        endereco_id = empresa.endereco_id
         
         # Limpar CNPJ e procurar Usuario associado
         cnpj_limpo = empresa.cnpj.replace('.', '').replace('/', '').replace('-', '')
@@ -719,32 +710,26 @@ class EmpresaViewSet(viewsets.ModelViewSet):
         try:
             usuario = Usuario.objects.filter(cnpj=cnpj_limpo).first()
             if usuario:
-                print(f"   🗑️ Encontrado Usuario ID {usuario.id} com CNPJ {cnpj_limpo}", flush=True)
-                print(f"      Deletando usuario...", flush=True)
                 usuario_id = usuario.id
                 usuario.delete()
-                print(f"      ✅ Usuario {usuario_id} deletado", flush=True)
                 usuario_deletado = True
             else:
-                print(f"   ⚠️ Usuario com CNPJ {cnpj_limpo} não encontrado", flush=True)
+                pass
         except Exception as e:
-            print(f"   ⚠️ Erro ao deletar usuario: {e}", flush=True)
+            pass
             # NÃO bloqueia a deleção da empresa
         
         # DELETAR EMPRESA - OBRIGATÓRIO
-        print(f"   💾 Deletando Empresa do banco de dados...", flush=True)
         try:
-            empresa_id = empresa.id
             empresa.delete()
-            print(f"   ✅ Empresa {empresa_id} deletada com sucesso", flush=True)
+
+            _delete_endereco_if_orphan(endereco_id)
             
             # Retornar resposta de sucesso
             response = Response(status=status.HTTP_204_NO_CONTENT)
-            print(f"   ✅ Retornando status 204 No Content", flush=True)
             return response
             
         except Exception as e:
-            print(f"   ❌ ERRO ao deletar Empresa: {e}", flush=True)
             import traceback
             traceback.print_exc()
             return Response(

@@ -65,7 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'config.middleware.JWTCookieToHeaderMiddleware',  # ✅ NOVO: Converte cookie → header
+    'config.middleware.JWTCookieToHeaderMiddleware',  #  NOVO: Converte cookie → header
     'config.middleware.SecurityHeadersMiddleware',  # Headers de segurança customizados
 ]
 
@@ -79,7 +79,7 @@ if DEBUG:
         "http://localhost:8000",
         "http://127.0.0.1:8000",
     ]
-    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_ALL_ORIGINS = False
 else:
     # PRODUÇÃO: Apenas origens específicas (CONFIGURAR NO .env)
     CORS_ALLOWED_ORIGINS = config(
@@ -126,18 +126,32 @@ DATABASES = {
 }
 
 # ===============================================
-# 🔐 Cache Configuration (necessário para Rate Limiting)
+#  Cache Configuration (necessário para Rate Limiting)
 # ===============================================
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'gaia-ratelimit-cache',
-        'TIMEOUT': 3600,  # 1 hora
-        'OPTIONS': {
-            'MAX_ENTRIES': 10000
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#         'LOCATION': 'gaia-ratelimit-cache',
+#         'TIMEOUT': 3600,  # 1 hora
+#         'OPTIONS': {
+#             'MAX_ENTRIES': 10000
+#         }
+#     }
+# }
+
+if DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -173,7 +187,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 # Media files configuration (APENAS para servir arquivos)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -219,13 +232,13 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # ===============================================
-# 🔒 SEGURANÇA: httpOnly Cookies (Proteção contra XSS)
+# SEGURANÇA: httpOnly Cookies (Proteção contra XSS)
 # ===============================================
 # EM DESENVOLVIMENTO: Ativado para testar; em PRODUÇÃO: controlled by if not DEBUG
-SESSION_COOKIE_HTTPONLY = True      # ✅ Cookies inacessíveis via JavaScript
-CSRF_COOKIE_HTTPONLY = True         # ✅ CSRF token inacessível via JavaScript
-SESSION_COOKIE_SAMESITE = 'Lax'     # ✅ Mitiga CSRF attacks
-CSRF_COOKIE_SAMESITE = 'Lax'        # ✅ Mitiga CSRF attacks
+SESSION_COOKIE_HTTPONLY = True      #  Cookies inacessíveis via JavaScript
+CSRF_COOKIE_HTTPONLY = True         #  CSRF token inacessível via JavaScript
+SESSION_COOKIE_SAMESITE = 'Lax'     #  Mitiga CSRF attacks
+CSRF_COOKIE_SAMESITE = 'Lax'        #  Mitiga CSRF attacks
 
 # Segurança para produção
 if not DEBUG:

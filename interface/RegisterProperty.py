@@ -17,7 +17,7 @@ class RegisterProperty(QDialog, RegisterPropertyDialog):
         "Paraná": [
             "Pato Branco", "Marmeleiro", "Coronel Vivida", "Sulina", "Enéas Marques",
             "Renascença", "Pranchita", "Crespo", "Santo Antônio do Sudoeste", 
-            "Capanema", "Ampére", "Neves", "Clevelândia", "Realeza"
+            "Capanema", "Ampére", "Neves", "Clevelândia", "Realeza", "Francisco Beltrão"
         ],
         "Santa Catarina": [
             "Chapecó", "Xanxerê", "Caxambu do Sul", "Tapejara", "Santa Cecília",

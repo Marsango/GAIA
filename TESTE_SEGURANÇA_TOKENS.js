@@ -76,16 +76,16 @@ if (tokenInfo.decoded) {
 // TESTE 2: Verificar nomenclatura (sem "token" antigos)
 // ============================================================
 console.log("\n");
-console.log("🔍 TESTE 2: Verificar nomenclatura de tokens");
+console.log(" TESTE 2: Verificar nomenclatura de tokens");
 console.log("=".repeat(50));
 
 const oldTokenNames = localStorage.getItem("token");
 const oldRefreshNames = localStorage.getItem("refresh");
 
 console.log({
-  "❌ Chave 'token' (ANTIGA) existe": !!oldTokenNames ? "ERRO!" : "✅ NÃO",
-  "❌ Chave 'refresh' (ANTIGA) existe": !!oldRefreshNames ? "ERRO!" : "✅ NÃO",
-  "✅ Usando 'access_token' (NOVO)": !!accessToken ? "✅ SIM" : "❌ NÃO",
+  " Chave 'token' (ANTIGA) existe": !!oldTokenNames ? "ERRO!" : "✅ NÃO",
+  " Chave 'refresh' (ANTIGA) existe": !!oldRefreshNames ? "ERRO!" : "✅ NÃO",
+  " Usando 'access_token' (NOVO)": !!accessToken ? "✅ SIM" : "❌ NÃO",
 });
 
 if (oldTokenNames || oldRefreshNames) {

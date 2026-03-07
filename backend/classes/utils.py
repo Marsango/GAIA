@@ -1,4 +1,5 @@
 import json
+import ast
 import logging
 from typing import Any
 from .exceptions import CPFAlreadyExistsError, CNPJAlreadyExistsError
@@ -41,14 +42,12 @@ def to_dict(_object: Any) -> dict[str, Any]:
     try:
         # Se não é objeto, retorna como está
         if not hasattr(_object, '__dict__'):
-            print(f"   ℹ️  to_dict: objeto não tem __dict__, retornando vazio ou como dict")
+            print(f"     to_dict: objeto não tem __dict__, retornando vazio ou como dict")
             return _object if isinstance(_object, dict) else {}
         
         result = {}
         obj_dict = _object.__dict__
-        
-        print(f"   ℹ️  to_dict: processando {type(_object).__name__} com {len(obj_dict)} atributos")
-        
+                
         for key, value in obj_dict.items():
             # Lidar com diferentes formatos de atributos:
             # 1. Atributo privado: "_Person__name" → "name"
@@ -65,13 +64,11 @@ def to_dict(_object: Any) -> dict[str, Any]:
             # Só adiciona se não for vazio
             if clean_key:
                 result[clean_key] = value
-                print(f"      {key} → {clean_key}: {value}")
         
-        print(f"   ✓ to_dict: resultado com {len(result)} campos")
         return result
         
     except Exception as e:
-        print(f"   ❌ ERRO em to_dict: {e}")
+        print(f"    ERRO em to_dict: {e}")
         import traceback
         traceback.print_exc()
         logging.error(f"Erro ao converter objeto para dicionário: {e}")
@@ -114,6 +111,43 @@ def handle_exception(e: Exception) -> str:
         error_message = f"{str(e)}"
         logging.error(error_message)
         return error_message
+
+    # Erros da API HTTP (ex.: validações do Django/DRF)
+    elif isinstance(e, RuntimeError):
+        raw_message = str(e)
+
+        # Formato esperado: "Erro de validação: {'campo': ['mensagem']}"
+        if raw_message.startswith("Erro de validação:"):
+            payload_str = raw_message.replace("Erro de validação:", "", 1).strip()
+
+            try:
+                payload = ast.literal_eval(payload_str)
+                if isinstance(payload, dict):
+                    mensagens: list[str] = []
+
+                    for field, errors in payload.items():
+                        field_name = translate_errors(field)
+
+                        if isinstance(errors, list):
+                            for err in errors:
+                                mensagens.append(f"{field_name}: {err}")
+                        else:
+                            mensagens.append(f"{field_name}: {errors}")
+
+                    if mensagens:
+                        error_message = "Erro de validação: " + " | ".join(mensagens)
+                        logging.warning(error_message)
+                        return error_message
+            except Exception:
+                # Se não conseguir parsear, retorna mensagem original sem cair em "desconhecido"
+                pass
+
+            logging.warning(raw_message)
+            return raw_message
+
+        # Outros RuntimeError devem aparecer claramente ao usuário
+        logging.error(raw_message)
+        return raw_message
 
     # Outros tipos de erro
     else:

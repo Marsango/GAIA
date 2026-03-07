@@ -79,14 +79,14 @@ const Login = () => {
             captchaAnswer || null,
           );
 
-      console.log("📦 Resposta do backend:", data); // ← NOVO: Debug
+      console.log(" Resposta do backend:", data); // ← NOVO: Debug
 
       // Verifica se os dados esperados estão presentes
       if (!data.user) {
         throw new Error("Dados incompletos recebidos do servidor");
       }
 
-      // ✅ httpOnly Cookies já são enviados automaticamente pelo navegador
+      //  httpOnly Cookies já são enviados automaticamente pelo navegador
       // Não precisamos mais salvar o token em sessionStorage
       // O axios com withCredentials: true vai gerenciar isso para nós
 
@@ -104,30 +104,105 @@ const Login = () => {
 
       const responseData = err.response?.data;
 
+      // Verificar se requer CAPTCHA
       if (responseData?.require_captcha && responseData?.captcha) {
         setCaptchaChallenge(
           responseData.captcha.challenge || "Resolva o CAPTCHA",
         );
         setCaptchaToken(responseData.captcha.token || "");
         setCaptchaAnswer("");
+
+        const failedAttempts = responseData.failed_attempts || 0;
+        const mensagem = ` Muitas tentativas falhadas (${failedAttempts}). Por favor, resolva o CAPTCHA para continuar.`;
+
         setError((prev) => ({
           ...prev,
-          general: "Confirme sua identidade resolvendo o CAPTCHA.",
+          general: mensagem,
         }));
         return;
       }
 
-      if (err.response?.status === 401) {
+      // Erro 403: CAPTCHA errado
+      if (err.response?.status === 403) {
+        // CAPTCHA continua visível, mas mostra erro
+        setCaptchaAnswer(""); // Limpa a resposta anterior
+
+        const errorMsg =
+          responseData?.error || "Resposta do CAPTCHA incorreta.";
+        const failedAttempts = responseData?.failed_attempts || 0;
+
+        let mensagem = ` ${errorMsg}`;
+        if (failedAttempts > 0) {
+          mensagem += ` (Tentativa ${failedAttempts})`;
+        }
+
         setError((prev) => ({
           ...prev,
-          general: "CPF/CNPJ ou senha incorretos.",
+          general: mensagem,
         }));
-      } else {
-        setError((prev) => ({
-          ...prev,
-          general: "Erro ao fazer login. Tente novamente.",
-        }));
+        return;
       }
+
+      // Erro 429: Conta bloqueada temporariamente
+      if (err.response?.status === 429) {
+        setError((prev) => ({
+          ...prev,
+          general:
+            " Muitas tentativas. Sua conta foi bloqueada temporariamente. Tente novamente em alguns minutos.",
+        }));
+        return;
+      }
+
+      // Erro 401: Credenciais inválidas
+      if (err.response?.status === 401) {
+        const failedAttempts = responseData?.failed_attempts || 0;
+        const maxAttempts = responseData?.max_attempts_before_captcha || 5;
+
+        let mensagem = " CPF/CNPJ ou senha incorretos.";
+
+        if (failedAttempts > 0) {
+          const tentativasRestantes = maxAttempts - failedAttempts;
+          if (tentativasRestantes > 0) {
+            mensagem += ` (Tentativa ${failedAttempts}/${maxAttempts}. Restam ${tentativasRestantes} antes do CAPTCHA)`;
+          } else {
+            mensagem += ` (${failedAttempts} tentativas falhadas. Próxima tentativa exigirá CAPTCHA)`;
+          }
+        }
+
+        setError((prev) => ({
+          ...prev,
+          general: mensagem,
+        }));
+        return;
+      }
+
+      // Erro 400: Validação
+      if (err.response?.status === 400) {
+        const errorMsg = responseData?.error || "Dados inválidos";
+        setError((prev) => ({
+          ...prev,
+          general: ` ${errorMsg}`,
+        }));
+        return;
+      }
+
+      // Erro genérico (5xx, network, etc)
+      if (err.code === "ERR_NETWORK") {
+        setError((prev) => ({
+          ...prev,
+          general:
+            " Erro de conexão. Verifique sua internet e tente novamente.",
+        }));
+        return;
+      }
+
+      // Fallback para qualquer outro erro
+      setError((prev) => ({
+        ...prev,
+        general:
+          responseData?.error ||
+          "Erro ao fazer login. Tente novamente mais tarde.",
+      }));
     } finally {
       setLoading(false);
     }
@@ -190,7 +265,14 @@ const Login = () => {
             <InputLogin
               type="text"
               value={captchaAnswer}
-              onChange={(e) => setCaptchaAnswer(e.target.value)}
+              onChange={(e) => {
+                setCaptchaAnswer(e.target.value);
+                // Limpar erro anterior quando usuário digita a resposta novamente
+                setError((prev) => ({
+                  ...prev,
+                  general: "",
+                }));
+              }}
               placeholder="Resposta do CAPTCHA"
               disabled={loading}
             />

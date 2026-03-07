@@ -88,11 +88,6 @@ class GetReportDialog(object):
 
         self.horizontalLayout_2.addWidget(self.frame_4)
 
-        self.close_button = QPushButton(self.frame_2)
-        self.close_button.setObjectName(u"close_button")
-
-        self.horizontalLayout_2.addWidget(self.close_button)
-
 
         self.verticalLayout.addWidget(self.frame_2)
 
@@ -116,6 +111,5 @@ class GetReportDialog(object):
         self.upload_button.setText(QCoreApplication.translate("Dialog", u"Upload PDF Assinado", None))
         self.publish_button.setText(QCoreApplication.translate("Dialog", u"Publicar Laudo", None))
         self.remove_button.setText(QCoreApplication.translate("Dialog", u"Remover Laudo", None))
-        self.close_button.setText(QCoreApplication.translate("Dialog", u"Sair", None))
     # retranslateUi
 

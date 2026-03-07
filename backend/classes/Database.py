@@ -1,59 +1,73 @@
 # Novo Database.py para software desktop (API Django)
-import requests
-import json
-from typing import Optional, List, Dict, Any
-from datetime import datetime
-import time
-from backend.classes.Sample import Sample
-from backend.classes.Report import Report
-from backend.classes.Person import Person
+from typing import List, Dict
+import importlib
 from backend.classes.Address import Address
-from backend.classes.Company import Company
 from backend.classes.Property import Property
-from backend.classes.exceptions import CNPJAlreadyExistsError
-from backend.classes.utils import *
+
+#Compatibilidade total com o código existente, delegando para o backend escolhido (API ou SQLite) sem alterar as assinaturas dos métodos. O wrapper é transparente para o restante do código, permitindo que ele funcione sem modificações, independentemente do backend utilizado.
 
 class Database:
     """Wrapper para manter compatibilidade total com código existente"""
     
     def __init__(self, use_api: bool = True, api_url: str = "http://localhost:8000"):
         self.use_api = use_api
-        
+        self.db = None
+
         if use_api:
             from backend.classes.DatabaseHTTPWrapper import DatabaseHTTPWrapper
-            self.db = DatabaseHTTPWrapper()
+            self.db = DatabaseHTTPWrapper(api_url=api_url)
             print("[API] Modo API Django ativado")
+
+            # Fallback opcional (DESATIVADO): se a API cair, trocar para SQLite local.
+            # Para testar depois, descomente este bloco.
+            # Requisito: existir backend/classes/DatabaseSQLite.py
+            # if not self.db.test_connection():
+            #     print("[API] Servidor indisponível. Alternando para SQLite local...")
+            #     self._create_sqlite_backend()
+        else:
+            self._create_sqlite_backend()
+
+    def _create_sqlite_backend(self) -> None:
+        """Inicializa backend SQLite local (modo contingência)."""
+        try:
+            module = importlib.import_module("backend.classes.DatabaseSQLite")
+            DatabaseSQLite = getattr(module, "Database")
+            self.db = DatabaseSQLite()
+            print("[SQLite] Modo SQLite local ativado")
+        except ImportError:
+            raise ImportError("Nao foi possivel carregar SQLite")
     
-    # ========== DELEGA??O DE M?TODOS ==========
+    # ========== DELEGACAO DE METODOS ==========
     
     def login(self, cpf: str, password: str) -> bool:
-        """Login compat?vel"""
+        """Login compativel"""
         if hasattr(self.db, 'login'):
             return self.db.login(cpf, password)
         return False
     
     def insert_property(self, property: Property, requester_id: int, address: Address) -> None:
-        """Insere propriedade - Mant?m assinatura original"""
+        """Insere propriedade - Mantem assinatura original"""
         if hasattr(self.db, 'insert_property'):
-            result = self.db.insert_property(property, requester_id, address)
-            # O m?todo original n?o retorna nada, apenas commit
+            self.db.insert_property(property, requester_id, address)
+            # O metodo original nao retorna nada, apenas commit
             return
-        raise NotImplementedError("M?todo n?o implementado")
+        raise NotImplementedError("Metodo nao implementado")
     
     def get_properties(self, **kwargs) -> list:
-        """Busca propriedades - Mant?m formato original"""
+        """Busca propriedades - Mantem formato original"""
         if hasattr(self.db, 'get_properties'):
             result = self.db.get_properties(**kwargs)
             # Converter para sqlite3.Row se necess?rio
             return self._convert_to_sqlite_format(result)
         return []
+    
     def _convert_to_sqlite_format(self, data: List[Dict]) -> list:
         """Converte dict para formato similar a sqlite3.Row"""
-        # Se j? s?o objetos com __getitem__, retorna como est?
+        # Se ja sao objetos com __getitem__, retorna como esta
         if data and hasattr(data[0], '__getitem__'):
             return data
 
-        # Esta ? uma simplifica??o. Pode precisar de mais ajustes.
+        # Esta eh uma simplificacaoo. Pode precisar de mais ajustes.
         class MockRow:
             def __init__(self, data):
                 self._data = data
@@ -65,7 +79,7 @@ class Database:
                 return self._data.keys()
 
         return [MockRow(item) for item in data]
-    # ========== DELEGAR TODOS OS OUTROS M?TODOS ==========
+    # ========== DELEGAR TODOS OS OUTROS METODOS ==========
     
     def __getattr__(self, name):
         """Delega métodos não implementados para o backend atual"""

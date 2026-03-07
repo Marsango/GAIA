@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api/api"; // ✅ CORRIGIDO: usar o api com interceptors
+import api from "../../api/api"; //  CORRIGIDO: usar o api com interceptors
 import logo from "../../assets/images/Logo_lab_Branco.svg";
 import { styles } from "./styled";
 import { lightGray, black } from "../../config/colors.js";
@@ -19,7 +19,14 @@ export default function ChangePassword() {
   });
   const [loading, setLoading] = useState(false);
   const [isFirstAccess, setIsFirstAccess] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   // Verificar se é primeiro acesso
   useEffect(() => {
@@ -81,7 +88,7 @@ export default function ChangePassword() {
   const sendChangePasswordRequest = async (currentPass, newPass) => {
     setLoading(true);
     try {
-      // ✅ Token automático via api.js interceptor
+      //  Token automático via api.js interceptor
       await api.post("change-password/", {
         // ← CORRIGIDO: /api/change-password/
         old_password: currentPass,
@@ -129,9 +136,17 @@ export default function ChangePassword() {
     }
   };
 
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/reports");
+    }
+  };
+
   return (
     <div style={styles.container}>
-      <div style={styles.box}>
+      <div style={{ ...styles.box, ...(isMobile ? styles.mobileBox : {}) }}>
         <img
           src={logo}
           alt="Gaia Logo"
@@ -198,6 +213,16 @@ export default function ChangePassword() {
           <button type="submit" disabled={loading} style={styles.button}>
             {loading ? "Processando..." : "Salvar Senha"}
           </button>
+
+          {!isFirstAccess && (
+            <button
+              type="button"
+              style={styles.secondaryButton}
+              onClick={handleGoBack}
+            >
+              Voltar
+            </button>
+          )}
         </form>
 
         {message && (

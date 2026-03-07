@@ -40,6 +40,7 @@ class PropertyWindow(QDialog, PropertyDialog):
     def refresh_table(self) -> None:
         db = Database()
         properties: list[sqlite3.Row] = db.get_properties(requester_id=self.current_owner_id)
+        properties = sorted(properties or [], key=lambda item: int(item['id']), reverse=True)
         self.property_table.setRowCount(0)
         for property in properties:
             row_position: int = self.property_table.rowCount()

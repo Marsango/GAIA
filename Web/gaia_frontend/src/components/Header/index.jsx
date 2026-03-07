@@ -6,7 +6,7 @@ import {
   ProfileText,
   LogoutButton,
   ChangePasswordButton,
-  ButtonGroup 
+  ButtonGroup,
 } from "./styled.js";
 import { CgProfile, CgLogOut } from "react-icons/cg";
 import { MdVpnKey } from "react-icons/md";
@@ -64,10 +64,8 @@ export default function Header() {
     <>
       <HeaderContainer>
         <ProfileIcon>
-          <CgProfile size={50} /> 
-          <ProfileText>
-            {user ? `${user.first_name} ${user.last_name}` : "Visitante"}
-          </ProfileText>
+          <CgProfile size={50} />
+          <ProfileText>{user ? user.nome : "Visitante"}</ProfileText>
         </ProfileIcon>
         <ButtonGroup>
           <ChangePasswordButton onClick={() => navigate("/change-password")}>
@@ -80,7 +78,12 @@ export default function Header() {
           </LogoutButton>
         </ButtonGroup>
       </HeaderContainer>
-      <LogoutModal isOpen={showLogoutModal} onClose={() => !logoutLoading && setShowLogoutModal(false)} onConfirm={handleLogout} loading={logoutLoading} />
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => !logoutLoading && setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        loading={logoutLoading}
+      />
     </>
   );
 }

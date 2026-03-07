@@ -56,11 +56,17 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
             item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def open_dialog(self) -> None:
-        # Deixa o usuário escolher apenas a pasta e propõe um nome padrão para o CSV.
-        directory = QFileDialog.getExistingDirectory(self, "Selecionar pasta para salvar")
-        if directory:
-            default_name = "export.csv"
-            self.file_path.setText(os.path.join(directory, default_name))
+        # Permite escolher pasta + nome do arquivo CSV.
+        selected_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Salvar CSV",
+            self.file_path.text() if self.file_path.text() else "export.csv",
+            "Arquivos CSV (*.csv)",
+        )
+        if selected_path:
+            if not selected_path.lower().endswith('.csv'):
+                selected_path += '.csv'
+            self.file_path.setText(selected_path)
 
     def translate_params(self, params) -> str:
         translate_dict = {
@@ -93,6 +99,11 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
         return selected_parameters
 
     def save(self) -> None:
+        if not self.file_path.text().strip():
+            dialog: AlertWindow = AlertWindow("Selecione o local e o nome do arquivo CSV antes de salvar.")
+            dialog.exec()
+            return
+
         with open(f'{self.file_path.text()}', 'w', newline='') as file:
             writer = csv.writer(file)
             columns = self.get_selected_parameters()

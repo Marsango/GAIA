@@ -5,7 +5,7 @@ class Usuario(AbstractUser):
     cpf = models.CharField(max_length=14, unique=True, null=True, blank=True)
     cnpj = models.CharField(max_length=20, unique=True, null=True, blank=True)
     telefone = models.CharField(max_length=15, blank=True, null=True)
-    data_nascimento = models.DateField(null=True, blank=True)  # ← NOVO CAMPO
+    data_nascimento = models.DateField(null=True, blank=True)
     
     # Campo novo para controlar o fluxo de primeiro acesso
     primeiro_acesso = models.BooleanField(default=True)
@@ -53,7 +53,7 @@ class LoginAttempt(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        status = "✅ Sucesso" if self.success else "❌ Falha"
+        status = " Sucesso" if self.success else " Falha"
         return f"{self.identifier} ({self.ip_address}) - {status}"
     
     class Meta:
@@ -68,8 +68,8 @@ class CaptchaChallenge(models.Model):
     identifier = models.CharField(max_length=20)  # CPF ou CNPJ
     ip_address = models.GenericIPAddressField()
     challenge_token = models.CharField(max_length=64, unique=True)
-    challenge_key = models.CharField(max_length=10)  # ex: "3 + 5 = ?"
-    correct_answer = models.CharField(max_length=10)  # ex: "8"
+    challenge_key = models.CharField(max_length=50)  # ex: "20 + 20 = ?"
+    correct_answer = models.CharField(max_length=20)  # ex: "40"
     attempts = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()

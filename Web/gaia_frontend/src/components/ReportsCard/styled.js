@@ -12,11 +12,22 @@ export const Card = styled.div`
   overflow: hidden;
 `;
 
-export const Header = styled.div`
+export const Header = styled.button`
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  width: 100%;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  text-align: left;
+
+  &:focus-visible {
+    outline: 3px solid #000;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
 `;
 
 export const Divider = styled.hr`
@@ -56,6 +67,11 @@ export const ButtonRow = styled.div`
   margin-top: 10px;
   justify-content: center;
   
+  /* Garante que os links ocupem o mesmo espaço que os botões */
+  & > * {
+    flex: 1;
+  }
+  
   @media (max-width: 600px) {
     gap: 5px; 
   }
@@ -65,6 +81,7 @@ export const Button = styled.button`
   background: ${(p) => (p.secundario ? "#2e7d32" : "#4caf50")};
   color: white;
   border: none;
+  min-height: 44px;
   padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
@@ -76,6 +93,11 @@ export const Button = styled.button`
   /* Reduzimos de 20px para 16px no Desktop! */
   font-size: 16px; 
   justify-content: center;
+
+  &:focus-visible {
+    outline: 3px solid #000;
+    outline-offset: 2px;
+  }
 
   @media (max-width: 600px) {
     font-size: 14px; 

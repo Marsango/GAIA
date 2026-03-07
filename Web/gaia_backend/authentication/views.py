@@ -2,10 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import make_password
-from .serializers import LoginSerializer, UsuarioSerializer, CustomTokenObtainPairSerializer
-from .models import Usuario
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
@@ -14,18 +11,19 @@ from django_ratelimit.decorators import ratelimit
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 from django.utils.crypto import get_random_string
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+import logging
+from datetime import datetime, date, timedelta
 
 from .models import Usuario, ConfiguracaoEmail
-from .serializers import LoginSerializer, UsuarioSerializer, ConfiguracaoEmailSerializer, CustomTokenObtainPairSerializer
+from .serializers import ConfiguracaoEmailSerializer, CustomTokenObtainPairSerializer
 
 from rest_framework.permissions import IsAdminUser
 
-# ✨ NOVO: Importar funções de segurança progressiva
 from .security import (
     record_login_attempt,
     get_failed_attempts,
@@ -36,7 +34,9 @@ from .security import (
     clear_failed_attempts
 )
 
-# ============ NOVO: View customizada que retorna primeiro_acesso ============
+logger = logging.getLogger(__name__)
+
+# ============ View customizada que retorna primeiro_acesso ============
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
     View customizada que estende TokenObtainPairView
@@ -46,7 +46,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 # ===============================================
-# 🔒 LOGIN COM SEGURANÇA PROGRESSIVA + CAPTCHA
+#  LOGIN COM SEGURANÇA PROGRESSIVA + CAPTCHA
 # ===============================================
 
 @ratelimit(key='ip', rate='6/m', method='POST', block=True)
@@ -71,17 +71,17 @@ def login_with_cpf_secure(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # 🔒 Verificar se está bloqueado completamente
+    #  Verificar se está bloqueado completamente
     if should_block_login(cpf, ip_address):
         return Response(
             {'error': 'Muitas tentativas. Conta bloqueada temporariamente.'},
             status=status.HTTP_429_TOO_MANY_REQUESTS
         )
     
-    # 📊 Obter status de segurança
+    #  Obter status de segurança
     security_status = get_login_security_status(cpf, ip_address)
     
-    # 🤖 Se requer CAPTCHA, validar primeiro
+    #  Se requer CAPTCHA, validar primeiro
     if security_status['require_captcha']:
         if not captcha_token or not captcha_answer:
             # Usuário não enviou CAPTCHA, gerar novo desafio
@@ -100,7 +100,7 @@ def login_with_cpf_secure(request):
                 'error': captcha_msg
             }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔐 Tentar login
+    #  Tentar login
     User = get_user_model()
     
     try:
@@ -108,7 +108,7 @@ def login_with_cpf_secure(request):
         
         if user.check_password(password):
             if user.is_active:
-                # ✅ Login bem-sucedido
+                #  Login bem-sucedido
                 record_login_attempt(cpf, ip_address, success=True)
                 clear_failed_attempts(cpf, ip_address)
                 
@@ -118,7 +118,6 @@ def login_with_cpf_secure(request):
                 refresh_token = str(refresh)
                 
                 response = Response({
-                    'access_token': access_token,
                     'user': {
                         'id': user.id,
                         'nome': f'{user.first_name} {user.last_name}'.strip(),
@@ -151,7 +150,7 @@ def login_with_cpf_secure(request):
                 
                 return response
         
-        # ❌ Senha incorreta
+        #  Senha incorreta
         failed = get_failed_attempts(cpf, ip_address, minutes=60)
         record_login_attempt(cpf, ip_address, success=False)
         
@@ -180,8 +179,9 @@ def login_with_cpf_secure(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
     except Exception as e:
+        logger.exception('Erro interno no login CPF seguro')
         return Response(
-            {'error': str(e)},
+            {'error': 'Erro interno do servidor'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -207,17 +207,17 @@ def login_with_cnpj_secure(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # 🔒 Verificar se está bloqueado completamente
+    #  Verificar se está bloqueado completamente
     if should_block_login(cnpj, ip_address):
         return Response(
             {'error': 'Muitas tentativas. Conta bloqueada temporariamente.'},
             status=status.HTTP_429_TOO_MANY_REQUESTS
         )
     
-    # 📊 Obter status de segurança
+    #  Obter status de segurança
     security_status = get_login_security_status(cnpj, ip_address)
     
-    # 🤖 Se requer CAPTCHA, validar primeiro
+    #  Se requer CAPTCHA, validar primeiro
     if security_status['require_captcha']:
         if not captcha_token or not captcha_answer:
             # Usuário não enviou CAPTCHA, gerar novo desafio
@@ -236,7 +236,7 @@ def login_with_cnpj_secure(request):
                 'error': captcha_msg
             }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔐 Tentar login
+    #  Tentar login
     User = get_user_model()
     
     try:
@@ -244,7 +244,7 @@ def login_with_cnpj_secure(request):
         
         if user.check_password(password):
             if user.is_active:
-                # ✅ Login bem-sucedido
+                #  Login bem-sucedido
                 record_login_attempt(cnpj, ip_address, success=True)
                 clear_failed_attempts(cnpj, ip_address)
                 
@@ -254,7 +254,6 @@ def login_with_cnpj_secure(request):
                 refresh_token = str(refresh)
                 
                 response = Response({
-                    'access_token': access_token,
                     'user': {
                         'id': user.id,
                         'nome': f'{user.first_name} {user.last_name}'.strip(),
@@ -287,7 +286,7 @@ def login_with_cnpj_secure(request):
                 
                 return response
         
-        # ❌ Senha incorreta
+        #  Senha incorreta
         failed = get_failed_attempts(cnpj, ip_address, minutes=60)
         record_login_attempt(cnpj, ip_address, success=False)
         
@@ -316,8 +315,9 @@ def login_with_cnpj_secure(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
     except Exception as e:
+        logger.exception('Erro interno no login CNPJ seguro')
         return Response(
-            {'error': str(e)},
+            {'error': 'Erro interno do servidor'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -348,6 +348,111 @@ def verify_captcha_endpoint(request):
         }, status=status.HTTP_403_FORBIDDEN)
 
 
+# ===============================================
+#  LOGIN DESKTOP - Retorna token no JSON
+# ===============================================
+
+# Rate limit para desktop: controla por CPF enviado para evitar bloqueio global por IP compartilhado.
+# block=False para permitir bypass controlado de admins desktop sem remover proteção dos demais.
+@ratelimit(key='post:cpf', rate='30/h', method='POST', block=False)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_with_cpf_desktop(request):
+    """
+    Login simplificado para aplicação desktop.
+    Retorna access_token e refresh_token no corpo da resposta JSON.
+    
+    ATENÇÃO: Este endpoint retorna tokens no JSON body (não em cookies).
+    Use apenas para aplicações desktop/CLI onde cookies não são apropriados.
+    Para web, use /login/cpf/secure/ que usa httpOnly cookies.
+    """
+    cpf = request.data.get('cpf', '').replace('.', '').replace('-', '').strip()
+    password = request.data.get('password', '')
+    
+    if not cpf or not password:
+        return Response(
+            {'error': 'CPF e senha são obrigatórios'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Se atingiu ratelimit, permite bypass apenas para admins ativos.
+    if getattr(request, 'limited', False):
+        usuario_rate = Usuario.objects.filter(cpf=cpf).first()
+        if not (usuario_rate and usuario_rate.is_staff and usuario_rate.is_active):
+            return Response(
+                {'error': 'Muitas tentativas de login. Aguarde alguns minutos.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        logger.info('Bypass de ratelimit aplicado para admin no login desktop cpf=%s', cpf)
+    
+    # Obter IP para rate limiting
+    ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+    
+    # Verificar bloqueio por tentativas excessivas (proteção básica)
+    if should_block_login(cpf, ip_address):
+        return Response({
+            'error': 'Muitas tentativas de login. Aguarde 30 minutos.'
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+    
+    User = get_user_model()
+    
+    try:
+        user = User.objects.get(cpf=cpf)
+        
+        if user.check_password(password):
+            if user.is_active:
+                # Login bem-sucedido
+                record_login_attempt(cpf, ip_address, success=True)
+                clear_failed_attempts(cpf, ip_address)
+                
+                # Gerar tokens
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
+                
+                logger.info('Login desktop bem-sucedido para usuario_id=%s', user.id)
+                
+                return Response({
+                    'access_token': access_token,
+                    'refresh_token': refresh_token,
+                    'user': {
+                        'id': user.id,
+                        'nome': f'{user.first_name} {user.last_name}'.strip(),
+                        'email': user.email,
+                        'cpf': cpf,
+                        'is_staff': user.is_staff,
+                        'primeiro_acesso': user.primeiro_acesso,
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {'error': 'Conta desativada'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
+        # Senha incorreta
+        record_login_attempt(cpf, ip_address, success=False)
+        failed = get_failed_attempts(cpf, ip_address, minutes=60)
+        
+        return Response({
+            'error': 'Credenciais inválidas',
+            'failed_attempts': failed
+        }, status=status.HTTP_401_UNAUTHORIZED)
+        
+    except User.DoesNotExist:
+        record_login_attempt(cpf, ip_address, success=False)
+        return Response(
+            {'error': 'Credenciais inválidas'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    except Exception as e:
+        logger.exception('Erro interno no login desktop')
+        return Response(
+            {'error': 'Erro interno do servidor'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
 def get_client_ip(request):
     """Extrai o IP real do cliente (considerando proxies)"""
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -356,6 +461,66 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+def validate_data_nascimento(data_nascimento_str):
+    """
+    Valida data de nascimento.
+    
+    Args:
+        data_nascimento_str: String no formato 'YYYY-MM-DD', 'DD/MM/YYYY' ou objeto date
+    
+    Returns:
+        tuple: (is_valid: bool, error_message: str, data_normalizada: date ou None)
+    
+    Validações:
+    - Formato válido
+    - Não pode ser futura
+    - Idade mínima de 18 anos
+    - Idade máxima razoável (120 anos)
+    """
+    if not data_nascimento_str:
+        return True, None, None  # Campo opcional
+    
+    # Se já é objeto date, usar diretamente
+    if isinstance(data_nascimento_str, date):
+        data_nascimento = data_nascimento_str
+    else:
+        # Tentar parsear de diferentes formatos
+        try:
+            # Tentar formato ISO: YYYY-MM-DD
+            if '-' in str(data_nascimento_str):
+                data_nascimento = datetime.strptime(str(data_nascimento_str), '%Y-%m-%d').date()
+            # Tentar formato brasileiro: DD/MM/YYYY
+            elif '/' in str(data_nascimento_str):
+                data_nascimento = datetime.strptime(str(data_nascimento_str), '%d/%m/%Y').date()
+            else:
+                return False, 'Formato de data inválido. Use YYYY-MM-DD ou DD/MM/YYYY', None
+        except (ValueError, TypeError):
+            return False, 'Data de nascimento inválida. Use formato YYYY-MM-DD ou DD/MM/YYYY', None
+    
+    hoje = date.today()
+    
+    # Verificar se a data não é futura
+    if data_nascimento > hoje:
+        return False, 'Data de nascimento não pode ser futura', None
+    
+    # Calcular idade
+    idade = hoje.year - data_nascimento.year - ((hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
+    
+    # Verificar idade mínima (18 anos)
+    if idade < 18:
+        return False, f'Idade mínima é 18 anos. Idade atual: {idade} anos', None
+    
+    # Verificar idade máxima razoável (120 anos)
+    if idade > 120:
+        return False, f'Data de nascimento muito antiga. Idade calculada: {idade} anos', None
+    
+    # Validação adicional: ano não pode ser anterior a 1900
+    if data_nascimento.year < 1900:
+        return False, 'Ano de nascimento não pode ser anterior a 1900', None
+    
+    return True, None, data_nascimento
 
 
 # Endpoint de Logout (limpa httpOnly cookies)
@@ -395,7 +560,6 @@ def refresh_token_from_cookie(request):
             
             response = Response(
                 {
-                    'access_token': new_access,  # ← NOVO: Retornar na resposta JSON
                     'message': 'Token renovado com sucesso'
                 },
                 status=status.HTTP_200_OK
@@ -430,7 +594,8 @@ def refresh_token_from_cookie(request):
             )
             
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception('Erro ao renovar token via cookie')
+        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # 1. Cadastro de Cliente com Envio de Senha
 @api_view(['POST'])
@@ -452,6 +617,21 @@ def register_client_email(request):
     
     if Usuario.objects.filter(email=email).exists():
         return Response({'error': 'Email já cadastrado.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Verificar se email existe em Person ou Empresa (cross-table validation)
+    from report.models import Person, Empresa
+    if Person.objects.filter(email=email).exists():
+        return Response({'error': 'Email já cadastrado para outra pessoa.'}, status=status.HTTP_400_BAD_REQUEST)
+    if Empresa.objects.filter(email=email).exists():
+        return Response({'error': 'Email já cadastrado para uma empresa.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Validar data de nascimento (se fornecida)
+    data_nascimento = data.get('data_nascimento')
+    if data_nascimento:
+        is_valid, error_msg, data_normalizada = validate_data_nascimento(data_nascimento)
+        if not is_valid:
+            return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+        data_nascimento = data_normalizada
 
     try:
         # Gera uma senha aleatória
@@ -465,6 +645,7 @@ def register_client_email(request):
             first_name=nome,
             last_name=data.get('last_name', ''),
             telefone=data.get('phone_number', '') or data.get('telefone', ''),  # ← Adiciona telefone!
+            data_nascimento=data_nascimento,  # ← Adiciona data de nascimento validada!
             primeiro_acesso=True # Marca para trocar a senha depois
         )
         user.set_password(temp_password)
@@ -500,10 +681,17 @@ def register_client_email(request):
             fail_silently=False,
         )
 
-        return Response({'message': 'Usuário criado e e-mail enviado.'}, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                'message': 'Usuário criado e e-mail enviado.',
+                'id': user.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception('Erro ao registrar cliente por email')
+        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Cadastro de Empresa com Envio de Senha
@@ -513,34 +701,37 @@ def register_company_email(request):
     """
     Cadastra uma empresa, gera uma senha aleatória e envia por e-mail.
     """
-    print("\n" + "="*60)
-    print("🏢 REGISTER_COMPANY_EMAIL - Iniciando registro de empresa")
-    print("="*60)
-    
     data = request.data
     email = data.get('email')
     cnpj = data.get('cnpj')
     nome = data.get('first_name')
 
-    print(f"📮 Email: {email}")
-    print(f"🏢 CNPJ: {cnpj}")
-    print(f"📝 Nome: {nome}")
-
     if not email or not cnpj:
-        print("❌ Email ou CNPJ não fornecidos")
         return Response({'error': 'Email e CNPJ são obrigatórios.'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Limpar CNPJ
     cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
-    print(f"✅ CNPJ limpo: {cnpj_limpo}")
 
     if Usuario.objects.filter(cnpj=cnpj_limpo).exists():
-        print("❌ CNPJ já cadastrado")
         return Response({'error': 'CNPJ já cadastrado.'}, status=status.HTTP_400_BAD_REQUEST)
     
     if Usuario.objects.filter(email=email).exists():
-        print("❌ Email já cadastrado")
         return Response({'error': 'Email já cadastrado.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Verificar se email existe em Person ou Empresa (cross-table validation)
+    from report.models import Person, Empresa
+    if Person.objects.filter(email=email).exists():
+        return Response({'error': 'Email já cadastrado para uma pessoa.'}, status=status.HTTP_400_BAD_REQUEST)
+    if Empresa.objects.filter(email=email).exists():
+        return Response({'error': 'Email já cadastrado para outra empresa.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Validar data de nascimento (se fornecida - pode ser do representante legal)
+    data_nascimento = data.get('data_nascimento')
+    if data_nascimento:
+        is_valid, error_msg, data_normalizada = validate_data_nascimento(data_nascimento)
+        if not is_valid:
+            return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+        data_nascimento = data_normalizada
 
     try:
         # Gera uma senha aleatória
@@ -555,18 +746,17 @@ def register_company_email(request):
             first_name=nome,
             last_name=data.get('last_name', ''),
             telefone=data.get('phone_number', '') or data.get('telefone', ''),  # ← Adiciona telefone!
+            data_nascimento=data_nascimento,  # ← Adiciona data de nascimento validada!
             primeiro_acesso=True  # Marca para trocar a senha depois
         )
         user.set_password(temp_password)
         user.save()
-        print(f"✅ Usuário criado: ID={user.id}")
 
         # 1. Pega o template do banco (ou cria se não existir)
         config_email, _ = ConfiguracaoEmail.objects.get_or_create(id=1)
         
         assunto_email = config_email.assunto
         mensagem_template = config_email.mensagem
-        print(f"📧 Assunto: {assunto_email}")
 
         # 2. Substitui os placeholders pelos dados reais
         try:
@@ -578,7 +768,7 @@ def register_company_email(request):
             )
         except KeyError as e:
             # Fallback: template com placeholder desconhecido
-            print(f"⚠️ Placeholder desconhecido no template: {e}")
+            logger.warning('Placeholder desconhecido no template de email de empresa: %s', e)
             mensagem_final = f"""Olá {nome},
 
 Seu cadastro no sistema GAIA foi realizado com sucesso.
@@ -589,14 +779,8 @@ Senha Temporária: {temp_password}
 Por favor, altere sua senha no primeiro acesso.
 
 Em caso de dúvidas, entre em contato com nosso suporte (46) 999XX-XXXX."""
-        
-        print(f"📝 Mensagem preparada, tamanho: {len(mensagem_final)} caracteres")
 
         # 3. Envia
-        print(f"📤 Enviando email para: {email}")
-        print(f"   Backend: {settings.EMAIL_BACKEND}")
-        print(f"   From: {settings.DEFAULT_FROM_EMAIL}")
-        
         num_sent = send_mail(
             assunto_email,
             mensagem_final,
@@ -604,18 +788,18 @@ Em caso de dúvidas, entre em contato com nosso suporte (46) 999XX-XXXX."""
             [email],
             fail_silently=False,
         )
-        
-        print(f"✅ Email enviado! Emails enviados: {num_sent}")
-        print("="*60 + "\n")
 
-        return Response({'message': 'Empresa cadastrada e e-mail enviado.'}, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                'message': 'Empresa cadastrada e e-mail enviado.',
+                'id': user.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     except Exception as e:
-        print(f"❌ ERRO ao registrar empresa: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        print("="*60 + "\n")
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception('Erro ao registrar empresa por email')
+        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -627,20 +811,11 @@ def change_password(request):
     try:
         user = request.user
         
-        print(f"\n[change_password] Tentativa de mudança de senha")
-        print(f"  Usuário autenticado: {user.is_authenticated}")
-        print(f"  ID do usuário: {user.id if hasattr(user, 'id') else 'N/A'}")
-        print(f"  CPF do usuário: {user.cpf if hasattr(user, 'cpf') else 'N/A'}")
-        
         if not user.is_authenticated:
-            print(f"  ❌ Usuário não autenticado!")
             return Response({'error': 'Usuário não autenticado.'}, status=status.HTTP_401_UNAUTHORIZED)
             
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
-
-        print(f"  Senha antiga fornecida: {'sim' if old_password else 'não'}")
-        print(f"  Senha nova fornecida: {'sim' if new_password else 'não'}")
 
         if not new_password:
             return Response({'error': 'Nova senha é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -660,16 +835,16 @@ def change_password(request):
                 
                 # Traduzir e melhorar mensagens específicas do Django
                 if 'too short' in message_str.lower() or 'must contain at least' in message_str.lower():
-                    error_messages.append('❌ Senha muito curta - deve ter pelo menos 8 caracteres')
+                    error_messages.append(' Senha muito curta - deve ter pelo menos 8 caracteres')
                 elif 'entirely numeric' in message_str.lower():
-                    error_messages.append('❌ Senha não pode conter apenas números')
+                    error_messages.append(' Senha não pode conter apenas números')
                 elif 'too similar' in message_str.lower():
-                    error_messages.append('❌ Senha é muito similar ao nome de usuário ou email')
+                    error_messages.append(' Senha é muito similar ao nome de usuário ou email')
                 elif 'common password' in message_str.lower():
-                    error_messages.append('❌ Senha é muito comum - escolha uma senha mais segura (ex: MinhaSe9ha!)')
+                    error_messages.append(' Senha é muito comum - escolha uma senha mais segura (ex: MinhaSe9ha!)')
                 else:
                     # Se não for mensagem conhecida, incluir a mensagem original
-                    error_messages.append(f'❌ {message_str}')
+                    error_messages.append(f' {message_str}')
             
             return Response({
                 'error': 'Senha fraca - não atende aos requisitos de segurança',
@@ -683,55 +858,47 @@ def change_password(request):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Verifica a senha antiga
-        print(f"  Testando check_password...")
-        print(f"    Senha fornecida tem {len(old_password)} caracteres")
-        print(f"    Primeiro caractere: '{old_password[0] if old_password else 'vazia'}'")
-        print(f"    Último caractere: '{old_password[-1] if old_password else 'vazia'}'")
-        
         is_password_correct = user.check_password(old_password)
-        print(f"    Resultado check_password: {is_password_correct}")
         
         if not is_password_correct:
-            print(f"  ❌ Senha atual incorreta!")
             return Response({'error': 'Senha atual incorreta.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        print(f"  ✅ Senha atual verificada com sucesso!")
         user.set_password(new_password)
         user.primeiro_acesso = False
         user.save()
 
-        print(f"  ✅ Senha alterada e primeiro_acesso definido como False")
         return Response({'message': 'Senha alterada com sucesso.'}, status=status.HTTP_200_OK)
     
     except Exception as e:
-        print(f"  ❌ ERRO INESPERADO: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return Response({'error': f'Erro ao processar: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception('Erro ao alterar senha')
+        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@ratelimit(key='ip', rate='5/h', method='POST', block=True)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def forgot_password(request):
     email = request.data.get('email')
-    
+    if not email:
+        return Response({'message': 'Se o e-mail estiver cadastrado, você receberá instruções de recuperação.'}, status=status.HTTP_200_OK)
+
     try:
         user = Usuario.objects.get(email=email)
-        
-        new_password = get_random_string(length=12)
-        user.set_password(new_password)
-        user.primeiro_acesso = True # Força trocar de novo
-        user.save()
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        reset_link = f"{frontend_base.rstrip('/')}/reset-password?uid={uid}&token={token}"
 
         subject = 'Recuperação de Senha - GAIA'
-        message = f"""
-        Olá {user.first_name},
+        message = f"""Olá {user.first_name},
 
-        Você solicitou a recuperação de senha.
-        Sua nova senha temporária é: {new_password}
+Recebemos uma solicitação para redefinir sua senha.
 
-        Use-a para logar e defina uma nova senha imediatamente.
-        """
-        
+Use este link para criar uma nova senha:
+{reset_link}
+
+Se você não solicitou esta alteração, ignore este e-mail.
+"""
+
         send_mail(
             subject,
             message,
@@ -739,12 +906,45 @@ def forgot_password(request):
             [email],
             fail_silently=False,
         )
-        
-        return Response({'message': 'Uma nova senha foi enviada para seu e-mail.'}, status=status.HTTP_200_OK)
-
     except Usuario.DoesNotExist:
-        # Por segurança, não dizemos explicitamente que o email não existe, ou dizemos genericamente
-        return Response({'message': 'Se o e-mail estiver cadastrado, você receberá uma nova senha.'}, status=status.HTTP_200_OK)
+        pass
+    except Exception as e:
+        logger.exception('Erro no fluxo de recuperação de senha')
+
+    return Response({'message': 'Se o e-mail estiver cadastrado, você receberá instruções de recuperação.'}, status=status.HTTP_200_OK)
+
+
+@ratelimit(key='ip', rate='10/h', method='POST', block=True)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_password_with_token(request):
+    """Redefine senha usando uid/token enviados por e-mail."""
+    uidb64 = request.data.get('uid')
+    token = request.data.get('token')
+    new_password = request.data.get('new_password')
+
+    if not uidb64 or not token or not new_password:
+        return Response({'error': 'uid, token e new_password são obrigatórios.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = Usuario.objects.get(pk=uid)
+    except Exception:
+        return Response({'error': 'Token inválido ou expirado.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not default_token_generator.check_token(user, token):
+        return Response({'error': 'Token inválido ou expirado.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        validate_password(new_password, user=user)
+    except ValidationError as e:
+        return Response({'error': 'Senha fraca', 'motivos': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.primeiro_acesso = False
+    user.save()
+
+    return Response({'message': 'Senha redefinida com sucesso.'}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST'])
@@ -772,9 +972,7 @@ def manage_email_template(request):
 @permission_classes([IsAdminUser])
 def sync_usuario(request):
     """API simples para o software cadastrar usuários - Apenas admins"""
-    print(f"\n📝 [sync_usuario] Solicitação recebida")
-    print(f"   Usuário logado: {request.user.username} (is_staff: {request.user.is_staff})")
-    print(f"   Dados: {request.data}")
+    logger.info('sync_usuario solicitado por usuario_id=%s', request.user.id)
     
     try:
         data = request.data
@@ -782,7 +980,6 @@ def sync_usuario(request):
         # Validar CPF (obrigatório)
         cpf = data.get('cpf', '').strip()
         if not cpf:
-            print(f"❌ CPF não fornecido")
             return Response(
                 {'error': 'CPF é obrigatório'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -791,7 +988,6 @@ def sync_usuario(request):
         # Validar email (obrigatório e único)
         email = data.get('email', '').strip()
         if not email:
-            print(f"❌ Email não fornecido")
             return Response(
                 {'error': 'Email é obrigatório'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -799,7 +995,6 @@ def sync_usuario(request):
         
         # Validar formato básico de email
         if '@' not in email or '.' not in email:
-            print(f"❌ Email inválido: {email}")
             return Response(
                 {'error': f'Email "{email}" é inválido'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -809,7 +1004,6 @@ def sync_usuario(request):
         if Usuario.objects.filter(cpf=cpf).exists():
             user = Usuario.objects.get(cpf=cpf)
             user_id = user.id
-            print(f"⚠️  CPF já existe com ID: {user_id} (is_staff: {user.is_staff})")
             return Response({
                 'error': f"CPF {cpf} já está cadastrado no sistema (ID: {user_id})",
                 'status': 'cpf_exists',
@@ -819,7 +1013,6 @@ def sync_usuario(request):
         # Verificar se email já existe
         if Usuario.objects.filter(email=email).exists():
             existing_user = Usuario.objects.get(email=email)
-            print(f"⚠️  Email já existe com ID: {existing_user.id}")
             return Response({
                 'error': f'Email "{email}" já está cadastrado. Use outro email!',
                 'status': 'email_exists',
@@ -829,16 +1022,18 @@ def sync_usuario(request):
         # Cria novo usuário
         first_name = data.get('first_name', '').strip()
         if not first_name:
-            print(f"❌ Nome é obrigatório")
             return Response(
                 {'error': 'Nome é obrigatório'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        print(f"   Validações OK. Criando novo usuário...")
-        print(f"   - CPF: {cpf}")
-        print(f"   - Email: {email}")
-        print(f"   - Nome: {first_name}")
+        # Validar data de nascimento (se fornecida)
+        data_nascimento = data.get('data_nascimento')
+        if data_nascimento:
+            is_valid, error_msg, data_normalizada = validate_data_nascimento(data_nascimento)
+            if not is_valid:
+                return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+            data_nascimento = data_normalizada
         
         usuario = Usuario.objects.create(
             username=cpf,  # Usa CPF como username
@@ -847,10 +1042,11 @@ def sync_usuario(request):
             last_name=data.get('last_name', '').strip(),
             email=email,  # Email único
             telefone=data.get('phone_number', '').strip(),
+            data_nascimento=data_nascimento,  # ← Adiciona data de nascimento validada!
             password=make_password(data.get('password', '123456'))
         )
-        
-        print(f"✅ Usuário criado com sucesso! ID: {usuario.id}")
+
+        logger.info('sync_usuario criou usuario_id=%s', usuario.id)
         return Response({
             'id': usuario.id,
             'status': 'created',
@@ -861,18 +1057,15 @@ def sync_usuario(request):
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
-        print(f"❌ Erro: {e}")
-        import traceback
-        traceback.print_exc()
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        logger.exception('Erro ao sincronizar criação de usuário')
+        return Response({'error': 'Falha ao processar operação'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def list_usuarios(request):
     """Lista todos os usuários cadastrados via sync_usuario"""
-    print(f"\n📋 [list_usuarios] Solicitação recebida")
-    print(f"   Usuário logado: {request.user.username}")
+    logger.info('list_usuarios solicitado por usuario_id=%s', request.user.id)
     
     try:
         # Filtros opcionais
@@ -907,17 +1100,15 @@ def list_usuarios(request):
                 'data_criacao': user.date_joined.isoformat() if hasattr(user, 'date_joined') else None,
             })
         
-        print(f"✅ {len(data)} usuário(s) encontrado(s)")
+        logger.info('list_usuarios retornou total=%s', len(data))
         return Response({
             'count': len(data),
             'results': data
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        print(f"❌ Erro: {e}")
-        import traceback
-        traceback.print_exc()
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        logger.exception('Erro ao listar usuários')
+        return Response({'error': 'Falha ao processar operação'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['DELETE'])
@@ -928,13 +1119,54 @@ def delete_usuario(request):
     if not cpf:
         return Response({'error': 'CPF é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    cpf_limpo = cpf.replace('.', '').replace('-', '')
+
     try:
-        user = Usuario.objects.get(cpf=cpf)
+        user = Usuario.objects.get(cpf=cpf_limpo)
     except Usuario.DoesNotExist:
         return Response({'error': 'Usuário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
+    # Remoção robusta: deleta Person/Empresa associadas e limpa Endereco órfão.
+    # Isso também cobre registros antigos sem vínculo por usuario, usando CPF/CNPJ.
+    from report.models import Person, Empresa, Endereco, Propriedade
+
+    enderecos_candidatos = set()
+
+    pessoa = Person.objects.filter(usuario=user).first() or Person.objects.filter(cpf=cpf_limpo).first()
+    if pessoa and pessoa.endereco_id:
+        enderecos_candidatos.add(pessoa.endereco_id)
+
+    empresa = None
+    if user.cnpj:
+        cnpj_limpo = user.cnpj.replace('.', '').replace('/', '').replace('-', '')
+        empresa = Empresa.objects.filter(usuario=user).first() or Empresa.objects.filter(cnpj=cnpj_limpo).first()
+        if empresa and empresa.endereco_id:
+            enderecos_candidatos.add(empresa.endereco_id)
+
+    # Deletar entidades de domínio antes do usuário para preservar controle dos endereços
+    if pessoa:
+        pessoa.delete()
+    if empresa:
+        empresa.delete()
+
     user.delete()
-    return Response({'message': 'Usuário excluído com sucesso.'}, status=status.HTTP_200_OK)
+
+    # Limpar endereços que ficaram sem referência
+    enderecos_removidos = 0
+    for endereco_id in enderecos_candidatos:
+        if not Person.objects.filter(endereco_id=endereco_id).exists() \
+           and not Empresa.objects.filter(endereco_id=endereco_id).exists() \
+           and not Propriedade.objects.filter(endereco_id=endereco_id).exists():
+            Endereco.objects.filter(id=endereco_id).delete()
+            enderecos_removidos += 1
+
+    return Response(
+        {
+            'message': 'Usuário excluído com sucesso.',
+            'enderecos_removidos': enderecos_removidos,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 User = get_user_model()
 
@@ -954,68 +1186,6 @@ def current_user(request):
                     'primeiro_acesso': user.primeiro_acesso
                     })
 
-
-# ENDPOINT DE TESTE PARA ENVIO DE EMAIL
-@api_view(['POST'])
-@permission_classes([IsAdminUser])
-def test_send_email(request):
-    """
-    Endpoint de teste para verificar se o envio de email está funcionando
-    POST /api/test-email/
-    Body: {"email": "seu_email@gmail.com"}
-    """
-    print("\n" + "="*60)
-    print("📧 TEST_SEND_EMAIL - Enviando email de teste")
-    print("="*60)
-    
-    email = request.data.get('email')
-    if not email:
-        print("❌ Email não fornecido")
-        return Response({'error': 'Email é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        print(f"📮 Email de destino: {email}")
-        print(f"📧 Backend configurado: {settings.EMAIL_BACKEND}")
-        print(f"📨 Remetente (FROM): {settings.DEFAULT_FROM_EMAIL}")
-        print(f"🏠 Host SMTP: {settings.EMAIL_HOST}")
-        print(f"🔌 Porta: {settings.EMAIL_PORT}")
-        print(f"🔐 TLS: {settings.EMAIL_USE_TLS}")
-        
-        assunto = "GAIA - Email de Teste"
-        mensagem = """
-Olá!
-
-Este é um email de teste do sistema GAIA.
-
-Se você recebeu este email, significa que o sistema de envio de emails está funcionando corretamente!
-
----
-Sistema GAIA
-Laboratório de Solos - UTFPR
-"""
-        
-        print(f"\n📝 Enviando email...")
-        num_sent = send_mail(
-            assunto,
-            mensagem,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False,
-        )
-        
-        print(f"✅ Email enviado com sucesso! Emails enviados: {num_sent}")
-        print("="*60 + "\n")
-        
-        return Response({'message': f'Email enviado com sucesso para {email}'}, status=status.HTTP_200_OK)
-    
-    except Exception as e:
-        print(f"❌ ERRO ao enviar email: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        print("="*60 + "\n")
-        return Response({'error': f'Erro ao enviar email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 # ========== SINCRONIZAÇÃO DE DADOS EMPRESA/PERSON ↔ USUARIO ==========
 
 @api_view(['PATCH'])
@@ -1025,28 +1195,24 @@ def sync_usuario_by_cpf(request):
     Sincroniza dados do Usuario quando Person é editada
     PATCH /api/sync/usuario/cpf/
     Body: {
-        "cpf": "12345678900",
+        "cpf": "123456789",
         "email": "novo@email.com",
         "first_name": "Nome Novo",
         "telefone": "11987654321"
     }
     """
-    print(f"\n🔵 sync_usuario_by_cpf CHAMADO", flush=True)
-    print(f"   Request data: {request.data}", flush=True)
+    logger.info('sync_usuario_by_cpf solicitado por usuario_id=%s', request.user.id)
     
     cpf = request.data.get('cpf')
     
     if not cpf:
-        print(f"❌ CPF não fornecido", flush=True)
         return Response({'error': 'CPF é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Normalizar CPF
     cpf_limpo = cpf.replace('.', '').replace('-', '')
-    print(f"   CPF normalizado: {cpf_limpo}", flush=True)
     
     try:
         usuario = Usuario.objects.get(cpf=cpf_limpo)
-        print(f"✅ Usuario encontrado: ID={usuario.id}, username={usuario.username}", flush=True)
         
         # Atualizar campos fornecidos
         alteracoes = []
@@ -1054,34 +1220,39 @@ def sync_usuario_by_cpf(request):
         # Se forneceu NEW_CPF, atualizar o CPF do Usuario também
         if 'new_cpf' in request.data and request.data['new_cpf']:
             new_cpf = request.data['new_cpf'].replace('.', '').replace('-', '')
-            print(f"   🔄 Atualizando CPF: '{usuario.cpf}' → '{new_cpf}'", flush=True)
             usuario.cpf = new_cpf
             # Atualizar username também (se for baseado em CPF)
             if usuario.username and usuario.username.replace('.', '').replace('-', '') == cpf_limpo:
-                print(f"   🔄 Atualizando username: '{usuario.username}' → '{new_cpf}'", flush=True)
                 usuario.username = new_cpf
             alteracoes.append(f"cpf")
         
         if 'email' in request.data:
-            print(f"   Atualizando email: '{usuario.email}' → '{request.data['email']}'", flush=True)
             usuario.email = request.data['email']
             alteracoes.append(f"email")
         if 'first_name' in request.data:
-            print(f"   Atualizando first_name: '{usuario.first_name}' → '{request.data['first_name']}'", flush=True)
             usuario.first_name = request.data['first_name']
             alteracoes.append(f"first_name")
         if 'telefone' in request.data:
-            print(f"   Atualizando telefone: '{usuario.telefone}' → '{request.data['telefone']}'", flush=True)
             usuario.telefone = request.data['telefone']
             alteracoes.append(f"telefone")
+        if 'data_nascimento' in request.data:
+            data_nascimento = request.data['data_nascimento']
+            if data_nascimento:
+                is_valid, error_msg, data_normalizada = validate_data_nascimento(data_nascimento)
+                if not is_valid:
+                    return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+                usuario.data_nascimento = data_normalizada
+                alteracoes.append(f"data_nascimento")
+            else:
+                # Se enviou None ou string vazia, limpar o campo
+                usuario.data_nascimento = None
+                alteracoes.append(f"data_nascimento")
         
         if not alteracoes:
-            print(f"⚠️ Nenhum campo foi enviado para atualizar", flush=True)
             return Response({'warning': 'Nenhum campo para atualizar'}, status=status.HTTP_200_OK)
         
         usuario.save()
-        print(f"💾 Usuario salvo com sucesso", flush=True)
-        print(f"✅ Campos atualizados: {', '.join(alteracoes)}", flush=True)
+        logger.info('sync_usuario_by_cpf atualizou usuario_id=%s campos=%s', usuario.id, ','.join(alteracoes))
         
         return Response({
             'id': usuario.id,
@@ -1093,16 +1264,13 @@ def sync_usuario_by_cpf(request):
         }, status=status.HTTP_200_OK)
         
     except Usuario.DoesNotExist:
-        print(f"❌ Usuario com CPF {cpf_limpo} NÃO ENCONTRADO", flush=True)
         return Response(
             {'error': f'Usuario com CPF {cpf_limpo} não encontrado no banco'},
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
-        print(f"❌ Erro ao sincronizar Usuario (CPF): {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception('Erro ao sincronizar usuário por CPF')
+        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['PATCH'])
@@ -1118,22 +1286,18 @@ def sync_usuario_by_cnpj(request):
         "telefone": "1133334444"
     }
     """
-    print(f"\n🔵 sync_usuario_by_cnpj CHAMADO", flush=True)
-    print(f"   Request data: {request.data}", flush=True)
+    logger.info('sync_usuario_by_cnpj solicitado por usuario_id=%s', request.user.id)
     
     cnpj = request.data.get('cnpj')
     
     if not cnpj:
-        print(f"❌ CNPJ não fornecido", flush=True)
         return Response({'error': 'CNPJ é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Normalizar CNPJ
     cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
-    print(f"   CNPJ normalizado: {cnpj_limpo}", flush=True)
     
     try:
         usuario = Usuario.objects.get(cnpj=cnpj_limpo)
-        print(f"✅ Usuario encontrado: ID={usuario.id}, username={usuario.username}", flush=True)
         
         # Atualizar campos fornecidos
         alteracoes = []
@@ -1141,34 +1305,39 @@ def sync_usuario_by_cnpj(request):
         # Se forneceu NEW_CNPJ, atualizar o CNPJ do Usuario também
         if 'new_cnpj' in request.data and request.data['new_cnpj']:
             new_cnpj = request.data['new_cnpj'].replace('.', '').replace('/', '').replace('-', '')
-            print(f"   🔄 Atualizando CNPJ: '{usuario.cnpj}' → '{new_cnpj}'", flush=True)
             usuario.cnpj = new_cnpj
             # Atualizar username também (se for baseado em CNPJ)
             if usuario.username and usuario.username.replace('.', '').replace('/', '').replace('-', '') == cnpj_limpo:
-                print(f"   🔄 Atualizando username: '{usuario.username}' → '{new_cnpj}'", flush=True)
                 usuario.username = new_cnpj
             alteracoes.append(f"cnpj")
         
         if 'email' in request.data:
-            print(f"   Atualizando email: '{usuario.email}' → '{request.data['email']}'", flush=True)
             usuario.email = request.data['email']
             alteracoes.append(f"email")
         if 'first_name' in request.data:
-            print(f"   Atualizando first_name: '{usuario.first_name}' → '{request.data['first_name']}'", flush=True)
             usuario.first_name = request.data['first_name']
             alteracoes.append(f"first_name")
         if 'telefone' in request.data:
-            print(f"   Atualizando telefone: '{usuario.telefone}' → '{request.data['telefone']}'", flush=True)
             usuario.telefone = request.data['telefone']
             alteracoes.append(f"telefone")
+        if 'data_nascimento' in request.data:
+            data_nascimento = request.data['data_nascimento']
+            if data_nascimento:
+                is_valid, error_msg, data_normalizada = validate_data_nascimento(data_nascimento)
+                if not is_valid:
+                    return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+                usuario.data_nascimento = data_normalizada
+                alteracoes.append(f"data_nascimento")
+            else:
+                # Se enviou None ou string vazia, limpar o campo
+                usuario.data_nascimento = None
+                alteracoes.append(f"data_nascimento")
         
         if not alteracoes:
-            print(f"⚠️ Nenhum campo foi enviado para atualizar", flush=True)
             return Response({'warning': 'Nenhum campo para atualizar'}, status=status.HTTP_200_OK)
         
         usuario.save()
-        print(f"💾 Usuario salvo com sucesso", flush=True)
-        print(f"✅ Campos atualizados: {', '.join(alteracoes)}", flush=True)
+        logger.info('sync_usuario_by_cnpj atualizou usuario_id=%s campos=%s', usuario.id, ','.join(alteracoes))
         
         return Response({
             'id': usuario.id,
@@ -1180,16 +1349,13 @@ def sync_usuario_by_cnpj(request):
         }, status=status.HTTP_200_OK)
         
     except Usuario.DoesNotExist:
-        print(f"❌ Usuario com CNPJ {cnpj_limpo} NÃO ENCONTRADO", flush=True)
         return Response(
             {'error': f'Usuario com CNPJ {cnpj_limpo} não encontrado no banco'},
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
-        print(f"❌ Erro ao sincronizar Usuario (CNPJ): {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception('Erro ao sincronizar usuário por CNPJ')
+        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['DELETE'])
@@ -1198,44 +1364,67 @@ def delete_usuario_by_cpf(request):
     """
     Deleta Usuario por CPF (usado internamente quando Person é excluída)
     DELETE /api/delete/usuario/cpf/
-    Params: cpf=12345678900
     """
-    print(f"\n🔵 delete_usuario_by_cpf CHAMADO", flush=True)
+    logger.info('delete_usuario_by_cpf solicitado por usuario_id=%s', request.user.id)
     
     cpf = request.query_params.get('cpf') or request.data.get('cpf')
     
     if not cpf:
-        print(f"❌ CPF não fornecido", flush=True)
         return Response({'error': 'CPF é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Normalizar CPF
     cpf_limpo = cpf.replace('.', '').replace('-', '')
-    print(f"   CPF normalizado: {cpf_limpo}", flush=True)
     
     try:
         usuario = Usuario.objects.get(cpf=cpf_limpo)
-        print(f"✅ Usuario encontrado: ID={usuario.id}, username={usuario.username}, cpf={cpf_limpo}", flush=True)
-        
+
+        from report.models import Person, Empresa, Endereco, Propriedade
+
+        enderecos_candidatos = set()
+
+        pessoa = Person.objects.filter(usuario=usuario).first() or Person.objects.filter(cpf=cpf_limpo).first()
+        if pessoa and pessoa.endereco_id:
+            enderecos_candidatos.add(pessoa.endereco_id)
+
+        empresa = None
+        if usuario.cnpj:
+            cnpj_limpo = usuario.cnpj.replace('.', '').replace('/', '').replace('-', '')
+            empresa = Empresa.objects.filter(usuario=usuario).first() or Empresa.objects.filter(cnpj=cnpj_limpo).first()
+            if empresa and empresa.endereco_id:
+                enderecos_candidatos.add(empresa.endereco_id)
+
+        if pessoa:
+            pessoa.delete()
+        if empresa:
+            empresa.delete()
+
         usuario_id = usuario.id
         usuario.delete()
-        print(f"💾 Usuario ID {usuario_id} deletado com sucesso", flush=True)
+
+        enderecos_removidos = 0
+        for endereco_id in enderecos_candidatos:
+            if not Person.objects.filter(endereco_id=endereco_id).exists() \
+               and not Empresa.objects.filter(endereco_id=endereco_id).exists() \
+               and not Propriedade.objects.filter(endereco_id=endereco_id).exists():
+                Endereco.objects.filter(id=endereco_id).delete()
+                enderecos_removidos += 1
+
+        logger.info('delete_usuario_by_cpf removeu usuario_id=%s enderecos=%s', usuario_id, enderecos_removidos)
         
         return Response({
             'message': f'Usuario com CPF {cpf_limpo} deletado com sucesso',
-            'id': usuario_id
+            'id': usuario_id,
+            'enderecos_removidos': enderecos_removidos,
         }, status=status.HTTP_200_OK)
         
     except Usuario.DoesNotExist:
-        print(f"❌ Usuario com CPF {cpf_limpo} NÃO ENCONTRADO", flush=True)
         return Response(
             {'warning': f'Usuario com CPF {cpf_limpo} não encontrado no banco'},
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
-        print(f"❌ Erro ao deletar Usuario (CPF): {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception('Erro ao deletar usuário por CPF')
+        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['DELETE'])
@@ -1246,39 +1435,63 @@ def delete_usuario_by_cnpj(request):
     DELETE /api/delete/usuario/cnpj/
     Params: cnpj=12345678000190
     """
-    print(f"\n🔵 delete_usuario_by_cnpj CHAMADO", flush=True)
+    logger.info('delete_usuario_by_cnpj solicitado por usuario_id=%s', request.user.id)
     
     cnpj = request.query_params.get('cnpj') or request.data.get('cnpj')
     
     if not cnpj:
-        print(f"❌ CNPJ não fornecido", flush=True)
         return Response({'error': 'CNPJ é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
     
     # Normalizar CNPJ
     cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
-    print(f"   CNPJ normalizado: {cnpj_limpo}", flush=True)
     
     try:
         usuario = Usuario.objects.get(cnpj=cnpj_limpo)
-        print(f"✅ Usuario encontrado: ID={usuario.id}, username={usuario.username}, cnpj={cnpj_limpo}", flush=True)
-        
+
+        from report.models import Person, Empresa, Endereco, Propriedade
+
+        enderecos_candidatos = set()
+
+        empresa = Empresa.objects.filter(usuario=usuario).first() or Empresa.objects.filter(cnpj=cnpj_limpo).first()
+        if empresa and empresa.endereco_id:
+            enderecos_candidatos.add(empresa.endereco_id)
+
+        pessoa = None
+        if usuario.cpf:
+            cpf_limpo = usuario.cpf.replace('.', '').replace('-', '')
+            pessoa = Person.objects.filter(usuario=usuario).first() or Person.objects.filter(cpf=cpf_limpo).first()
+            if pessoa and pessoa.endereco_id:
+                enderecos_candidatos.add(pessoa.endereco_id)
+
+        if pessoa:
+            pessoa.delete()
+        if empresa:
+            empresa.delete()
+
         usuario_id = usuario.id
         usuario.delete()
-        print(f"💾 Usuario ID {usuario_id} deletado com sucesso", flush=True)
+
+        enderecos_removidos = 0
+        for endereco_id in enderecos_candidatos:
+            if not Person.objects.filter(endereco_id=endereco_id).exists() \
+               and not Empresa.objects.filter(endereco_id=endereco_id).exists() \
+               and not Propriedade.objects.filter(endereco_id=endereco_id).exists():
+                Endereco.objects.filter(id=endereco_id).delete()
+                enderecos_removidos += 1
+
+        logger.info('delete_usuario_by_cnpj removeu usuario_id=%s enderecos=%s', usuario_id, enderecos_removidos)
         
         return Response({
             'message': f'Usuario com CNPJ {cnpj_limpo} deletado com sucesso',
-            'id': usuario_id
+            'id': usuario_id,
+            'enderecos_removidos': enderecos_removidos,
         }, status=status.HTTP_200_OK)
         
     except Usuario.DoesNotExist:
-        print(f"❌ Usuario com CNPJ {cnpj_limpo} NÃO ENCONTRADO", flush=True)
         return Response(
             {'warning': f'Usuario com CNPJ {cnpj_limpo} não encontrado no banco'},
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
-        print(f"❌ Erro ao deletar Usuario (CNPJ): {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception('Erro ao deletar usuário por CNPJ')
+        return Response({'error': 'Erro interno do servidor'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

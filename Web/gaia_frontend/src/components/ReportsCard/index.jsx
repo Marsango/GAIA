@@ -43,7 +43,11 @@ const ReportCard = ({ data, amostras }) => {
 
   return (
     <Card>
-      <Header onClick={() => setExpandido(!expandido)}>
+      <Header
+        type="button"
+        onClick={() => setExpandido(!expandido)}
+        aria-expanded={expandido}
+      >
         <Data>
           <strong>Data da coleta:</strong> {formatarDataBR(data)}
         </Data>
@@ -71,7 +75,7 @@ const ReportCard = ({ data, amostras }) => {
                   <Button
                     onClick={async () => {
                       try {
-                        // ✅ NOVO: Usar axios/api com httpOnly cookies ao invés de fetch manual
+                        //  NOVO: Usar axios/api com httpOnly cookies ao invés de fetch manual
                         const response = await api.get(laudo.arquivoUrl, {
                           responseType: "blob",
                         });

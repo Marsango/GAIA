@@ -24,12 +24,6 @@ export const styles = {
     borderRadius: "0",
     backgroundColor: "transparent",
   },
-  input: {
-    width: "100%",
-    padding: "10px",
-    marginBottom: "20px",
-    fontFamily: "Poppins, sans-serif",
-  },
   button: {
     width: "100%",
     padding: "10px",
@@ -40,6 +34,7 @@ export const styles = {
     cursor: "pointer",
     fontWeight: 600,
     fontFamily: "Poppins, sans-serif",
+    marginTop: "10px",
   },
   link: {
     display: "block",
@@ -49,5 +44,25 @@ export const styles = {
     fontSize: "0.9rem",
     fontFamily: "Poppins, sans-serif",
     textDecoration: "underline",
+  },
+  message: {
+    marginTop: "16px",
+    padding: "10px",
+    borderRadius: "4px",
+    fontWeight: 600,
+    fontSize: "0.9rem",
+    fontFamily: "Poppins, sans-serif",
+    whiteSpace: "pre-wrap",
+    textAlign: "left",
+  },
+  messageSuccess: {
+    color: "#155724",
+    backgroundColor: "#d4edda",
+    border: "1px solid #c3e6cb",
+  },
+  messageError: {
+    color: "#721c24",
+    backgroundColor: "#f8d7da",
+    border: "1px solid #f5c6cb",
   },
 };

@@ -23,6 +23,7 @@ class Person(models.Model):
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     nascimento = models.DateField(blank=True, null=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
+    usuario = models.OneToOneField('authentication.Usuario', on_delete=models.CASCADE, null=True, blank=True, related_name='person')
 
     def __str__(self):
         return self.name
@@ -34,6 +35,7 @@ class Empresa(models.Model):
     email = models.EmailField(blank=True, null=True, unique=True)
     telefone = models.CharField(max_length=15, blank=True, null=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE)
+    usuario = models.OneToOneField('authentication.Usuario', on_delete=models.CASCADE, null=True, blank=True, related_name='empresa')
 
     def __str__(self):
         return self.name

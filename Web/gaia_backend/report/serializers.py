@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Propriedade, Laudo, Amostra, Empresa, Person, Endereco
+from authentication.views import validate_data_nascimento
 
 class AmostraSerializer(serializers.ModelSerializer):
     
@@ -75,7 +76,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
         return cnpj_limpo
     
     def validate_email(self, value):
-        """Valida email único"""
+        """Valida email único (verifica em Empresa E Person)"""
         if not value:  # Email é opcional
             return value
         
@@ -87,11 +88,17 @@ class EmpresaSerializer(serializers.ModelSerializer):
                     f'Email {value} já está cadastrado para outra empresa.'
                 )
         else:
-            # Criação - verificar se já existe
+            # Criação - verificar se já existe em Empresa
             if Empresa.objects.filter(email=value).exists():
                 raise serializers.ValidationError(
-                    f'Email {value} já está cadastrado.'
+                    f'Email {value} já está cadastrado para outra empresa.'
                 )
+        
+        # Verificar se email existe em Person (cross-table validation)
+        if Person.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                f'Email {value} já está cadastrado para uma pessoa.'
+            )
         
         return value
     
@@ -99,7 +106,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
         """
         Método explícito para UPDATE - FORÇA a persistência dos dados
         """
-        print(f"\n🔵 EmpresaSerializer.update() CHAMADO", flush=True)
+        print(f"\n EmpresaSerializer.update() CHAMADO", flush=True)
         print(f"   Instance ID: {instance.id}", flush=True)
         print(f"   Validated data: {validated_data}", flush=True)
         
@@ -109,12 +116,12 @@ class EmpresaSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         
         # SALVAR EXPLICITAMENTE
-        print(f"   💾 Salvando no banco de dados...", flush=True)
+        print(f"    Salvando no banco de dados...", flush=True)
         instance.save()
         
         # Verificar que foi salvo
         instance.refresh_from_db()
-        print(f"   ✅ Salvo! Verificação pós-save:", flush=True)
+        print(f"    Salvo! Verificação pós-save:", flush=True)
         for attr in validated_data.keys():
             print(f"      {attr}: {getattr(instance, attr)}", flush=True)
         
@@ -148,7 +155,7 @@ class PersonSerializer(serializers.ModelSerializer):
         return cpf_limpo
     
     def validate_email(self, value):
-        """Valida email único no modelo Person"""
+        """Valida email único (verifica em Person E Empresa)"""
         if not value:  # Email é opcional
             return value
         
@@ -160,13 +167,32 @@ class PersonSerializer(serializers.ModelSerializer):
                     f'Email {value} já está cadastrado para outra pessoa.'
                 )
         else:
-            # Criação - verificar se já existe
+            # Criação - verificar se já existe em Person
             if Person.objects.filter(email=value).exists():
                 raise serializers.ValidationError(
-                    f'Email {value} já está cadastrado.'
+                    f'Email {value} já está cadastrado para outra pessoa.'
                 )
         
+        # Verificar se email existe em Empresa (cross-table validation)
+        if Empresa.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                f'Email {value} já está cadastrado para uma empresa.'
+            )
+        
         return value
+    
+    def validate_nascimento(self, value):
+        """Valida data de nascimento - não pode ser futura e idade deve estar entre 18 e 120 anos"""
+        if not value:  # Campo opcional
+            return value
+        
+        # Usar a função compartilhada de validação
+        is_valid, error_msg, data_normalizada = validate_data_nascimento(value)
+        
+        if not is_valid:
+            raise serializers.ValidationError(error_msg)
+        
+        return data_normalizada
     
     def update(self, instance, validated_data):
         """
@@ -175,7 +201,7 @@ class PersonSerializer(serializers.ModelSerializer):
         O genérico do ModelSerializer às vezes não atualiza corretamente
         Este método garante que TODOS os campos são atualizados
         """
-        print(f"\n🔵 PersonSerializer.update() CHAMADO", flush=True)
+        print(f"\n PersonSerializer.update() CHAMADO", flush=True)
         print(f"   Instance ID: {instance.id}", flush=True)
         print(f"   Validated data: {validated_data}", flush=True)
         
@@ -185,12 +211,12 @@ class PersonSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         
         # SALVAR EXPLICITAMENTE
-        print(f"   💾 Salvando no banco de dados...", flush=True)
+        print(f"    Salvando no banco de dados...", flush=True)
         instance.save()
         
         # Verificar que foi salvo
         instance.refresh_from_db()
-        print(f"   ✅ Salvo! Verificação pós-save:", flush=True)
+        print(f"    Salvo! Verificação pós-save:", flush=True)
         for attr in validated_data.keys():
             print(f"      {attr}: {getattr(instance, attr)}", flush=True)
         
@@ -228,14 +254,14 @@ class PropriedadeSerializer(serializers.ModelSerializer):
         # tenta pessoa
         pessoa = Person.objects.filter(id=proprietario_id).first()
         if pessoa:
-            print(f"   ✅ Proprietário encontrado: Person ID {pessoa.id} - {pessoa.name}")
+            print(f"    Proprietário encontrado: Person ID {pessoa.id} - {pessoa.name}")
             validated_data['proprietario_pessoa'] = pessoa
             return super().create(validated_data)
 
         # tenta empresa
         empresa = Empresa.objects.filter(id=proprietario_id).first()
         if empresa:
-            print(f"   ✅ Proprietário encontrado: Empresa ID {empresa.id} - {empresa.name}")
+            print(f"    Proprietário encontrado: Empresa ID {empresa.id} - {empresa.name}")
             validated_data['proprietario_empresa'] = empresa
             return super().create(validated_data)
 

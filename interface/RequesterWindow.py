@@ -73,7 +73,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             self.refresh_table(query_result=query_result)
             
         except Exception as e:
-            print(f"❌ Erro na busca: {e}")
+            print(f" Erro na busca: {e}")
             import traceback
             traceback.print_exc()
 
@@ -160,13 +160,13 @@ class RequesterWindow(QDialog, RequesterDialog):
             id_str = self.requester_table.item(row, 0).text()
             
             if not id_str:
-                print("⚠️  ID não encontrado na tabela")
+                print("  ID não encontrado na tabela")
                 return
             
             try:
                 requester_id = int(id_str)
             except ValueError:
-                print(f"⚠️  ID inválido: {id_str}")
+                print(f"  ID inválido: {id_str}")
                 return
             
             db = Database()
@@ -175,7 +175,7 @@ class RequesterWindow(QDialog, RequesterDialog):
                 # Usar método get_persons com id
                 persons = db.get_persons(id=requester_id)
                 if not persons:
-                    print(f"⚠️  Pessoa com ID {requester_id} não encontrada")
+                    print(f"  Pessoa com ID {requester_id} não encontrada")
                     db.close_connection()
                     return
                 
@@ -187,7 +187,7 @@ class RequesterWindow(QDialog, RequesterDialog):
                 # Buscar empresa com id
                 companies = db.get_companies(id=requester_id)
                 if not companies:
-                    print(f"⚠️  Empresa com ID {requester_id} não encontrada")
+                    print(f"  Empresa com ID {requester_id} não encontrada")
                     db.close_connection()
                     return
                 
@@ -201,13 +201,13 @@ class RequesterWindow(QDialog, RequesterDialog):
             if hasattr(dialog, 'edit_mode'):
                 dialog.edit_mode(requester)
             else:
-                print(f"⚠️  Dialog não tem método edit_mode")
+                print(f"  Dialog não tem método edit_mode")
             
             dialog.exec()
             self.refresh_table()
             
         except Exception as e:
-            print(f"❌ Erro ao editar solicitante: {e}")
+            print(f" Erro ao editar solicitante: {e}")
             import traceback
             traceback.print_exc()
             from interface.AlertWindow import AlertWindow
@@ -240,6 +240,12 @@ class RequesterWindow(QDialog, RequesterDialog):
 
     def refresh_table(self, **kwargs) -> None:
         db = Database()
+
+        def _safe_id(item) -> int:
+            try:
+                return int(item.get('id', 0))
+            except Exception:
+                return 0
         
         try:
             if self.current_table_type == 'person':
@@ -247,6 +253,8 @@ class RequesterWindow(QDialog, RequesterDialog):
                     persons: list = db.get_persons()
                 else:
                     persons: list = kwargs.get('query_result')
+
+                persons = sorted(persons or [], key=_safe_id, reverse=True)
                 
                 print(f"🔍 Total de pessoas: {len(persons) if persons else 0}")
                 
@@ -284,8 +292,10 @@ class RequesterWindow(QDialog, RequesterDialog):
                     companies: list = db.get_companies()
                 else:
                     companies: list = kwargs.get('query_result')
+
+                companies = sorted(companies or [], key=_safe_id, reverse=True)
                 
-                print(f"🔍 Total de empresas: {len(companies) if companies else 0}")
+                print(f" Total de empresas: {len(companies) if companies else 0}")
                 
                 self.requester_table.setRowCount(0)
                 self.requester_table.setColumnCount(6)
@@ -320,7 +330,7 @@ class RequesterWindow(QDialog, RequesterDialog):
                 self.requester_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
                 
         except Exception as e:
-            print(f"❌ Erro ao atualizar tabela: {e}")
+            print(f" Erro ao atualizar tabela: {e}")
             import traceback
             traceback.print_exc()
             
@@ -374,7 +384,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             return " - ".join(parts) if parts else "Endereço não informado"
             
         except Exception as e:
-            print(f"⚠️  Erro ao formatar endereço: {e}")
+            print(f"  Erro ao formatar endereço: {e}")
             return "Endereço não disponível"
 
 
@@ -413,7 +423,7 @@ class RequesterWindow(QDialog, RequesterDialog):
             try:
                 requester_id = int(id_str)
             except ValueError:
-                print(f"⚠️  ID inválido: {id_str}")
+                print(f"  ID inválido: {id_str}")
                 return
             
             from interface.PropertyWindow import PropertyWindow
@@ -421,6 +431,6 @@ class RequesterWindow(QDialog, RequesterDialog):
             dialog.exec()
             
         except Exception as e:
-            print(f"❌ Erro ao visualizar propriedades: {e}")
+            print(f" Erro ao visualizar propriedades: {e}")
             import traceback
             traceback.print_exc()
