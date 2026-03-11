@@ -7,7 +7,8 @@ import backend.classes.Report as Report
 import shutil
 from itertools import pairwise
 from pathlib import Path
-from PySide6.QtGui import QPixmap, QColor
+from PySide6.QtGui import QColor
+from interface.icon_utils import get_window_icon
 from backend.classes.GraphParameters import GraphParameters
 from interface.base_windows.generate_report import GenerateReportDialog
 from interface.AlertWindow import AlertWindow
@@ -22,11 +23,7 @@ class GenerateReport(QDialog, GenerateReportDialog):
         super(GenerateReport, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Gerar Relatório')
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+        self.setWindowIcon(get_window_icon())
         self.sample_id = sample_id
         self.label.setText('Convênio: ')
         self.parameters_table.verticalHeader().setVisible(False)

@@ -1,4 +1,4 @@
-from PIL.ImageQt import QPixmap
+from interface.icon_utils import get_window_icon
 
 from interface.base_windows.backup_window import BackupDialog
 from interface.AlertWindow import AlertWindow
@@ -31,11 +31,7 @@ class BackupWindow(QDialog, BackupDialog):
         self.setWindowTitle('Opções de backup')  # Define o título da janela
 
         # Define o ícone da janela com o caminho absoluto da imagem
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+        self.setWindowIcon(get_window_icon())
 
         # Instancia a classe Database para manipulação do banco de dados
         db = Database()

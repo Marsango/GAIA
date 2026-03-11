@@ -1,6 +1,6 @@
 import os
 
-from PySide6.QtGui import QPixmap
+from interface.icon_utils import get_window_icon
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 
 from interface.GenerateCSV import GenerateCSV
@@ -19,11 +19,7 @@ class SampleWindow(QDialog, SampleDialog):
         super(SampleWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Amostras cadastradas')
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+        self.setWindowIcon(get_window_icon())
         owner: str = kwargs.get('owner') if kwargs.get('owner') else ''
         _property: str = kwargs.get('property') if kwargs.get('property') else ''
         self.owner.setText(owner)

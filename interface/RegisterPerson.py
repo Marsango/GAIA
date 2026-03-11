@@ -1,6 +1,6 @@
 import os
 
-from PySide6.QtGui import QPixmap
+from interface.icon_utils import get_window_icon
 from PySide6.QtWidgets import (QDialog, QCompleter)
 from interface.base_windows.register_person import RegisterPersonDialog
 from PySide6.QtCore import Qt
@@ -38,11 +38,7 @@ class RegisterPerson(QDialog, RegisterPersonDialog):
         self.setupUi(self)
         self.cep_input.setMaxLength(8)
         self.setWindowTitle('Registro de Pessoa Física')
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+        self.setWindowIcon(get_window_icon())
         self.register_button.clicked.connect(self.register_action)
         # Conectar eventos de mudança
         self.state_input.editingFinished.connect(self.state_changed)

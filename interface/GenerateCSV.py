@@ -4,7 +4,7 @@ import sqlite3
 from PySide6 import QtCore, QtGui
 import csv
 
-from PySide6.QtGui import QPixmap
+from interface.icon_utils import get_window_icon
 
 from interface.base_windows.generate_csv import GenerateCSVDialog
 from interface.AlertWindow import AlertWindow
@@ -18,11 +18,7 @@ class GenerateCSV(QDialog, GenerateCSVDialog):
         super(GenerateCSV, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Exportar para CSV")
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+        self.setWindowIcon(get_window_icon())
         self.selected_ids = selected_ids
         self.file_path.setReadOnly(True)
         self.path_button.clicked.connect(self.open_dialog)

@@ -7,7 +7,7 @@
   },
   {
    "optionDest": "filenames",
-   "value": "PATHTOFOLDER/GAIA/interface/__main__.py"
+   "value": "C:\\Users\\brun0\\Documents\\LabSolos\\GAIA\\interface\\__main__.py"
   },
   {
    "optionDest": "onefile",
@@ -19,7 +19,7 @@
   },
   {
    "optionDest": "icon_file",
-   "value": "PATHTOFOLDER/GAIA/interface/images/GAIA_icon.ico"
+   "value": "C:\\Users\\brun0\\Documents\\LabSolos\\GAIA\\interface\\images\\GAIA_icon.ico"
   },
   {
    "optionDest": "clean_build",
@@ -55,7 +55,15 @@
   },
   {
    "optionDest": "datas",
-   "value": "PATHTOFOLDER/PycharmProjects/GAIA/interface/images;images/"
+   "value": "C:\\Users\\brun0\\Documents\\LabSolos\\GAIA\\interface\\images;images/"
+    },
+    {
+     "optionDest": "datas",
+     "value": "C:\\Users\\brun0\\Documents\\LabSolos\\GAIA\\backend\\classes;backend/classes"
+    },
+    {
+     "optionDest": "datas",
+     "value": "C:\\Users\\brun0\\Documents\\LabSolos\\GAIA\\interface\\qt_files;interface/qt_files"
   }
  ],
  "nonPyinstallerOptions": {

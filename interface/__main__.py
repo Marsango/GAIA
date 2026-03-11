@@ -18,6 +18,16 @@ myappid = 'mycompany.myproduct.subproduct.version'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 
+def get_image_path(filename: str) -> str:
+    """Resolve caminhos de imagens tanto no código-fonte quanto no executável."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        base_dir = sys._MEIPASS
+        return os.path.join(base_dir, "images", filename)
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_dir, "images", filename)
+
+
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self) -> None:
         super(MainWindow, self).__init__()
@@ -26,11 +36,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.showMaximized()
         base_dir = os.path.dirname(os.path.abspath(__file__))
         bg_dir = os.path.join(base_dir, 'images', 'background.svg')
-        self.setWindowIcon(QIcon(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.ico"))
+
+        icon_path = get_image_path("GAIA_icon.ico")
+        if not os.path.exists(icon_path):
+            # Fallback para cenários onde apenas PNG foi empacotado.
+            icon_path = get_image_path("GAIA_icon.png")
+        self.setWindowIcon(QIcon(icon_path))
+
         self.svg_widget = QSvgWidget(bg_dir)
         self.horizontalLayout.addWidget(self.svg_widget)
 
@@ -94,6 +106,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    app_icon = get_image_path("GAIA_icon.ico")
+    if not os.path.exists(app_icon):
+        app_icon = get_image_path("GAIA_icon.png")
+    app.setWindowIcon(QIcon(app_icon))
+
     window = MainWindow()
     window.show()
     app.exec()

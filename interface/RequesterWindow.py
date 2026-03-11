@@ -1,6 +1,7 @@
 import os
+import sys
 
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.requester_window import RequesterDialog
 from interface.DeleteConfirmation import DeleteConfirmation
@@ -13,16 +14,24 @@ from backend.classes.Database import Database
 import sqlite3
 
 
+def get_image_path(filename: str) -> str:
+    """Resolve imagens tanto no código-fonte quanto no executável PyInstaller."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, "images", filename)
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "images", filename)
+
+
 class RequesterWindow(QDialog, RequesterDialog):
     def __init__(self) -> None:
         super(RequesterWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Solicitantes registrados')
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+
+        icon_path = get_image_path("GAIA_icon.ico")
+        if not os.path.exists(icon_path):
+            icon_path = get_image_path("GAIA_icon.png")
+        self.setWindowIcon(QIcon(icon_path))
+
         self.requester_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.requester_table.verticalHeader().setVisible(False)
         self.add.clicked.connect(self.register_person)

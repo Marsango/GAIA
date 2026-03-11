@@ -1,6 +1,6 @@
 import os
 
-from PySide6.QtGui import QPixmap
+from interface.icon_utils import get_window_icon
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView)
 from interface.base_windows.property_window import PropertyDialog
 from interface.DeleteConfirmation import DeleteConfirmation
@@ -16,11 +16,7 @@ class PropertyWindow(QDialog, PropertyDialog):
         super(PropertyWindow, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Propriedades cadastradas')
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+        self.setWindowIcon(get_window_icon())
         self.requester_list: list[sqlite3.Row] | None = None
         self.property_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.property_table.verticalHeader().setVisible(False) #linha adicionada para esconder os números das linhas, pode ser removida caso queira mostrar

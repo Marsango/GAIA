@@ -2,7 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
-from PySide6.QtGui import QPixmap
+from interface.icon_utils import get_window_icon
 from PySide6.QtWidgets import (QDialog, QTableWidgetItem, QAbstractItemView, QHeaderView, QFileDialog)
 from interface.AlertWindow import AlertWindow
 from interface.base_windows.get_report import GetReportDialog
@@ -14,11 +14,7 @@ class GetReport(QDialog, GetReportDialog):
         super(GetReport, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Laudos cadastrados')
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+        self.setWindowIcon(get_window_icon())
         self.report_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.report_table.verticalHeader().setVisible(False)
         self.report_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)

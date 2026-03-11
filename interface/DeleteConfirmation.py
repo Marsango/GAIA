@@ -1,6 +1,6 @@
 import os
 
-from PySide6.QtGui import QPixmap
+from interface.icon_utils import get_window_icon
 
 from backend.classes.utils import handle_exception
 from interface.AlertWindow import AlertWindow
@@ -14,11 +14,7 @@ class DeleteConfirmation(QDialog, DeleteDialog):
         self.setupUi(self)
         self.setWindowTitle('Confirmação')
         self.confirm_button.clicked.connect(self.delete_action)
-        self.setWindowIcon(QPixmap(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "interface",
-            "images"
-        ).replace("\\", "/") + "/GAIA_icon.png"))
+        self.setWindowIcon(get_window_icon())
         self.cancel_button.clicked.connect(self.close)
         self.list_of_ids: list[int] = list_of_ids
         self.table_type: str = table_type
