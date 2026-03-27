@@ -91,6 +91,27 @@ else:
 
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF_TRUSTED_ORIGINS: Confiar em requisições dessa origem para CSRF
+# Essencial quando frontend está em origem diferente do backend
+# Formato: ['https://example.com', 'https://www.example.com']
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",      # Vite dev server (padrão)
+        "http://127.0.0.1:5173",
+        "http://localhost:5000",      # Alternativo
+        "http://127.0.0.1:5000",
+        "http://localhost:8000",      # Backend (para fazer requisições para si mesmo)
+        "http://127.0.0.1:8000",
+    ]
+else:
+    # PRODUÇÃO: Apenas o domínio real (CONFIGURAR NO .env)
+    # Exemplo: CSRF_TRUSTED_ORIGINS=https://www.seuprojeto.com.br,https://seuprojeto.com.br
+    CSRF_TRUSTED_ORIGINS = config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='',
+        cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
+    )
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [

@@ -121,6 +121,21 @@ def handle_exception(e: Exception) -> str:
     elif isinstance(e, RuntimeError):
         raw_message = str(e)
 
+        # Erros de conectividade devem ser curtos e amigáveis no alerta.
+        connection_signatures = [
+            "Nao foi possivel conectar ao servidor",
+            "Falha no auto-login",
+            "Failed to establish a new connection",
+            "Connection refused",
+            "Max retries exceeded",
+            "Read timed out",
+        ]
+        if any(signature in raw_message for signature in connection_signatures):
+            return (
+                "Nao foi possivel conectar ao servidor. "
+                "Verifique se o backend esta online e tente novamente."
+            )
+
         # Formato esperado: "Erro de validação: {'campo': ['mensagem']}"
         if raw_message.startswith("Erro de validação:"):
             payload_str = raw_message.replace("Erro de validação:", "", 1).strip()
@@ -151,6 +166,12 @@ def handle_exception(e: Exception) -> str:
             return raw_message
 
         # Outros RuntimeError devem aparecer claramente ao usuário
+        max_alert_len = 280
+        if len(raw_message) > max_alert_len:
+            short_message = raw_message[:max_alert_len].rstrip() + "..."
+            logging.error(raw_message)
+            return short_message
+
         logging.error(raw_message)
         return raw_message
 

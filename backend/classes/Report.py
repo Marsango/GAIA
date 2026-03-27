@@ -14,6 +14,7 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
 import os
 import math
+import sys
 from reportlab.lib.colors import HexColor
 
 from interface.AlertWindow import AlertWindow
@@ -68,6 +69,40 @@ class Report:
         pdfmetrics.registerFont(TTFont('ariali', f"{self.__fonts_path}/ariali.ttf"))
         pdfmetrics.registerFont(TTFont('arilbk', f"{self.__fonts_path}/ariblk.ttf"))
 
+    def _resolve_image_path(self, candidates: list[str]) -> str | None:
+        """Resolve image path with fallback for runtime/location/case differences."""
+        search_dirs = []
+
+        # Build PyInstaller: arquivos em _MEIPASS/images
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+            search_dirs.append(os.path.join(sys._MEIPASS, "images"))
+
+        # Build one-folder: ao lado do executavel
+        exe_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else ""
+        if exe_dir:
+            search_dirs.append(os.path.join(exe_dir, "images"))
+            search_dirs.append(os.path.join(exe_dir, "_internal", "images"))
+
+        # Dev/source
+        search_dirs.extend([
+            self.__images_location,
+            os.path.join(os.getcwd(), "interface", "images"),
+            os.path.join(os.getcwd(), "images"),
+        ])
+
+        for base_dir in search_dirs:
+            for name in candidates:
+                full_path = os.path.join(base_dir, name)
+                if os.path.exists(full_path):
+                    return full_path.replace("\\", "/")
+        return None
+
+    def _draw_image_safe(self, candidates: list[str], x: int, y: int, w: int, h: int) -> None:
+        image_path = self._resolve_image_path(candidates)
+        if not image_path:
+            return
+        self.__pdf.drawImage(image_path, x, y, w, h, preserveAspectRatio=True, mask='auto')
+
     def setup_pdf(self, number: int, path: str) -> canvas.Canvas:
         self.add_fonts()
         pdf: canvas.Canvas = canvas.Canvas(f'{path}')
@@ -82,15 +117,19 @@ class Report:
 
         self.__pdf.setFont('arialbd', 14)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 725, 'Laudo de Análise de Solo')
-        self.__pdf.drawImage(f'{self.__images_location}/UTFPR_logo.svg.png', 65, 725, 100, 100,
-                             preserveAspectRatio=True, mask='auto')
+        self._draw_image_safe(
+            ['UTFPR_logo.svg.png', 'UTFPR_Logo.svg.png', 'UTFPR_logo.png', 'UTFPR_Logo.png'],
+            65,
+            725,
+            100,
+            100,
+        )
         self.__pdf.setFont('arialbd', 10)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 785, 'LABSOLOS - Laboratório de Solos da UTFPR')
         self.__pdf.setFont('arial', 10)
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 772, 'Universidade Tecnólogica Federal do Paraná')
         self.__pdf.drawCentredString(self.__horizontal_size / 2, 759, 'Campus Pato Branco')
-        self.__pdf.drawImage(f'{self.__images_location}/logo_lab.png', 410, 730, 125, 125, preserveAspectRatio=True,
-                             mask='auto')
+        self._draw_image_safe(['logo_lab.png', 'Logo_lab.png'], 410, 730, 125, 125)
         self.__pdf.setFont('arial', 8)
 
     def draw_square(self, pos_horizontal1: int, pos_horizontal2: int, pos_vertical1: int,
@@ -467,8 +506,7 @@ class Report:
                                      ' (ZARC), IN SPA/MAPA nº 01 de 21 de junho de 2022, do MAPA')
 
     def draw_report_stamp(self, coord_x, coord_y):
-        self.__pdf.drawImage(f'{self.__images_location}/report_stamp.png', coord_x, coord_y, 100, 100,
-                             preserveAspectRatio=True, mask='auto')
+        self._draw_image_safe(['report_stamp.png', 'Report_stamp.png'], coord_x, coord_y, 100, 100)
 
     def generate_pdf(self, report_data: sqlite3.Row, path_to_save: str, report_id: int, sample_values: sqlite3.Row,
                      reference: dict[str, dict[str, float]]) -> None:

@@ -99,7 +99,7 @@ const ReportCard = ({ data, amostras }) => {
                 </ButtonRow>
               ) : (
                 <p style={{ color: "#999", fontSize: "14px" }}>
-                  📄 Laudo ainda não possui arquivo PDF anexado
+                   Laudo ainda não possui arquivo PDF anexado
                 </p>
               )}
             </div>

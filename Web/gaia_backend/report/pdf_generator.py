@@ -3,10 +3,8 @@ Gerador de PDF de laudos para o sistema web
 Versão standalone sem dependências de PySide6
 """
 import os
-import sys
-import json
+import re
 from io import BytesIO
-from pathlib import Path
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from reportlab.pdfbase.ttfonts import TTFont
@@ -16,10 +14,21 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.colors import HexColor
-import matplotlib
-matplotlib.use('Agg')  # Backend sem GUI
-import matplotlib.pyplot as plt
 import math
+
+# Limites de segurança para strings renderizadas no PDF
+_MAX_TEXT_LEN = 200
+_MAX_AGREEMENT_LEN = 100
+_CONTROL_CHARS_RE = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
+
+
+def _sanitize(value, max_len=_MAX_TEXT_LEN) -> str:
+    """Remove caracteres de controle e limita comprimento de strings para ReportLab."""
+    if value is None:
+        return ''
+    text = str(value)
+    text = _CONTROL_CHARS_RE.sub('', text)  # remove caracteres de controle
+    return text[:max_len]
 
 
 class WebReportGenerator:
@@ -51,6 +60,9 @@ class WebReportGenerator:
             propriedade = amostra.propriedade
             endereco = propriedade.endereco if propriedade.endereco else None
             
+            # Sanitizar todas as strings antes de passar ao ReportLab
+            safe_agreement = _sanitize(agreement, _MAX_AGREEMENT_LEN)
+
             # Buffer para o PDF
             buffer = BytesIO()
             pdf = canvas.Canvas(buffer)
@@ -65,25 +77,25 @@ class WebReportGenerator:
             
             # Informações do solicitante
             if propriedade.proprietario_pessoa:
-                pdf.drawString(50, y, f"Solicitante: {propriedade.proprietario_pessoa.name}")
+                pdf.drawString(50, y, f"Solicitante: {_sanitize(propriedade.proprietario_pessoa.name)}")
                 y -= 15
-                pdf.drawString(50, y, f"CPF: {propriedade.proprietario_pessoa.cpf}")
+                pdf.drawString(50, y, f"CPF: {_sanitize(propriedade.proprietario_pessoa.cpf)}")
             elif propriedade.proprietario_empresa:
-                pdf.drawString(50, y, f"Solicitante: {propriedade.proprietario_empresa.name}")
+                pdf.drawString(50, y, f"Solicitante: {_sanitize(propriedade.proprietario_empresa.name)}")
                 y -= 15
-                pdf.drawString(50, y, f"CNPJ: {propriedade.proprietario_empresa.cnpj}")
+                pdf.drawString(50, y, f"CNPJ: {_sanitize(propriedade.proprietario_empresa.cnpj)}")
             
             y -= 20
-            pdf.drawString(50, y, f"Propriedade: {propriedade.name}")
+            pdf.drawString(50, y, f"Propriedade: {_sanitize(propriedade.name)}")
             y -= 15
             
             if endereco:
-                pdf.drawString(50, y, f"Município: {endereco.cidade} - {endereco.estado}")
+                pdf.drawString(50, y, f"Município: {_sanitize(endereco.cidade)} - {_sanitize(endereco.estado)}")
                 y -= 15
             
-            pdf.drawString(50, y, f"Matrícula: {propriedade.registration_number}")
+            pdf.drawString(50, y, f"Matrícula: {_sanitize(propriedade.registration_number)}")
             y -= 15
-            pdf.drawString(50, y, f"Convênio: {agreement}")
+            pdf.drawString(50, y, f"Convênio: {safe_agreement}")
             y -= 15
             pdf.drawString(50, y, f"Amostra: {amostra.numero_amostra}")
             y -= 15

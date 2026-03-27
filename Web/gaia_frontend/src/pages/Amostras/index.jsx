@@ -142,7 +142,7 @@ export default function Amostras() {
                     disabled={loading}
                     className="btn-download"
                   >
-                    📄 Baixar Laudo
+                    Baixar Laudo
                   </button>
                 </td>
               </tr>

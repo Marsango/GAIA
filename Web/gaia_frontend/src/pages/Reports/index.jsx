@@ -5,7 +5,15 @@ import PropertiesCard from "../../components/PropertiesCard";
 import ReportsCard from "../../components/ReportsCard";
 import api from "../../api/api";
 import {
-  PageContainer, Title, Content, Properties, Reports, ReportList, FullPageContainer, Subtitle, AdminButton
+  PageContainer,
+  Title,
+  Content,
+  Properties,
+  Reports,
+  ReportList,
+  FullPageContainer,
+  Subtitle,
+  AdminButton,
 } from "./styled";
 
 const CentralLaudos = () => {
@@ -59,7 +67,9 @@ const CentralLaudos = () => {
 
   const carregarLaudos = async (propriedadeId) => {
     try {
-      const response = await api.get(`laudos/por_propriedade/?propriedade_id=${propriedadeId}`);
+      const response = await api.get(
+        `laudos/por_propriedade/?propriedade_id=${propriedadeId}`,
+      );
       const data = response.data.results || response.data || [];
       setLaudos(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -101,7 +111,7 @@ const CentralLaudos = () => {
                 />
               ))
             ) : (
-              <p style={{ color: '#777' }}>Nenhuma propriedade encontrada.</p>
+              <p style={{ color: "#777" }}>Nenhuma propriedade encontrada.</p>
             )}
           </Properties>
 
@@ -109,19 +119,25 @@ const CentralLaudos = () => {
             <Subtitle>Laudos Disponíveis</Subtitle>
             <ReportList>
               {laudos.length > 0 ? (
-                Object.entries(agruparPorData(laudos)).map(([data, laudosDoDia]) => (
-                  <ReportsCard
-                    key={data}
-                    data={data}
-                    amostras={laudosDoDia.map((l) => ({
-                      id: l.id,
-                      numero: l.numero_amostra,
-                      arquivoUrl: l.arquivo_url || null,
-                    }))}
-                  />
-                ))
+                Object.entries(agruparPorData(laudos)).map(
+                  ([data, laudosDoDia]) => (
+                    <ReportsCard
+                      key={data}
+                      data={data}
+                      amostras={laudosDoDia.map((l) => ({
+                        id: l.id,
+                        numero: l.numero_amostra,
+                        arquivoUrl: l.arquivo_url || null,
+                      }))}
+                    />
+                  ),
+                )
               ) : (
-                <p style={{ color: '#777' }}>Selecione uma propriedade para ver os laudos.</p>
+                <p style={{ color: "#777", fontSize: "20px" }}>
+                  {selectedProperty
+                    ? "Nenhum laudo cadastrado para esta propriedade."
+                    : "Selecione uma propriedade para ver os laudos."}
+                </p>
               )}
             </ReportList>
           </Reports>

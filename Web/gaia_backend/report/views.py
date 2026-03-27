@@ -6,6 +6,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import FileResponse
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
+
+_MAX_AGREEMENT_LEN = 100
 from .models import Propriedade, Laudo, Amostra, Empresa, Person, Endereco
 from .serializers import PropriedadeSerializer, LaudoSerializer, AmostraSerializer, EmpresaSerializer, PersonSerializer, EnderecoSerializer
 from django.utils import timezone
@@ -414,6 +418,7 @@ class AmostraViewSet(viewsets.ModelViewSet):
         
         return Amostra.objects.filter(query)
     
+    @method_decorator(ratelimit(key='user', rate='10/m', method='ALL', block=True))
     @action(detail=True, methods=['get', 'post'])
     def gerar_laudo(self, request, pk=None):
         """
@@ -428,6 +433,13 @@ class AmostraViewSet(viewsets.ModelViewSet):
         
         # Pegar convênio do query param (GET) ou do body (POST)
         convenio = request.query_params.get('convenio') or request.data.get('convenio', 'Sistema Web GAIA')
+
+        # Validar tamanho do convênio para evitar DoS via string gigante
+        if len(str(convenio)) > _MAX_AGREEMENT_LEN:
+            return Response(
+                {'error': f'Convênio deve ter no máximo {_MAX_AGREEMENT_LEN} caracteres'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Gerar PDF
         pdf_buffer = WebReportGenerator.generate_pdf_for_sample(
@@ -544,6 +556,7 @@ class AmostraViewSet(viewsets.ModelViewSet):
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @method_decorator(ratelimit(key='user', rate='10/m', method='ALL', block=True))
     @action(detail=True, methods=['post'])
     def gerar_laudo(self, request, pk=None):
         """
@@ -554,6 +567,13 @@ class AmostraViewSet(viewsets.ModelViewSet):
         try:
             amostra = self.get_object()
             agreement = request.data.get('agreement', 'Sistema Web GAIA')
+
+            # Validar tamanho para evitar DoS via string gigante
+            if len(str(agreement)) > _MAX_AGREEMENT_LEN:
+                return Response(
+                    {'error': f'Agreement deve ter no máximo {_MAX_AGREEMENT_LEN} caracteres'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
             # Gerar PDF
             pdf_buffer = WebReportGenerator.generate_pdf_for_sample(

@@ -1,0 +1,23 @@
+# Dependencias para deploy WEB (backend Django/API em VM)
+# Nao inclui bibliotecas de app desktop.
+
+Django==5.2.7
+django-cors-headers==4.9.0
+django-filter==25.2
+django-ratelimit==4.1.0
+djangorestframework==3.16.1
+djangorestframework_simplejwt==5.5.1
+python-decouple==3.8
+# Driver PostgreSQL compilado localmente (preferivel em producao)
+psycopg2==2.9.11
+requests==2.32.5
+reportlab==4.2.5
+matplotlib==3.10.0
+
+# Producao
+# WSGI server para Django
+gunicorn==23.0.0
+# Servir arquivos estaticos no Django (se usar)
+whitenoise==6.8.2
+# Necessario quando DEBUG=False e cache Redis esta habilitado no settings.py
+redis==5.2.1

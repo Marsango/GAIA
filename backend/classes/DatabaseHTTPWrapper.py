@@ -203,13 +203,11 @@ class DatabaseHTTPWrapper:
 
             if not self.token:
                 if not self._auto_login():
-                    detalhes = f"\nDetalhes técnicos: {self.last_auth_error}" if self.last_auth_error else ""
                     raise RuntimeError(
-                        f"Falha no auto-login. Verifique:\n"
-                        f"1. Se o servidor está rodando em {self.base_url}\n"
-                        f"2. Se auth_config.json está configurado corretamente\n"
-                        f"3. Se o usuário existe no banco de dados"
-                        f"{detalhes}"
+                        f"Nao foi possivel conectar ao servidor. Verifique:\n"
+                        f"1. Se o servidor esta rodando em {self.base_url}\n"
+                        f"2. Se auth_config.json esta configurado corretamente\n"
+                        f"3. Se o usuario existe no banco de dados"
                     )
 
             headers = self.headers.copy()
