@@ -27,8 +27,8 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 # PRODUÇÃO: Adicione o domínio do servidor aqui
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1',
-    cast=lambda v: [s.strip() for s in v.split(',')]
+    default='localhost,127.0.0.1,gaia-2spq.onrender.com',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
 )
 
 # Validação explícita de configuração em produção.
@@ -79,6 +79,7 @@ if DEBUG:
         "http://127.0.0.1:5000",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
+        "https://gaia-2spq.onrender.com",
     ]
     CORS_ALLOW_ALL_ORIGINS = False
 else:
@@ -103,6 +104,7 @@ if DEBUG:
         "http://127.0.0.1:5000",
         "http://localhost:8000",      # Backend (para fazer requisições para si mesmo)
         "http://127.0.0.1:8000",
+        "https://gaia-2spq.onrender.com",
     ]
 else:
     # PRODUÇÃO: Apenas o domínio real (CONFIGURAR NO .env)
